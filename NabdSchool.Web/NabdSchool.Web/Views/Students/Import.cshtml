@@ -1,0 +1,264 @@
+﻿@{
+    ViewData["Title"] = "استيراد الطلاب من Excel";
+}
+
+<link rel="stylesheet" href="~/css/import.css" />
+<div class="container-fluid mt-4" dir="rtl">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-excel"></i> استيراد الطلاب من ملف Excel
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i> @TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <!-- Instructions -->
+                    <div class="alert alert-info mb-4">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-info-circle"></i> تعليمات الاستيراد
+                        </h6>
+                        <hr>
+                        <ul class="mb-0">
+                            <li>يجب أن يكون الملف بصيغة <strong>Excel (.xlsx أو .xls)</strong></li>
+                            <li>يجب أن يحتوي الملف على الأعمدة التالية بالترتيب:</li>
+                        </ul>
+                        <div class="table-responsive mt-3">
+                            <table class="table table-sm table-bordered bg-white">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>الجوال</th>
+                                        <th>الفصل</th>
+                                        <th>رقم الصف</th>
+                                        <th>اسم الطالب</th>
+                                        <th>رقم الطالب</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="text-muted">
+                                        <td>966505792234</td>
+                                        <td>1</td>
+                                        <td>0723</td>
+                                        <td>أحمد محمد علي</td>
+                                        <td>1163713595</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-lightbulb"></i>
+                            <strong>ملاحظة:</strong> رقم الصف مكون من رقمين (مثلاً: 07 = الصف السابع) + رقم الفصل (مثلاً: 23)
+                        </small>
+                    </div>
+
+                    <!-- Upload Form -->
+                    <form asp-action="Import" method="post" enctype="multipart/form-data" id="importForm">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="fas fa-upload"></i> اختر ملف Excel
+                            </label>
+                            <input type="file"
+                                   class="form-control form-control-lg"
+                                   name="file"
+                                   id="fileInput"
+                                   accept=".xlsx,.xls"
+                                   required>
+                            <div class="form-text">
+                                <i class="fas fa-file-excel text-success"></i>
+                                الملفات المدعومة: .xlsx, .xls (حجم أقصى: 10 MB)
+                            </div>
+                        </div>
+
+                        <!-- File Info -->
+                        <div id="fileInfo" class="alert alert-secondary d-none mb-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-file-excel fa-2x text-success me-3"></i>
+                                <div class="flex-grow-1">
+                                    <strong id="fileName"></strong>
+                                    <br>
+                                    <small class="text-muted" id="fileSize"></small>
+                                </div>
+                                <button type="button" class="btn-close" onclick="clearFile()"></button>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div id="progressContainer" class="d-none mb-4">
+                            <div class="progress" style="height: 30px;">
+                                <div id="progressBar"
+                                     class="progress-bar progress-bar-striped progress-bar-animated"
+                                     role="progressbar"
+                                     style="width: 0%">
+                                    <span id="progressText">0%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                                <i class="fas fa-cloud-upload-alt"></i> رفع الملف واستيراد البيانات
+                            </button>
+                            <a asp-controller="Students" asp-action="Index" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> إلغاء
+                            </a>
+                        </div>
+                    </form>
+
+                    <!-- Sample File Download -->
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6 class="mb-2">
+                            <i class="fas fa-download"></i> تحميل ملف نموذجي
+                        </h6>
+                        <p class="text-muted small mb-2">
+                            قم بتحميل ملف Excel نموذجي لمعرفة التنسيق الصحيح
+                        </p>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="downloadSampleFile()">
+                            <i class="fas fa-file-download"></i> تحميل الملف النموذجي
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips Card -->
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-body">
+                    <h6 class="text-primary">
+                        <i class="fas fa-lightbulb"></i> نصائح مهمة
+                    </h6>
+                    <ul class="mb-0 small">
+                        <li>تأكد من صحة البيانات قبل الرفع لتجنب الأخطاء</li>
+                        <li>سيتم تخطي الطلاب الموجودين مسبقاً بنفس رقم الطالب</li>
+                        <li>سيتم عرض تقرير تفصيلي بعد الاستيراد يوضح عدد السجلات المستوردة والأخطاء إن وجدت</li>
+                        <li>يمكنك استيراد عدد كبير من الطلاب دفعة واحدة</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const submitBtn = document.getElementById('submitBtn');
+        const importForm = document.getElementById('importForm');
+
+        // File selection handler
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+
+            if (file) {
+                // Validate file type
+                const validTypes = ['.xlsx', '.xls'];
+                const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+
+                if (!validTypes.includes(fileExtension)) {
+                    alert('الرجاء اختيار ملف Excel صحيح (.xlsx أو .xls)');
+                    clearFile();
+                    return;
+                }
+
+                // Validate file size (10 MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('حجم الملف كبير جداً. الحد الأقصى 10 ميجابايت');
+                    clearFile();
+                    return;
+                }
+
+                // Display file info
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                fileInfo.classList.remove('d-none');
+            }
+        });
+
+        // Form submission handler
+        importForm.addEventListener('submit', function(e) {
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                alert('الرجاء اختيار ملف');
+                return;
+            }
+
+            // Show progress bar
+            submitBtn.disabled = true;
+            progressContainer.classList.remove('d-none');
+
+            // Simulate progress (since we can't track actual upload progress in this setup)
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                if (progress <= 90) {
+                    updateProgress(progress);
+                } else {
+                    clearInterval(interval);
+                }
+            }, 200);
+        });
+
+        function clearFile() {
+            fileInput.value = '';
+            fileInfo.classList.add('d-none');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function updateProgress(percent) {
+            progressBar.style.width = percent + '%';
+            progressText.textContent = percent + '%';
+        }
+
+        function downloadSampleFile() {
+            // Create sample data
+            const data = [
+                ['الجوال', 'الفصل', 'رقم الصف', 'اسم الطالب', 'رقم الطالب'],
+                ['966505792234', '1', '0723', 'أحمد محمد علي', '1163713595'],
+                ['966566231915', '1', '0723', 'محمد أحمد سعيد', '1162672560'],
+                ['966552538562', '2', '0723', 'علي عبدالله محمد', '1163537358']
+            ];
+
+            // Convert to CSV
+            const csv = data.map(row => row.join(',')).join('\n');
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+
+            // Download
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'sample_students_import.csv';
+            link.click();
+
+            alert('تم تحميل الملف النموذجي بنجاح!\n\nملاحظة: الملف المحمل بصيغة CSV. يمكنك فتحه في Excel وحفظه بصيغة .xlsx');
+        }
+    </script>
+}
+

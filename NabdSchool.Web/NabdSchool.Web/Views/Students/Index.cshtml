@@ -1,0 +1,215 @@
+﻿@model IEnumerable<NabdSchool.Core.Entities.Student>
+
+@{
+    ViewData["Title"] = "قائمة الطلاب";
+    var showDeleted = ViewBag.ShowDeleted ?? false;
+}
+
+<div class="container-fluid mt-4" dir="rtl">
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h2 class="mb-0">
+                <i class="fas fa-users"></i>
+                @(showDeleted ? "الأرشيف - الطلاب المحذوفون" : "قائمة الطلاب")
+            </h2>
+        </div>
+        <div class="col-md-4 text-end">
+            @if (User.IsInRole("Admin") || User.IsInRole("DataEntry"))
+            {
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> إضافة طالب جديد
+                </a>
+                <a asp-action="Import" class="btn btn-success">
+                    <i class="fas fa-file-excel"></i> استيراد من Excel
+                </a>
+            }
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filters -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">الصف</label>
+                    <select name="grade" class="form-select">
+                        <option value="">جميع الصفوف</option>
+                        @for (int i = 1; i <= 12; i++)
+                        {
+                            <option value="@i" selected="@(ViewBag.SelectedGrade == i)">الصف @i</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">الفصل</label>
+                    <select name="classNumber" class="form-select">
+                        <option value="">جميع الفصول</option>
+                        @for (int i = 1; i <= 10; i++)
+                        {
+                            <option value="@i" selected="@(ViewBag.SelectedClass == i)">الفصل @i</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">عرض المحذوفين</label>
+                    <div class="form-check form-switch pt-2">
+                        <input class="form-check-input" type="checkbox" name="showDeleted"
+                               value="true" @(showDeleted ? "checked" : "")>
+                        <label class="form-check-label">
+                            عرض الطلاب المحذوفين (الأرشيف)
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> بحث
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Students Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="studentsTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>رقم الطالب</th>
+                            <th>اسم الطالب</th>
+                            <th>رقم الجوال</th>
+                            <th>الصف</th>
+                            <th>الفصل</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            int counter = 1;
+                            @foreach (var student in Model)
+                            {
+                                <tr class="@(!student.IsVisible ? "table-secondary" : "")">
+                                    <td>@counter</td>
+                                    <td>@student.StudentNumber</td>
+                                    <td>@student.FullName</td>
+                                    <td>@student.PhoneNumber</td>
+                                    <td>
+                                        <span class="badge bg-info">الصف @student.Grade</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">الفصل @student.Class?.ClassName</span>
+                                        <span class="badge bg-primary">الفصل @student.Class?.ClassNumber</span>
+
+                                    </td>
+                                    <td>
+                                        @if (student.IsVisible)
+                                        {
+                                            <span class="badge bg-success">نشط</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">محذوف</span>
+                                            <br />
+                                            <small class="text-muted">
+                                                بواسطة: @student.DeletedBy<br />
+                                                في: @student.DeletedDate?.ToString("yyyy-MM-dd HH:mm")
+                                            </small>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (student.IsVisible)
+                                        {
+                                            @if (User.IsInRole("Admin") || User.IsInRole("DataEntry"))
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@student.Id"
+                                                   class="btn btn-sm btn-warning" title="تعديل">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            }
+
+                                            @if (User.IsInRole("Admin"))
+                                            {
+                                                <form asp-action="Delete" method="post" class="d-inline"
+                                                      onsubmit="return confirm('هل أنت متأكد من حذف هذا الطالب؟');">
+                                                    <input type="hidden" name="id" value="@student.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-danger" title="حذف">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                        }
+                                        else if (User.IsInRole("Admin"))
+                                        {
+                                            <form asp-action="Restore" method="post" class="d-inline">
+                                                <input type="hidden" name="id" value="@student.Id" />
+                                                <button type="submit" class="btn btn-sm btn-success" title="استرجاع">
+                                                    <i class="fas fa-undo"></i> استرجاع
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                                counter++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center">
+                                    <div class="py-4">
+                                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">لا توجد بيانات</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model.Any())
+            {
+                <div class="mt-3">
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        إجمالي الطلاب: <strong>@Model.Count()</strong>
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#studentsTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/ar.json'
+                },
+                pageLength: 25,
+                order: [[1, 'asc']]
+            });
+        });
+    </script>
+}

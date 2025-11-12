@@ -1,0 +1,155 @@
+﻿@model NabdSchool.Web.ViewModels.CreateUserViewModel
+
+@{
+    ViewData["Title"] = "إضافة مستخدم جديد";
+}
+
+<div class="container-fluid mt-4" dir="rtl">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-plus"></i> إضافة مستخدم جديد
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="row g-3">
+                            <!-- Username -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Username" class="form-control" placeholder="اسم المستخدم">
+                                    <label asp-for="Username">
+                                        <i class="fas fa-user"></i> اسم المستخدم
+                                    </label>
+                                    <span asp-validation-for="Username" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <!-- Full Name -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="FullName" class="form-control" placeholder="الاسم الكامل">
+                                    <label asp-for="FullName">
+                                        <i class="fas fa-id-card"></i> الاسم الكامل
+                                    </label>
+                                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Email" type="email" class="form-control" placeholder="البريد الإلكتروني">
+                                    <label asp-for="Email">
+                                        <i class="fas fa-envelope"></i> البريد الإلكتروني
+                                    </label>
+                                    <span asp-validation-for="Email" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <!-- Phone Number -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="رقم الجوال">
+                                    <label asp-for="PhoneNumber">
+                                        <i class="fas fa-phone"></i> رقم الجوال
+                                    </label>
+                                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Password" type="password" class="form-control" placeholder="كلمة المرور">
+                                    <label asp-for="Password">
+                                        <i class="fas fa-lock"></i> كلمة المرور
+                                    </label>
+                                    <span asp-validation-for="Password" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <!-- Confirm Password -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="تأكيد كلمة المرور">
+                                    <label asp-for="ConfirmPassword">
+                                        <i class="fas fa-lock"></i> تأكيد كلمة المرور
+                                    </label>
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <!-- Roles -->
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="mb-3">
+                                            <i class="fas fa-shield-alt text-primary"></i> الصلاحيات
+                                        </h6>
+                                        <div class="row">
+                                            @foreach (var role in Model.AvailableRoles)
+                                            {
+                                                <div class="col-md-4 mb-2">
+                                                    <div class="form-check">
+                                                        <input type="checkbox"
+                                                               class="form-check-input"
+                                                               name="SelectedRoles"
+                                                               value="@role"
+                                                               id="role_@role">
+                                                        <label class="form-check-label" for="role_@role">
+                                                            @if (role == "Admin")
+                                                            {
+                                                                <i class="fas fa-crown text-warning"></i>
+                                                                <strong>مدير النظام</strong>
+                                                            }
+                                                            else if (role == "Teacher")
+                                                            {
+                                                                <i class="fas fa-chalkboard-teacher text-info"></i>
+                                                                <strong>معلم</strong>
+                                                            }
+                                                            else if (role == "DataEntry")
+                                                            {
+                                                                <i class="fas fa-keyboard text-success"></i>
+                                                                <strong>مدخل بيانات</strong>
+                                                            }
+                                                            else
+                                                            {
+                                                                @role
+                                                            }
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                        <small class="text-muted d-block mt-2">
+                                            <i class="fas fa-info-circle"></i>
+                                            يمكنك تحديد أكثر من صلاحية للمستخدم
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> حفظ
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

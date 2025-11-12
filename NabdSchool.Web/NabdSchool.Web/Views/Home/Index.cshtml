@@ -1,0 +1,359 @@
+﻿@model NabdSchool.Web.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "لوحة التحكم";
+}
+
+<div class="container-fluid mt-4" dir="rtl">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient-primary text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-2">
+                                <i class="fas fa-hand-sparkles"></i> 
+                                مرحباً، @User.Identity.Name
+                            </h3>
+                            <p class="mb-0 opacity-75">
+                                <i class="fas fa-calendar-day"></i> 
+                                @DateTime.Now.ToString("dddd، dd MMMM yyyy", new System.Globalization.CultureInfo("ar-SA"))
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <i class="fas fa-graduation-cap" style="font-size: 60px; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <!-- Total Students -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 hover-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted mb-2 small">إجمالي الطلاب</p>
+                            <h2 class="mb-0 fw-bold text-primary">@Model.TotalStudents</h2>
+                            <small class="text-success">
+                                <i class="fas fa-arrow-up"></i> نشط
+                            </small>
+                        </div>
+                        <div class="stat-icon bg-primary-subtle">
+                            <i class="fas fa-users text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0">
+                    <a asp-controller="Students" asp-action="Index" class="text-decoration-none small">
+                        عرض الطلاب <i class="fas fa-arrow-left"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deleted Students -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 hover-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted mb-2 small">الطلاب المحذوفون</p>
+                            <h2 class="mb-0 fw-bold text-danger">@Model.DeletedStudents</h2>
+                            <small class="text-muted">
+                                <i class="fas fa-archive"></i> أرشيف
+                            </small>
+                        </div>
+                        <div class="stat-icon bg-danger-subtle">
+                            <i class="fas fa-user-slash text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0">
+                    <a asp-controller="Archive" asp-action="Students" class="text-decoration-none small">
+                        عرض الأرشيف <i class="fas fa-arrow-left"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Grades -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 hover-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted mb-2 small">عدد الصفوف</p>
+                            <h2 class="mb-0 fw-bold text-info">@Model.TotalGrades</h2>
+                            <small class="text-muted">
+                                <i class="fas fa-layer-group"></i> مستوى دراسي
+                            </small>
+                        </div>
+                        <div class="stat-icon bg-info-subtle">
+                            <i class="fas fa-book text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Classes -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 hover-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted mb-2 small">عدد الفصول</p>
+                            <h2 class="mb-0 fw-bold text-success">@Model.TotalClasses</h2>
+                            <small class="text-muted">
+                                <i class="fas fa-door-open"></i> فصل دراسي
+                            </small>
+                        </div>
+                        <div class="stat-icon bg-success-subtle">
+                            <i class="fas fa-chalkboard text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Students by Grade Chart -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-4 pb-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar text-primary"></i> توزيع الطلاب حسب الصفوف
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="studentsChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-4 pb-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt text-warning"></i> إجراءات سريعة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-3">
+                        @if (User.IsInRole("Admin") || User.IsInRole("DataEntry"))
+                        {
+                            <a asp-controller="Students" asp-action="Create" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-user-plus"></i> إضافة طالب جديد
+                            </a>
+                            <a asp-controller="Students" asp-action="Import" class="btn btn-outline-success btn-lg">
+                                <i class="fas fa-file-excel"></i> استيراد من Excel
+                            </a>
+                        }
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-controller="Users" asp-action="Create" class="btn btn-outline-info btn-lg">
+                                <i class="fas fa-user-shield"></i> إضافة مستخدم
+                            </a>
+                        }
+                        <a asp-controller="Students" asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-list"></i> عرض جميع الطلاب
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-4 pb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history text-info"></i> النشاطات الأخيرة
+                        </h5>
+                        <a asp-controller="Archive" asp-action="Index" class="btn btn-sm btn-outline-primary">
+                            عرض الكل <i class="fas fa-arrow-left"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentActivities != null && Model.RecentActivities.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>الوقت</th>
+                                        <th>المستخدم</th>
+                                        <th>الإجراء</th>
+                                        <th>الجدول</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var activity in Model.RecentActivities.Take(10))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-clock"></i>
+                                                    @activity.DateTime.ToString("yyyy-MM-dd HH:mm")
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <i class="fas fa-user"></i> @activity.UserName
+                                            </td>
+                                            <td>
+                                                @if (activity.Action == "Insert")
+                                                {
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-plus"></i> إضافة
+                                                    </span>
+                                                }
+                                                else if (activity.Action == "Update")
+                                                {
+                                                    <span class="badge bg-warning">
+                                                        <i class="fas fa-edit"></i> تعديل
+                                                    </span>
+                                                }
+                                                else if (activity.Action == "Delete")
+                                                {
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-trash"></i> حذف
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>@activity.TableName</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                            <p>لا توجد نشاطات حديثة</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .hover-card {
+            transition: all 0.3s ease;
+        }
+
+        .hover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15) !important;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Students by Grade Chart
+        const ctx = document.getElementById('studentsChart').getContext('2d');
+        
+        const data = {
+            labels: [@Html.Raw(string.Join(",", Model.StudentsByGrade.Select(g => $"'الصف {g.GradeId}'")))],
+            datasets: [{
+                label: 'عدد الطلاب',
+                data: [@Html.Raw(string.Join(",", Model.StudentsByGrade.Select(g => g.Count)))],
+                backgroundColor: [
+                    'rgba(102, 126, 234, 0.8)',
+                    'rgba(118, 75, 162, 0.8)',
+                    'rgba(237, 100, 166, 0.8)',
+                    'rgba(255, 154, 158, 0.8)',
+                    'rgba(250, 208, 196, 0.8)',
+                    'rgba(156, 204, 237, 0.8)',
+                    'rgba(161, 211, 175, 0.8)',
+                    'rgba(255, 199, 119, 0.8)'
+                ],
+                borderWidth: 0,
+                borderRadius: 8
+            }]
+        };
+
+        const config = {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        titleFont: {
+                            size: 14
+                        },
+                        bodyFont: {
+                            size: 13
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        };
+
+        new Chart(ctx, config);
+    </script>
+}
+@* @{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div> *@
