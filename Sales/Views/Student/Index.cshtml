@@ -1,0 +1,270 @@
+﻿@{
+    ViewData["Title"] = "إدارة الطلاب";
+}
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">إدارة الطلاب</h6>
+            <div>
+                <a href="@Url.Action("Archive", "Student")" class="btn btn-warning btn-sm">
+                    <i class="fas fa-archive"></i> الأرشيف
+                </a>
+                <button type="button" class="btn btn-success btn-sm" onclick="ImportStudents()">
+                    <i class="fas fa-file-excel"></i> استيراد من Excel
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="CreateStudent()">
+                    <i class="fas fa-plus"></i> إضافة طالب
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Filter Section -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label>الصف:</label>
+                    <select id="filterClass" class="form-control" onchange="LoadClassRooms(this.value)">
+                        <option value="">الكل</option>
+                        @foreach (var item in ViewBag.Classes)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label>الفصل:</label>
+                    <select id="filterClassRoom" class="form-control" onchange="LoadStudents()">
+                        <option value="">الكل</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn btn-primary btn-block" onclick="LoadStudents()">
+                        <i class="fas fa-search"></i> بحث
+                    </button>
+                </div>
+            </div>
+
+            <!-- Students Table -->
+            <div class="table-responsive">
+                <table id="studentsTable" class="table table-bordered table-hover" style="width:100%">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>رقم الطالب</th>
+                            <th>اسم الطالب</th>
+                            <th>رقم الجوال</th>
+                            <th>الجنس</th>
+                            <th>الصف</th>
+                            <th>الفصل</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Container -->
+<div id="modalContainer"></div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
+
+    <script>
+        var studentsTable;
+
+        $(document).ready(function () {
+            InitializeDataTable();
+            LoadStudents();
+        });
+
+        function InitializeDataTable() {
+            studentsTable = $('#studentsTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/ar.json"
+                },
+                "columns": [
+                    { "data": "student_Code" },
+                    { "data": "student_Name" },
+                    { "data": "student_Phone" },
+                    {
+                        "data": "student_Gender",
+                        "render": function(data) {
+                            return data === "ذكر" ? '<span class="badge badge-primary">ذكر</span>' :
+                                   data === "أنثى" ? '<span class="badge badge-info">أنثى</span>' :
+                                   '<span class="badge badge-secondary">-</span>';
+                        }
+                    },
+                    { "data": "className" },
+                    { "data": "classRoomName" },
+                    {
+                        "data": null,
+                        "render": function (data, type, row) {
+                            return `
+                                <button type="button" class="btn btn-sm btn-info" onclick="EditStudent(${row.student_ID})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="DeleteStudent(${row.student_ID}, '${row.student_Name}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            `;
+                        }
+                    }
+                ],
+                "order": [[1, "asc"]]
+            });
+        }
+
+        function LoadStudents() {
+            var classId = $('#filterClass').val();
+            var classRoomId = $('#filterClassRoom').val();
+
+            $.ajax({
+                url: '@Url.Action("GetStudents", "Student")',
+                type: 'GET',
+                data: { classId: classId, classRoomId: classRoomId },
+                success: function (response) {
+                    studentsTable.clear();
+                    studentsTable.rows.add(response.data);
+                    studentsTable.draw();
+                },
+                error: function (xhr) {
+                    ShowToast('error', 'خطأ في تحميل البيانات');
+                }
+            });
+        }
+
+        function LoadClassRooms(classId) {
+            var $classRoomSelect = $('#filterClassRoom');
+            $classRoomSelect.html('<option value="">الكل</option>');
+
+            if (!classId) {
+                LoadStudents();
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("GetClassRoomsByClass", "Student")',
+                type: 'GET',
+                data: { classId: classId },
+                success: function (response) {
+                    $.each(response.data, function (index, item) {
+                        $classRoomSelect.append($('<option>', {
+                            value: item.value,
+                            text: item.text
+                        }));
+                    });
+                    LoadStudents();
+                }
+            });
+        }
+
+        function CreateStudent() {
+            $.ajax({
+                url: '@Url.Action("CreateStudent", "Student")',
+                type: 'GET',
+                success: function (html) {
+                    $('#modalContainer').html(html);
+                    $('#studentModal').modal('show');
+                }
+            });
+        }
+
+        function EditStudent(id) {
+            $.ajax({
+                url: '@Url.Action("EditStudent", "Student")',
+                type: 'GET',
+                data: { id: id },
+                success: function (html) {
+                    $('#modalContainer').html(html);
+                    $('#studentModal').modal('show');
+                }
+            });
+        }
+
+        function DeleteStudent(id, name) {
+            Swal.fire({
+                title: 'تأكيد الحذف',
+                text: `هل أنت متأكد من حذف الطالب: ${name}؟`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'نعم، احذف',
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteStudent", "Student")',
+                        type: 'POST',
+                        data: { id: id },
+                        headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (response) {
+                            if (response.isValid) {
+                                ShowToast('success', response.message);
+                                LoadStudents();
+                            } else {
+                                ShowToast('error', response.message);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        function ImportStudents() {
+            $.ajax({
+                url: '@Url.Action("ImportStudents", "Student")',
+                type: 'GET',
+                success: function (html) {
+                    $('#modalContainer').html(html);
+                    $('#importModal').modal('show');
+                }
+            });
+        }
+
+        function SaveStudentForm(form) {
+            $.ajax({
+                url: $(form).attr('action'),
+                type: 'POST',
+                data: new FormData(form),
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.isValid) {
+                        $('#studentModal').modal('hide');
+                        ShowToast('success', response.message);
+                        LoadStudents();
+                    } else {
+                        ShowToast('error', response.message);
+                    }
+                }
+            });
+            return false;
+        }
+
+        function ShowToast(type, message) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+
+            Toast.fire({
+                icon: type,
+                title: message
+            });
+        }
+    </script>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
+}

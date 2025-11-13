@@ -1,0 +1,219 @@
+﻿@model ModelUsers
+@{
+	ViewData["Modal"] = "تعديل بيانات المستخدم";
+}
+
+<div class="modal fade" id="kt_modal_edit" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered mw-650px">
+		<div class="modal-content">
+			<div class="modal-header ribbon ribbon-start ribbon-clip" id="kt_modal_edit_header">
+				<div class="ribbon-label fs-4">
+					@ViewData["Modal"]
+					<span class="ribbon-inner bg-info"></span>
+				</div>
+				<div class="card-title">
+					<div class="d-flex align-items-center position-relative my-1"></div>
+				</div>
+				<div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+					<span class="svg-icon svg-icon-1">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="currentColor" />
+							<rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
+						</svg>
+					</span>
+				</div>
+			</div>
+
+			<form id="kt_modal_edit_form" class="form" asp-controller="Users" asp-action="Edit" onsubmit="return EditPost()" method="post">
+				<input type="hidden" asp-for="Id" />
+
+				<div class="modal-body scroll-y mx-5 mx-xl-15 my-2">
+					<div class="d-flex flex-column scroll-y me-n7 pe-7" id="kt_modal_edit_scroll">
+
+						<!--begin::Input group - الفروع-->
+						<div class="row mb-4">
+							<div class="col-xl-12">
+								<label class="required fw-semibold fs-6 mb-2">الفــرع</label>
+								<select asp-for="BranchID" name="branchID" asp-items="@Model.BranchList" class="form-select form-select-solid"></select>
+							</div>
+						</div>
+						<!--end::Input group-->
+						<!--begin::Input group - نوع المستخدم-->
+						<div class="row mb-4">
+							<div class="col-xl-12">
+								<label class="required fw-semibold fs-6 mb-2">نوع المستخدم</label>
+								<select asp-for="UserType" name="userType" asp-items="@Model.UserTypeList" class="form-select form-select-solid"></select>
+							</div>
+						</div>
+						<!--end::Input group-->
+						<!--begin::Input group - اسم المستخدم-->
+						<div class="row mb-4">
+							<div class="col-xl-12">
+								<label class="required fw-semibold fs-6 mb-2">إسم المستخدم</label>
+								<input type="text" asp-for="UserName" name="userName" class="form-control form-control-solid text-center" placeholder="إسم المستخدم" />
+							</div>
+						</div>
+						<!--end::Input group-->
+						<!--begin::Input group - كلمة المرور-->
+						<div class="row mb-4">
+							<div class="col-xl-12">
+								<label class="required fw-semibold fs-6 mb-2">كلمة المرور</label>
+								<input type="text" asp-for="Password" name="password" class="form-control form-control-solid text-center" />
+							</div>
+						</div>
+						<!--end::Input group-->
+
+					</div>
+				</div>
+
+				<div class="modal-footer justify-content-center row">
+					<div class="col-xl-5">
+						<button type="submit" id="btnedit" class="btn btn-primary" data-kt-modal-action="submit">
+							<span class="indicator-label">حفظ</span>
+							<span class="indicator-progress">
+								إنتظر ...
+								<span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+							</span>
+						</button>
+					</div>
+					<div class="col-xl-5">
+						<button type="button" id="btndelete" onclick="Delete('Users/Delete/@Model.Id')" class="btn btn-danger w-75">
+							حذف
+						</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+@* @model ModelUsers
+@{
+	ViewData["Modal"] = "تعديل بيانات المستخدم";
+}
+
+<!--begin::Modal - Add task-->
+<div class="modal fade" id="kt_modal_edit" tabindex="-1" aria-hidden="true">
+	<!--begin::Modal dialog-->
+	<div class="modal-dialog modal-dialog-centered mw-650px">
+		<!--begin::Modal content-->
+		<div class="modal-content">
+			<!--begin::Modal header-->
+			<div class="modal-header ribbon ribbon-start ribbon-clip" id="kt_modal_edit_header">
+				<!--begin::Card title-->
+				<div class="ribbon-label fs-4">
+					@ViewData["Modal"]
+					<span class="ribbon-inner bg-info"></span>
+				</div>
+				<div class="card-title">
+					<div class="d-flex align-items-center position-relative my-1"></div>
+				</div>
+				<!--end::Card title-->
+				<!--begin::Close-->
+				<div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+					<span class="svg-icon svg-icon-1">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="currentColor" />
+							<rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
+						</svg>
+					</span>
+				</div>
+				<!--end::Close-->
+			</div>
+			<!--end::Modal header-->
+			<!--begin::Form-->
+			<form id="kt_modal_edit_form" class="form" asp-controller="Users" asp-action="Edit" onsubmit="return EditPost()" method="post">
+				<input type="hidden" asp-for="Id" />
+				<!--begin::Modal body-->
+				<div class="modal-body scroll-y mx-5 mx-xl-15 my-2">
+					<!--begin::Scroll-->
+					<div class="d-flex flex-column scroll-y me-n7 pe-7" id="kt_modal_edit_scroll" data-kt-scroll="true" data-kt-scroll-activate="{default: false, lg: true}" data-kt-scroll-max-height="auto" data-kt-scroll-dependencies="#kt_modal_edit_header" data-kt-scroll-wrappers="#kt_modal_edit_scroll" data-kt-scroll-offset="300px">
+						<!--begin::Input group-->
+						<div class="row mb-2">
+							<div class="col-xl-12">
+								<!--begin::Label-->
+								<label class="required fw-semibold fs-6 mb-2">الفروع</label>
+								<!--end::Label-->
+								<!--begin::Input-->
+								<select asp-for="BranchID" name="branchID" asp-items="@Model.BranchList" class="form-select form-select-solid" aria-label="Select example"></select>
+								<!--end::Input-->
+							</div>
+						</div>
+						<!--end::Input group-->
+						<!--begin::Input group-->
+						<div class="row mb-2">
+							<div class="col-xl-12">
+								<!--begin::Label-->
+								<label class="required fw-semibold fs-6 mb-2">الصندوق</label>
+								<!--end::Label-->
+								<!--begin::Input-->
+								<select asp-for="CashBalance_ID" name="cashBalance_ID" asp-items="@Model.CashBalanceList" class="form-select form-select-solid" aria-label="Select example"></select>
+								<!--end::Input-->
+							</div>
+						</div>
+						<!--end::Input group-->
+						<!--begin::Input group-->
+						<div class="row mb-2">
+							<div class="col-xl-12">
+								<!--begin::Label-->
+								<label class="required fw-semibold fs-6 mb-2">الشبكة</label>
+								<!--end::Label-->
+								<!--begin::Input-->
+								<select asp-for="CashBalanceBank_ID" name="cashBalanceBank_ID" asp-items="@Model.CashBalanceBankList" class="form-select form-select-solid" aria-label="Select example"></select>
+								<!--end::Input-->
+							</div>
+						</div>
+						<!--end::Input group-->
+						<!--begin::Input group-->
+						<div class="row mb-2">
+							<div class="col-xl-12">
+								<!--begin::Label-->
+								<label class="required fw-semibold fs-6 mb-2">إسم المستخدم</label>
+								<!--end::Label-->
+								<!--begin::Input-->
+								<input type="text" asp-for="UserName" name="userName" class="form-control form-control-solid text-center mb-3 mb-lg-0" placeholder="إسم المستخدم" />
+								<!--end::Input-->
+							</div>
+						</div>
+						<!--end::Input group-->
+						<!--begin::Input group-->
+						<div class="row mb-2">
+							<div class="col-xl-12">
+								<!--begin::Label-->
+								<label class="required fw-semibold fs-6 mb-2">كلمة المرور</label>
+								<!--end::Label-->
+								<!--begin::Input-->
+								<input type="text" asp-for="Password" name="password" class="form-control form-control-solid text-center mb-3 mb-lg-0" />
+								<!--end::Input-->
+							</div>
+						</div>
+						<!--end::Input group-->
+					</div>
+					<!--end::Scroll-->
+				</div>
+				<!--end::Modal body-->
+				<!--begin::Modal footer-->
+				<div class="modal-footer justify-content-center row">
+					<div class="col-xl-5">
+						<button type="submit" id="btnedit" class="btn btn-primary" data-kt-modal-action="submit">
+							<span class="indicator-label">حفظ</span>
+							<span class="indicator-progress">
+								إنتظر ...
+								<span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+							</span>
+						</button>
+					</div>
+					<div class="col-xl-5">
+						<button type="button" id="btndelete" onclick="Delete('Users/Delete/@Model.Id')" class="btn btn-danger w-75">
+							حذف
+						</button>
+					</div>
+				</div>
+				<!--end::Modal footer-->
+			</form>
+			<!--end::Form-->
+		</div>
+		<!--end::Modal content-->
+	</div>
+	<!--end::Modal dialog-->
+</div>
+<!--end::Modal - Add task--> *@

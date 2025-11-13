@@ -1,0 +1,237 @@
+﻿@model ModelProfile
+@{
+	ViewData["Page"] = "تعديل بياناتى";
+}
+<!--begin::Content wrapper-->
+<div class="d-flex flex-column flex-column-fluid">
+	<!--begin::Content-->
+	<div id="kt_app_content" class="app-content flex-column-fluid">
+		<!--begin::Content container-->
+		<div id="kt_app_content_container" class="app-container container-fluid">
+			@if (ViewBag.Type == "error")
+			{
+				<!--begin::Alert-->
+				<div class="alert alert-dismissible bg-light-danger border border-danger border-dashed d-flex flex-column flex-sm-row w-100 p-5 mb-10">
+					<!--begin::Icon-->
+					<!--begin::Svg Icon | path: icons/duotune/communication/com003.svg-->
+					<span class="svg-icon svg-icon-2hx svg-icon-danger me-4 mb-5 mb-sm-0">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path opacity="0.3" d="M2 4V16C2 16.6 2.4 17 3 17H13L16.6 20.6C17.1 21.1 18 20.8 18 20V17H21C21.6 17 22 16.6 22 16V4C22 3.4 21.6 3 21 3H3C2.4 3 2 3.4 2 4Z" fill="currentColor" />
+							<path d="M18 9H6C5.4 9 5 8.6 5 8C5 7.4 5.4 7 6 7H18C18.6 7 19 7.4 19 8C19 8.6 18.6 9 18 9ZM16 12C16 11.4 15.6 11 15 11H6C5.4 11 5 11.4 5 12C5 12.6 5.4 13 6 13H15C15.6 13 16 12.6 16 12Z" fill="currentColor" />
+						</svg>
+					</span>
+					<!--end::Svg Icon-->
+					<!--end::Icon-->
+					<!--begin::Content-->
+					<div class="d-flex flex-column pe-0 pe-sm-10">
+						<h5 class="mb-1">خطأ !</h5>
+						<span>@ViewBag.Message</span>
+					</div>
+					<!--end::Content-->
+					<!--begin::Close-->
+					<button type="button" class="position-absolute position-sm-relative m-2 m-sm-0 top-0 end-0 btn btn-icon ms-sm-auto" data-bs-dismiss="alert">
+						<i class="bi bi-x fs-1 text-danger"></i>
+					</button>
+					<!--end::Close-->
+				</div>
+				<!--end::Alert-->
+			}
+			else
+			{
+				<!--begin::Sign-in Method-->
+				<div class="card mb-5 mb-xl-10">
+					<!--begin::Card header-->
+					<div class="card-header ribbon ribbon-start ribbon-clip border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_signin_method">
+						<!--begin::Card title-->
+						<div class="ribbon-label fs-4">
+							بيانات تسجيل الدخول
+							<span class="ribbon-inner bg-info"></span>
+						</div>
+						<div class="card-title">
+							<div class="d-flex align-items-center position-relative my-1"></div>
+						</div>
+						<!--end::Card title-->
+					</div>
+					<!--end::Card header-->
+					<!--begin::Content-->
+					<div id="kt_account_settings_signin_method" class="collapse show">
+						<!--begin::Card body-->
+						<div class="card-body border-top p-9">
+							<!--begin::Email Address-->
+							<div class="d-flex flex-wrap align-items-center">
+								<!--begin::Label-->
+								<div id="kt_signin_email">
+									<div class="fs-6 fw-bold mb-1">إسم المستخدم</div>
+									<div id="SignUserName" class="fw-semibold text-gray-600">@Model.SignUserName</div>
+								</div>
+								<!--end::Label-->
+								<!--begin::Edit-->
+								<div id="kt_signin_email_edit" class="flex-row-fluid d-none">
+									<!--begin::Form-->
+									<form id="kt_signin_change_email" class="form" novalidate="novalidate" autocomplete="off">
+										<div class="row mb-6">
+											<div class="col-lg-6 mb-4 mb-lg-0">
+												<div class="fv-row mb-0">
+													<label for="addNewUserName" class="form-label fs-6 fw-bold mb-3">إسم المستخدم الجديد</label>
+													<input type="text" class="form-control form-control-lg form-control-solid text-center" id="addNewUserName" name="addNewUserName" autocomplete="off" placeholder="إسم المستخدم الجديد" />
+												</div>
+											</div>
+										</div>
+										<div class="d-flex">
+											<button id="kt_signin_submit" type="submit" class="btn btn-primary me-2 px-6">حفظ</button>
+											<button id="kt_signin_cancel" type="button" class="btn btn-color-gray-400 btn-active-light-primary px-6">الغاء</button>
+										</div>
+									</form>
+									<!--end::Form-->
+								</div>
+								<!--end::Edit-->
+								<!--begin::Action-->
+								@if(Model.Category == "admin")
+								{
+									<div id="kt_signin_email_button" class="ms-auto">
+										<button class="btn btn-light btn-active-light-primary">تعديل إسم المستخدم</button>
+									</div>
+								}
+								<!--end::Action-->
+							</div>
+							<!--end::Email Address-->
+							<!--begin::Separator-->
+							<div class="separator separator-dashed my-6"></div>
+							<!--end::Separator-->
+							<!--begin::Password-->
+							<div class="d-flex flex-wrap align-items-center mb-10">
+								<!--begin::Label-->
+								<div id="kt_signin_password">
+									<div class="fs-6 fw-bold mb-1">كلمة المرور</div>
+									<div class="fw-semibold text-gray-600">******</div>
+								</div>
+								<!--end::Label-->
+								<!--begin::Edit-->
+								<div id="kt_signin_password_edit" class="flex-row-fluid d-none">
+									<!--begin::Form-->
+									<form id="kt_signin_change_password" class="form" novalidate="novalidate" asp-controller="Profile" asp-action="PasswordChange" method="post">
+										<div class="row mb-1">
+											<div class="col-lg-4">
+												<div class="fv-row mb-0">
+													<label for="PasswordCurrent" class="form-label fs-6 fw-bold mb-3">كلمة المرور الحالية</label>
+													<input type="password" class="form-control form-control-lg form-control-solid" name="passwordCurrent" asp-for="PasswordCurrent" autocomplete="off" />
+												</div>
+											</div>
+											<div class="col-lg-4">
+												<div class="fv-row mb-0">
+													<label for="PasswordNew" class="form-label fs-6 fw-bold mb-3">كلمة المرور الجديدة</label>
+													<input type="password" class="form-control form-control-lg form-control-solid" name="passwordNew" asp-for="PasswordNew" autocomplete="off" />
+												</div>
+											</div>
+											<div class="col-lg-4">
+												<div class="fv-row mb-0">
+													<label for="PasswordConfirm" class="form-label fs-6 fw-bold mb-3">تأكيد كلمة المرور</label>
+													<input type="password" class="form-control form-control-lg form-control-solid" name="passwordConfirm" asp-for="PasswordConfirm" autocomplete="off" />
+												</div>
+											</div>
+										</div>
+										<div class="form-text mb-5">يجب ان تحتوى كلمة المرور على 4 أحرف على الأقل</div>
+										<div class="d-flex">
+											<button id="kt_password_submit" type="submit" class="btn btn-primary">
+												<!--begin::Indicator label-->
+												<span class="indicator-label">حفظ</span>
+												<!--end::Indicator label-->
+												<!--begin::Indicator progress-->
+												<span class="indicator-progress">
+													... إنتظر
+													<span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+												</span>
+												<!--end::Indicator progress-->
+											</button>
+											<button id="kt_password_cancel" type="button" class="btn btn-color-gray-400 btn-active-light-primary px-6">الغاء</button>
+										</div>
+									</form>
+									<!--end::Form-->
+								</div>
+								<!--end::Edit-->
+								<!--begin::Action-->
+								<div id="kt_signin_password_button" class="ms-auto">
+									<button class="btn btn-light btn-active-light-primary">تغيير كلمة المرور</button>
+								</div>
+								<!--end::Action-->
+							</div>
+							<!--end::Password-->
+						</div>
+						<!--end::Card body-->
+					</div>
+					<!--end::Content-->
+				</div>
+				<!--end::Sign-in Method-->
+			}
+		</div>
+		<!--end::Content container-->
+	</div>
+	<!--end::Content-->
+</div>
+<!--end::Content wrapper-->
+
+<!--begin::Modal - Create Project-->
+<div class="modal fade" id="kt_modal_change_phone" tabindex="-1" aria-hidden="true">
+	<!--begin::Modal dialog-->
+	<div class="modal-dialog">
+		<!--begin::Modal content-->
+		<div class="modal-content">
+			<!--begin::Modal header-->
+			<div class="modal-header">
+				<!--begin::Modal title-->
+				<h4>تغيير إسم المستخدم</h4>
+				<!--end::Modal title-->
+				<!--begin::Close-->
+				<div class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">
+					<!--begin::Svg Icon | path: icons/duotune/arrows/arr061.svg-->
+					<span class="svg-icon svg-icon-1">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="currentColor" />
+							<rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
+						</svg>
+					</span>
+					<!--end::Svg Icon-->
+				</div>
+				<!--end::Close-->
+			</div>
+			<!--end::Modal header-->
+			<!--begin::Form-->
+			<form class="mx-auto w-100 mw-600px" novalidate="novalidate" id="kt_modal_change_phone_form" asp-controller="Profile" asp-action="UserNameChange" method="post">
+				<input type="hidden" asp-for="UserNameNew" />
+				<!--begin::Modal body-->
+				<div class="modal-body scroll-y m-5">
+					<div class="row">
+						<div class="fv-row mb-0">
+							<label for="SignPassword" class="form-label fs-6 fw-bold mb-3">كلمة المرور</label>
+							<input type="password" class="form-control form-control-lg form-control-solid text-center" asp-for="SignPassword" name="signPassword" autocomplete="off" />
+						</div>
+					</div>
+				</div>
+				<!--end::Modal body-->
+				<!--begin::Modal footer-->
+				<div class="modal-footer justify-content-center">
+					<button id="kt_confirm_submit" type="submit" class="btn btn-primary">
+						<span class="indicator-label">حفظ</span>
+						<span class="indicator-progress">
+							... إنتظر
+						    <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+						</span>
+					</button>
+					<button type="button" class="btn btn-light" data-bs-dismiss="modal">الغاء</button>
+				</div>
+				<!--end::Modal footer-->
+			</form>
+			<!--end::Form-->			
+		</div>
+		<!--end::Modal content-->
+	</div>
+	<!--end::Modal dialog-->
+</div>
+<!--end::Modal - Create Project-->
+
+@section Scripts
+	{
+		<!--begin::Custom Javascript(used for this page only)-->
+		<script src="/js/Profile_Sign.js"></script>
+		<!--end::Custom Javascript-->
+}

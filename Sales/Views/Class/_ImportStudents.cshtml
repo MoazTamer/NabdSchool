@@ -1,0 +1,87 @@
+﻿@model SalesModel.Models.TblStudent
+
+<div class="modal fade" id="importStudentsModal" tabindex="-1" role="dialog" aria-labelledby="importStudentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importStudentsModalLabel">استيراد الطلاب من Excel</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="importForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="classRoomSelect">اختر الفصل الدراسي</label>
+                        <select class="form-control" id="classRoomSelect" name="classRoomId" required>
+                            <option value="">-- اختر الفصل --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="excelFile">ملف Excel</label>
+                        <input type="file" class="form-control-file" id="excelFile" name="excelFile" accept=".xlsx,.xls" required>
+                        <small class="form-text text-muted">
+                            تأكد من أن تنسيق الملف يتطابق مع الشكل المطلوب:<br>
+                            رقم الطالب | الفصل | رقم الصف | اسم الطالب | الجوال
+                        </small>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>ملاحظة:</strong> يمكنك تحميل
+                        <a href="#" id="downloadTemplate">نموذج Excel</a>
+                        لاستخدامه كقالب.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">استيراد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // تحميل قائمة الفصول
+    function loadClassRooms() {
+        $.get('/Class/GetClassRoomsForImport', function(data) {
+            $('#classRoomSelect').empty().append('<option value="">-- اختر الفصل --</option>');
+            data.forEach(function(classRoom) {
+                $('#classRoomSelect').append('<option value="' + classRoom.classRoom_ID + '">' +
+                    classRoom.class_Name + ' - ' + classRoom.classRoom_Name + '</option>');
+            });
+        });
+    }
+
+    // تحميل نموذج Excel
+    $('#downloadTemplate').click(function(e) {
+        e.preventDefault();
+        window.open('/Class/DownloadTemplate', '_blank');
+    });
+
+    // إرسال النموذج
+    $('#importForm').submit(function(e) {
+        e.preventDefault();
+
+        var formData = new FormData();
+        formData.append('excelFile', $('#excelFile')[0].files[0]);
+        formData.append('classRoomId', $('#classRoomSelect').val());
+
+        $.ajax({
+            url: '/Class/ImportStudents',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.isValid) {
+                    $('#importStudentsModal').modal('hide');
+                    showNotification('success', response.title, response.message);
+                    // إعادة تحميل البيانات
+                    loadStudents();
+                } else {
+                    showNotification('error', response.title, response.message);
+                }
+            }
+        });
+    });
+</script>

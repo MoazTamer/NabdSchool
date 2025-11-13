@@ -1,0 +1,136 @@
+﻿@using Sales.Helper;
+<!--begin::Primary menu-->
+<div id="kt_app_aside_menu" class="menu menu-sub-indention menu-rounded menu-column fw-semibold fs-6 px-2" data-kt-menu="true">
+	<!--begin:Menu item-->
+	<div class="menu-item">
+		<!--begin:Menu link-->
+		<a href="/Home" class="@Html.IsSelected(actions: "index", controllers: "home")">
+			<span class="menu-icon">
+				<i class="ki-outline ki-home-2 fs-2"></i>
+			</span>
+			<span class="menu-title">الرئيسية</span>
+		</a>
+		<!--end:Menu link-->
+	</div>
+	<!--end:Menu item-->
+	<!--begin:Menu item - التعليم (الصفوف والطلاب)-->
+	<div data-kt-menu-trigger="click" class="@(Html.IsShow(controllers: "class,student") == "education" ? "menu-item here show menu-accordion" : "menu-item menu-accordion")">
+		<!--begin:Menu link-->
+		<span class="menu-link">
+			<span class="menu-icon">
+				<i class="ki-duotone ki-teacher fs-1">
+					<span class="path1"></span>
+					<span class="path2"></span>
+				</i>
+			</span>
+			<span class="menu-title">التعليم</span>
+			<span class="menu-arrow"></span>
+		</span>
+		<!--end:Menu link-->
+		<!--begin:Menu sub-->
+		<div class="menu-sub menu-sub-accordion">
+			<!--begin:Menu item-->
+			<div class="menu-item">
+				<!--begin:Menu link-->
+				<a class="@Html.IsSelected(actions: "index", controllers: "class")" asp-controller="Class" asp-action="Index">
+					<span class="menu-bullet">
+						<span class="bullet bullet-dot"></span>
+					</span>
+					<span class="menu-title">الصفوف والفصول</span>
+				</a>
+				<!--end:Menu link-->
+			</div>
+			<!--end:Menu item-->
+			<!--begin:Menu item-->
+			<div class="menu-item">
+				<!--begin:Menu link-->
+				<a class="@Html.IsSelected(actions: "index", controllers: "student")" asp-controller="Student" asp-action="Index">
+					<span class="menu-bullet">
+						<span class="bullet bullet-dot"></span>
+					</span>
+					<span class="menu-title">الطلاب</span>
+				</a>
+				<!--end:Menu link-->
+			</div>
+			<!--end:Menu item-->
+		</div>
+		<!--end:Menu sub-->
+	</div>
+	<!--end:Menu item-->
+	<!--begin:Menu item-->
+	<div data-kt-menu-trigger="click" class="@(Html.IsShow(controllers: "product_category,product_unit,product_title") == "product" ? "menu-item here show menu-accordion" : "menu-item menu-accordion")">
+		<!--begin:Menu link-->
+	
+		<!--end:Menu link-->
+		<!--begin:Menu sub-->
+		<div class="menu-sub menu-sub-accordion">
+			<!--begin:Menu item-->
+			<div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+				<!--begin:Menu item-->
+				<div class="menu-item">
+					<!--begin:Menu link-->
+					<a class="@Html.IsSelected(actions: "index", controllers: "product_category")" asp-controller="Product_Category" asp-action="Index">
+						<span class="menu-bullet">
+							<span class="bullet bullet-dot"></span>
+						</span>
+						<span class="menu-title">الفئات</span>
+					</a>
+					<!--end:Menu link-->
+				</div>
+				<!--end:Menu item-->
+			</div>
+			<!--end:Menu item-->
+		</div>
+		<!--end:Menu sub-->
+	</div>
+	<!--end:Menu item-->
+	<!--begin:Menu item - الإعدادات-->
+	<div data-kt-menu-trigger="click" class="@(Html.IsShow(controllers: "users,schoolsettings") == "setting" ? "menu-item here show menu-accordion" : "menu-item menu-accordion")">
+		<!--begin:Menu link-->
+		<span class="menu-link">
+			<span class="menu-icon">
+				<i class="ki-duotone ki-setting fs-1">
+					<span class="path1"></span>
+					<span class="path2"></span>
+				</i>
+			</span>
+			<span class="menu-title">الإعدادات</span>
+			<span class="menu-arrow"></span>
+		</span>
+		<!--end:Menu link-->
+		<!--begin:Menu sub-->
+		<div class="menu-sub menu-sub-accordion">
+			<!--begin:Menu item-->
+			<div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+				<!--begin:Menu item-->
+				<div class="menu-item">
+					<!--begin:Menu link-->
+					<a class="@Html.IsSelected(actions: "index", controllers: "users")" asp-controller="Users" asp-action="Index">
+						<span class="menu-bullet">
+							<span class="bullet bullet-dot"></span>
+						</span>
+						<span class="menu-title">المستخدمين</span>
+					</a>
+					<!--end:Menu link-->
+				</div>
+				<!--end:Menu item-->
+				<!--begin:Menu item - موعد الحضور اليومي-->
+				<div class="menu-item">
+					<!--begin:Menu link-->
+					<a class="@Html.IsSelected(actions: "index", controllers: "schoolsettings")" asp-controller="SchoolSettings" asp-action="Index">
+						<span class="menu-bullet">
+							<span class="bullet bullet-dot"></span>
+						</span>
+						<span class="menu-title">موعد الحضور اليومي</span>
+					</a>
+					<!--end:Menu link-->
+				</div>
+				<!--end:Menu item-->
+			</div>
+			<!--end:Menu item-->
+		</div>
+		<!--end:Menu sub-->
+	</div>
+	<!--end:Menu item-->
+</div>
+<!--end::Primary menu-->

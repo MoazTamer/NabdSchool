@@ -1,0 +1,27 @@
+﻿:root {
+    --background: #d1d1d1;
+}
+
+
+.background {
+    background-color: var(--background)
+}
+
+
+body {
+}
+table thead {
+    --bs-gray-700: #d1d1d1;
+    text-align: center;
+    color: black;
+}
+.shortcutBtn {
+    position: absolute;
+    top: 0;
+    left: 20px;
+    color: white
+}
+
+th {
+    vertical-align: middle;
+}

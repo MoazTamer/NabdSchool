@@ -1,0 +1,153 @@
+﻿@model SalesModel.ViewModels.ModelStudent
+
+<div class="modal fade" id="studentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">تعديل بيانات الطالب</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form asp-action="EditStudent" asp-controller="Student" method="post" onsubmit="return SaveStudentForm(this);">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Student_ID" />
+
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Student Name -->
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Student_Name" class="control-label">اسم الطالب <span class="text-danger">*</span></label>
+                            <input asp-for="Student_Name" class="form-control" />
+                            <span asp-validation-for="Student_Name" class="text-danger"></span>
+                        </div>
+
+                        <!-- Student Code -->
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Student_Code" class="control-label">رقم الطالب</label>
+                            <input asp-for="Student_Code" class="form-control" />
+                            <span asp-validation-for="Student_Code" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Class -->
+                        <div class="col-md-6 form-group">
+                            <label for="Class_ID" class="control-label">الصف <span class="text-danger">*</span></label>
+                            <select id="Class_ID" class="form-control" onchange="LoadClassRoomsForForm(this.value)">
+                                <option value="">اختر الصف</option>
+                                @foreach (var item in ViewBag.Classes)
+                                {
+                                    <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- ClassRoom -->
+                        <div class="col-md-6 form-group">
+                            <label asp-for="ClassRoom_ID" class="control-label">الفصل <span class="text-danger">*</span></label>
+                            <select asp-for="ClassRoom_ID" class="form-control" id="ClassRoom_ID">
+                                @if (ViewBag.ClassRooms != null)
+                                {
+                                    foreach (var item in ViewBag.ClassRooms)
+                                    {
+                                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                                    }
+                                }
+                                else
+                                {
+                                    <option value="">اختر الفصل أولاً</option>
+                                }
+                            </select>
+                            <span asp-validation-for="ClassRoom_ID" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Phone -->
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Student_Phone" class="control-label">رقم الجوال</label>
+                            <input asp-for="Student_Phone" class="form-control" />
+                            <span asp-validation-for="Student_Phone" class="text-danger"></span>
+                        </div>
+
+                        <!-- Gender -->
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Student_Gender" class="control-label">الجنس</label>
+                            <select asp-for="Student_Gender" class="form-control">
+                                <option value="">اختر الجنس</option>
+                                <option value="ذكر">ذكر</option>
+                                <option value="أنثى">أنثى</option>
+                            </select>
+                            <span asp-validation-for="Student_Gender" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Birth Date -->
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Student_BirthDate" class="control-label">تاريخ الميلاد</label>
+                            <input asp-for="Student_BirthDate" type="date" class="form-control" />
+                            <span asp-validation-for="Student_BirthDate" class="text-danger"></span>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Student_Address" class="control-label">العنوان</label>
+                            <input asp-for="Student_Address" class="form-control" />
+                            <span asp-validation-for="Student_Address" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Notes -->
+                        <div class="col-md-12 form-group">
+                            <label asp-for="Student_Notes" class="control-label">ملاحظات</label>
+                            <textarea asp-for="Student_Notes" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Student_Notes" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-info">تحديث</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function LoadClassRoomsForForm(classId) {
+        var $classRoomSelect = $('#ClassRoom_ID');
+        var currentValue = '@Model.ClassRoom_ID';
+        $classRoomSelect.html('<option value="">اختر الفصل</option>');
+
+        if (!classId) {
+            return;
+        }
+
+        $.ajax({
+            url: '@Url.Action("GetClassRoomsByClass", "Student")',
+            type: 'GET',
+            data: { classId: classId },
+            success: function (response) {
+                $.each(response.data, function (index, item) {
+                    var option = $('<option>', {
+                        value: item.value,
+                        text: item.text
+                    });
+                    if (item.value == currentValue) {
+                        option.attr('selected', 'selected');
+                    }
+                    $classRoomSelect.append(option);
+                });
+            }
+        });
+    }
+</script>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

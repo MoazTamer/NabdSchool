@@ -1,0 +1,348 @@
+﻿using System.Security.Claims;
+
+namespace SalesModel.ViewModels
+{
+	public class ModelPermissionItem
+	{
+		public static List<Claim> claimsList = new List<Claim>()
+		{
+			new Claim("المستخدمين","الإعدادات"),
+			new Claim("UsersView","UsersView"),
+			new Claim("UsersCreate","UsersCreate"),
+			new Claim("UsersEdit","UsersEdit"),
+			new Claim("UsersDelete","UsersDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("صلاحيات المستخدمين","الإعدادات"),
+			new Claim("UsersPermissionView","UsersPermissionView"),
+			new Claim("UsersPermissionCreate","0"),
+			new Claim("UsersPermissionEdit","UsersPermissionEdit"),
+			new Claim("UsersPermissionDelete","0"),
+            //-----------------------------------------------------------------------------------
+            new Claim("نوع الأرصدة النقدية","الإعدادات"),
+			new Claim("CashBalanceTypeView","CashBalanceTypeView"),
+			new Claim("CashBalanceTypeCreate","CashBalanceTypeCreate"),
+			new Claim("CashBalanceTypeEdit","CashBalanceTypeEdit"),
+			new Claim("CashBalanceTypeDelete","CashBalanceTypeDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("بنود المصروفات الرئيسية","الإعدادات"),
+			new Claim("OutcomingMainView","OutcomingMainView"),
+			new Claim("OutcomingMainCreate","OutcomingMainCreate"),
+			new Claim("OutcomingMainEdit","OutcomingMainEdit"),
+			new Claim("OutcomingMainDelete","OutcomingMainDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("بنود المصروفات الفرعية","الإعدادات"),
+			new Claim("OutcomingSubView","OutcomingSubView"),
+			new Claim("OutcomingSubCreate","OutcomingSubCreate"),
+			new Claim("OutcomingSubEdit","OutcomingSubEdit"),
+			new Claim("OutcomingSubDelete","OutcomingSubDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("ضريبة القيمة المضافة","الإعدادات"),
+			new Claim("VatView","0"),
+			new Claim("VatCreate","0"),
+			new Claim("VatEdit","VatEdit"),
+			new Claim("VatDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("الأرصدة النقدية","الأرصدة النقدية"),
+			new Claim("CashBalanceView","CashBalanceView"),
+			new Claim("CashBalanceCreate","CashBalanceCreate"),
+			new Claim("CashBalanceEdit","CashBalanceEdit"),
+			new Claim("CashBalanceDelete","CashBalanceDelete"),
+			//-----------------------------------------------------------------------------------
+			new Claim("تفاصيل الأرصدة النقدية","الأرصدة النقدية"),
+			new Claim("CashBalanceDetailView","CashBalanceDetailView"),
+			new Claim("CashBalanceCreate","0"),
+			new Claim("CashBalanceEdit","0"),
+			new Claim("CashBalanceDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("تحويل بين الأرصدة","الأرصدة النقدية"),
+			new Claim("CashBalanceOperationView","0"),
+			new Claim("CashBalanceOperationCreate","CashBalanceOperationCreate"),
+			new Claim("CashBalanceOperationEdit","CashBalanceOperationEdit"),
+			new Claim("CashBalanceOperationDelete","CashBalanceOperationDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("حسابات العملاء","العملاء"),
+			new Claim("CustomerDataView","CustomerDataView"),
+			new Claim("CustomerDataCreate","CustomerDataCreate"),
+			new Claim("CustomerDataEdit","CustomerDataEdit"),
+			new Claim("CustomerDataDelete","CustomerDataDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("تفاصيل حسابات العملاء","العملاء"),
+			new Claim("CustomerDataDetailView","CustomerDataDetailView"),
+			new Claim("CustomerDataDetailCreate","0"),
+			new Claim("CustomerDataDetailEdit","0"),
+			new Claim("CustomerDataDetailDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("اظهار مبيعات وعملاء الفروع الاخرى","العملاء"),
+			new Claim("CustomerDataBranchView","CustomerDataBranchView"),
+			new Claim("CustomerDataBranchCreate","CustomerDataBranchCreate"),
+			new Claim("CustomerDataBranchEdit","0"),
+			new Claim("CustomerDataBranchDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("فواتير المبيعات","العملاء"),
+			new Claim("CustomerSaleView","CustomerSaleView"),
+			new Claim("CustomerSaleCreate","CustomerSaleCreate"),
+			new Claim("CustomerSaleEdit","CustomerSaleEdit"),
+			new Claim("CustomerSaleDelete","CustomerSaleDelete"),
+			//-----------------------------------------------------------------------------------
+            new Claim("تاريخ فواتير المبيعات","العملاء"),
+			new Claim("CustomerSaleDateView","CustomerSaleDateView"),
+			new Claim("CustomerSaleDateCreate","0"),
+			new Claim("CustomerSaleDateEdit","0"),
+			new Claim("CustomerSaleDateDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("إظهار سعر الشراء فى البيع","العملاء"),
+			new Claim("CustomerSaleBuy","CustomerSaleBuy"),
+			new Claim("CustomerSaleBuyCreate","0"),
+			new Claim("CustomerSaleBuyEdit","0"),
+			new Claim("CustomerSaleBuyDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("البيع بكميات سالب","العملاء"),
+			new Claim("CustomerSaleKemia","CustomerSaleKemia"),
+			new Claim("CustomerSaleKemiaCreate","0"),
+			new Claim("CustomerSaleKemiaEdit","0"),
+			new Claim("CustomerSaleKemiaDelete","0"),
+			//-----------------------------------------------------------------------------------
+			new Claim("البيع اكبر من السعر النقدى","العملاء"),
+            new Claim("CustomerSalePayPrice","CustomerSalePayPrice"),
+            new Claim("CustomerSalePayPriceCreate","0"),
+            new Claim("CustomerSalePayPriceEdit","0"),
+            new Claim("CustomerSalePayPriceDelete","0"),
+			//-----------------------------------------------------------------------------------
+			new Claim("البيع الى سعر الجملة","العملاء"),
+			new Claim("CustomerSaleSpecialPrice","CustomerSaleSpecialPrice"),
+			new Claim("CustomerSaleSpecialPriceCreate","0"),
+			new Claim("CustomerSaleSpecialPriceEdit","0"),
+			new Claim("CustomerSaleSpecialPriceDelete","0"),
+			//-----------------------------------------------------------------------------------
+			new Claim("البيع الى سعر الشراء","العملاء"),
+			new Claim("CustomerSaleBuyPrice","CustomerSaleBuyPrice"),
+			new Claim("CustomerSaleBuyPriceCreate","0"),
+			new Claim("CustomerSaleBuyPriceEdit","0"),
+			new Claim("CustomerSaleBuyPriceDelete","0"),
+			//-----------------------------------------------------------------------------------
+		    new Claim("البيع بسعر غير محدد","العملاء"),
+			new Claim("CustomerSaleAnyPrice","CustomerSaleAnyPrice"),
+			new Claim("CustomerSaleAnyPriceCreate","0"),
+			new Claim("CustomerSaleAnyPriceEdit","0"),
+			new Claim("CustomerSaleAnyPriceDelete","0"),
+			//-----------------------------------------------------------------------------------
+			new Claim("تغيير الصندوق والشبكه فى البيع","العملاء"),
+			new Claim("CustomerSaleCash","CustomerSaleCash"),
+			new Claim("CustomerSaleKemiaCash","0"),
+			new Claim("CustomerSaleKemiaCash","0"),
+			new Claim("CustomerSaleKemiaCash","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("تغيير الفرع فى فاتورة البيع","العملاء"),
+			new Claim("CustomerSaleBranch","CustomerSaleBranch"),
+			new Claim("CustomerSaleBranchCreate","0"),
+			new Claim("CustomerSaleBranchEdit","0"),
+			new Claim("CustomerSaleBranchDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("تقرير رقمى للمبيعات","العملاء"),
+			new Claim("CustomerSaleReportView","CustomerSaleReportView"),
+			new Claim("CustomerSaleReportCreate","0"),
+			new Claim("CustomerSaleReportEdit","0"),
+			new Claim("CustomerSaleReportDelete","0"),
+			//-----------------------------------------------------------------------------------
+			new Claim("تقرير المبيعات للأصناف","العملاء"),
+			new Claim("CustomerSaleReportProductView","CustomerSaleReportProductView"),
+			new Claim("CustomerSaleReportProductCreate","0"),
+			new Claim("CustomerSaleReportProductEdit","0"),
+			new Claim("CustomerSaleReportProductDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("سندات العملاء","العملاء"),
+			new Claim("CustomerPaymentView","CustomerPaymentView"),
+			new Claim("CustomerPaymentCreate","CustomerPaymentCreate"),
+			new Claim("CustomerPaymentEdit","CustomerPaymentEdit"),
+			new Claim("CustomerPaymentDelete","CustomerPaymentDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("حسابات الموردين","الموردين"),
+			new Claim("VendorDataView","VendorDataView"),
+			new Claim("VendorDataCreate","VendorDataCreate"),
+			new Claim("VendorDataEdit","VendorDataEdit"),
+			new Claim("VendorDataDelete","VendorDataDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("اظهار جميع موردين الفروع","الموردين"),
+			new Claim("VendorDataBranchView","VendorDataBranchView"),
+			new Claim("VendorDataBranchCreate","0"),
+			new Claim("VendorDataBranchEdit","0"),
+			new Claim("VendorDataBranchDelete","0"),
+            //-----------------------------------------------------------------------------------
+		    new Claim("تفاصيل حسابات الموردين","الموردين"),
+			new Claim("VendorDataDetailView","VendorDataDetailView"),
+			new Claim("VendorDataDetailCreate","0"),
+			new Claim("VendorDataDetailEdit","0"),
+			new Claim("VendorDataDetailDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("فواتير المشتريات","الموردين"),
+			new Claim("VendorBuyView","VendorBuyView"),
+			new Claim("VendorBuyCreate","VendorBuyCreate"),
+			new Claim("VendorBuyEdit","VendorBuyEdit"),
+			new Claim("VendorBuyDelete","VendorBuyDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("سندات الموردين","الموردين"),
+			new Claim("VendorPaymentView","VendorPaymentView"),
+			new Claim("VendorPaymentCreate","VendorPaymentCreate"),
+			new Claim("VendorPaymentEdit","VendorPaymentEdit"),
+			new Claim("VendorPaymentDelete","VendorPaymentDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("المصروفات","المصروفات"),
+			new Claim("OutcomingDetailView","OutcomingDetailView"),
+			new Claim("OutcomingDetailCreate","OutcomingDetailCreate"),
+			new Claim("OutcomingDetailEdit","OutcomingDetailEdit"),
+			new Claim("OutcomingDetailDelete","OutcomingDetailDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("بيانات الموظفين","الموظفين"),
+			new Claim("EmployeeDataView","EmployeeDataView"),
+			new Claim("EmployeeDataCreate","EmployeeDataCreate"),
+			new Claim("EmployeeDataEdit","EmployeeDataEdit"),
+			new Claim("EmployeeDataDelete","EmployeeDataDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("حسابات الموظفين","حسابات الموظفين"),
+			new Claim("EmployeeSalaryView","EmployeeSalaryView"),
+			new Claim("EmployeeSalaryCreate","0"),
+			new Claim("EmployeeSalaryEdit","EmployeeSalaryEdit"),
+			new Claim("EmployeeSalaryDelete","EmployeeSalaryDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("مدفوعات الموظفين","مدفوعات الموظفين"),
+			new Claim("EmployeePayView","0"),
+			new Claim("EmployeePayCreate","EmployeePayCreate"),
+			new Claim("EmployeePayEdit","EmployeePayEdit"),
+			new Claim("EmployeePayDelete","EmployeePayDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("مكافأت الموظفين","مكافأت الموظفين"),
+			new Claim("EmployeeBonusView","0"),
+			new Claim("EmployeeBonusCreate","EmployeeBonusCreate"),
+			new Claim("EmployeeBonusEdit","EmployeeBonusEdit"),
+			new Claim("EmployeeBonusDelete","EmployeeBonusDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("خصومات الموظفين","خصومات الموظفين"),
+			new Claim("EmployeeDiscountView","0"),
+			new Claim("EmployeeDiscountCreate","EmployeeDiscountCreate"),
+			new Claim("EmployeeDiscountEdit","EmployeeDiscountEdit"),
+			new Claim("EmployeeDiscountDelete","EmployeeDiscountDelete"),
+			//-----------------------------------------------------------------------------------
+			new Claim("ارشيف الموظفين","الموظفين"),
+			new Claim("EmployeeArchivesView","EmployeeArchivesView"),
+			new Claim("EmployeeArchivesCreate","0"),
+			new Claim("EmployeeArchivesEdit","0"),
+			new Claim("EmployeeArchivesDelete","EmployeeArchivesDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("الفئات","الأصناف"),
+			new Claim("ProductCategoryView","ProductCategoryView"),
+			new Claim("ProductCategoryCreate","ProductCategoryCreate"),
+			new Claim("ProductCategoryEdit","ProductCategoryEdit"),
+			new Claim("ProductCategoryDelete","ProductCategoryDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("الوحدات","الأصناف"),
+			new Claim("ProductUnitView","ProductUnitView"),
+			new Claim("ProductUnitCreate","ProductUnitCreate"),
+			new Claim("ProductUnitEdit","ProductUnitEdit"),
+			new Claim("ProductUnitDelete","ProductUnitDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("بيانات الأصناف","الأصناف"),
+			new Claim("ProductTitleView","ProductTitleView"),
+			new Claim("ProductTitleCreate","ProductTitleCreate"),
+			new Claim("ProductTitleEdit","ProductTitleEdit"),
+			new Claim("ProductTitleDelete","ProductTitleDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("تتبع الأصناف","الأصناف"),
+			new Claim("ProductTitleFollowView","ProductTitleFollowView"),
+			new Claim("ProductTitleFollowCreate","0"),
+			new Claim("ProductTitleFollowEdit","0"),
+			new Claim("ProductTitleFollowDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("طباعة ستيكر باركود","الأصناف"),
+			new Claim("ProductBarcodePrintView","ProductBarcodePrintView"),
+			new Claim("ProductBarcodePrintCreate","0"),
+			new Claim("ProductBarcodePrintEdit","0"),
+			new Claim("ProductBarcodePrintDelete","0"),
+			//-----------------------------------------------------------------------------------
+			new Claim("العروض","الأصناف"),
+			new Claim("ProductOfferView","ProductOfferView"),
+			new Claim("ProductOfferCreate","ProductOfferCreate"),
+			new Claim("ProductOfferEdit","ProductOfferEdit"),
+			new Claim("ProductOfferDelete","ProductOfferDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("تحويلات الفروع","الأصناف"),
+			new Claim("ProductTransferView","ProductTransferView"),
+			new Claim("ProductTransferCreate","ProductTransferCreate"),
+			new Claim("ProductTransferEdit","ProductTransferEdit"),
+			new Claim("ProductTransferDelete","ProductTransferDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("التالف","الأصناف"),
+			new Claim("ProductDamagedView","ProductDamagedView"),
+			new Claim("ProductDamagedCreate","ProductDamagedCreate"),
+			new Claim("ProductDamagedEdit","ProductDamagedEdit"),
+			new Claim("ProductDamagedDelete","ProductDamagedDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("تحويل مخزون خارجى","الأصناف"),
+			new Claim("ProductReceiptView","ProductReceiptView"),
+			new Claim("ProductReceiptCreate","ProductReceiptCreate"),
+			new Claim("ProductReceiptEdit","ProductReceiptEdit"),
+			new Claim("ProductReceiptDelete","ProductReceiptDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("جرد الأصناف","الأصناف"),
+			new Claim("ProductInventoryView","ProductInventoryView"),
+			new Claim("ProductInventoryCreate","ProductInventoryCreate"),
+			new Claim("ProductInventoryEdit","ProductInventoryEdit"),
+			new Claim("ProductInventoryDelete","ProductInventoryDelete"),
+            //-----------------------------------------------------------------------------------
+		    new Claim("تفاصيل جرد الأصناف","الأصناف"),
+			new Claim("ProductInventoryDetailView","ProductInventoryDetailView"),
+			new Claim("ProductInventoryDetailCreate","0"),
+			new Claim("ProductInventoryDetailEdit","0"),
+			new Claim("ProductInventoryDetailDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("عروض الأسعار","عروض الأسعار"),
+			new Claim("PriceOfferView","PriceOfferView"),
+			new Claim("PriceOfferCreate","PriceOfferCreate"),
+			new Claim("PriceOfferEdit","PriceOfferEdit"),
+			new Claim("PriceOfferDelete","PriceOfferDelete"),
+            //-----------------------------------------------------------------------------------
+			new Claim("تقرير أرباح المبيعات","التقارير"),
+			new Claim("ReportProfitView","ReportProfitView"),
+			new Claim("ReportProfitCreate","0"),
+			new Claim("ReportProfitEdit","0"),
+			new Claim("ReportProfitDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("تقرير الموقف المالى","التقارير"),
+			new Claim("ReportSafeView","ReportSafeView"),
+			new Claim("ReportSafeCreate","0"),
+			new Claim("ReportSafeEdit","0"),
+			new Claim("ReportSafeDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("تقرير ضريبة القيمة المضافة","التقارير"),
+			new Claim("ReportVatView","ReportVatView"),
+			new Claim("ReportVatCreate","0"),
+			new Claim("ReportVatEdit","0"),
+			new Claim("ReportVatDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("التقرير اليومى","التقارير"),
+			new Claim("ReportDailyView","ReportDailyView"),
+			new Claim("ReportDailyCreate","0"),
+			new Claim("ReportDailyEdit","0"),
+			new Claim("ReportDailyDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("تقرير قيمة المخزون","التقارير"),
+			new Claim("ReportStoreCostView","ReportStoreCostView"),
+			new Claim("ReportStoreCostCreate","0"),
+			new Claim("ReportStoreCostEdit","0"),
+			new Claim("ReportStoreCostDelete","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("الإحصائيات","التقارير"),
+			new Claim("ReportStatisticsView","ReportStatisticsView"),
+			new Claim("ReportStatisticsView","0"),
+			new Claim("ReportStatisticsView","0"),
+			new Claim("ReportStatisticsView","0"),
+            //-----------------------------------------------------------------------------------
+			new Claim("عرض جميع الارصدة للمستخدم","الأرصدة النقدية"),
+			new Claim("CashBalanceUserView","CashBalanceUserView"),
+			new Claim("CashBalanceUserCreate","0"),
+			new Claim("CashBalanceUserEdit","0"),
+			new Claim("CashBalanceUserDelete","0"),
+            //-----------------------------------------------------------------------------------
+			
+		};
+	}
+}

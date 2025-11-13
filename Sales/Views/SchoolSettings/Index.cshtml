@@ -1,0 +1,192 @@
+﻿@model SalesModel.ViewModels.ModelSchoolSettings
+
+@{
+    ViewData["Title"] = "موعد الحضور اليومي";
+}
+
+<!--begin::App Content Header-->
+<div class="app-content-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h3 class="mb-0">موعد الحضور اليومي</h3>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-end">
+                    <li class="breadcrumb-item"><a href="/Home">الرئيسية</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">موعد الحضور اليومي</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<!--end::App Content Header-->
+<!--begin::App Content-->
+<div class="app-content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <!--begin::Card-->
+                <div class="card card-flush">
+                    <!--begin::Card header-->
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="ki-duotone ki-time fs-1 me-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            تحديد موعد الحضور اليومي
+                        </h3>
+                    </div>
+                    <!--end::Card header-->
+                    <!--begin::Card body-->
+                    <div class="card-body pt-5">
+                        <form id="attendanceTimeForm" asp-action="SaveAttendanceTime" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" asp-for="Setting_ID" />
+                            <input type="hidden" asp-for="Setting_Key" />
+
+                            <!--begin::Alert Info-->
+                            <div class="alert alert-info d-flex align-items-center mb-8">
+                                <i class="ki-duotone ki-information-5 fs-2x text-info me-4">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                </i>
+                                <div class="d-flex flex-column">
+                                    <h5 class="mb-1">معلومة هامة</h5>
+                                    <span>سيتم حساب تأخر الطلاب بناءً على الموعد المحدد هنا. أي طالب يحضر بعد هذا الموعد سيتم اعتباره متأخراً.</span>
+                                </div>
+                            </div>
+                            <!--end::Alert Info-->
+                            <!--begin::Form Group-->
+                            <div class="mb-10">
+                                <label class="form-label required fs-5 fw-bold mb-3">موعد الحضور</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text">
+                                        <i class="ki-duotone ki-time fs-1">
+                                            <span class="path1"></span>
+                                            <span class="path2"></span>
+                                        </i>
+                                    </span>
+                                    <input type="time"
+                                           class="form-control form-control-lg"
+                                           asp-for="AttendanceTime"
+                                           placeholder="مثال: 07:30"
+                                           required />
+                                </div>
+                                <div class="form-text">أدخل الوقت بصيغة 24 ساعة (مثال: 07:30 للساعة 7:30 صباحاً)</div>
+                                <span asp-validation-for="AttendanceTime" class="text-danger"></span>
+                            </div>
+                            <!--end::Form Group-->
+                            <!--begin::Current Setting Display-->
+                            <div class="bg-light-primary rounded border border-primary border-dashed p-6 mb-8">
+                                <div class="d-flex align-items-center">
+                                    <i class="ki-duotone ki-check-circle fs-2x text-primary me-4">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                    <div>
+                                        <h5 class="mb-1">الموعد الحالي</h5>
+                                        <span class="fs-3 fw-bold text-primary" id="currentTimeDisplay">@Model.AttendanceTime</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--end::Current Setting Display-->
+                            <!--begin::Actions-->
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="ki-duotone ki-check fs-2">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                    حفظ الإعدادات
+                                </button>
+                            </div>
+                            <!--end::Actions-->
+                        </form>
+                    </div>
+                    <!--end::Card body-->
+                </div>
+                <!--end::Card-->
+            </div>
+        </div>
+    </div>
+</div>
+<!--end::App Content-->
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle form submission
+            $('#attendanceTimeForm').on('submit', function(e) {
+                e.preventDefault();
+
+                var form = $(this);
+                var submitBtn = form.find('button[type="submit"]');
+
+                // Disable submit button
+                submitBtn.prop('disabled', true);
+                submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>جاري الحفظ...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function(response) {
+                        if (response.isValid) {
+                            // Update current time display
+                            var timeValue = $('#AttendanceTime').val();
+                            $('#currentTimeDisplay').text(timeValue);
+
+                            // Show success message
+                            Swal.fire({
+                                icon: 'success',
+                                title: response.title,
+                                text: response.message,
+                                confirmButtonText: 'حسناً',
+                                customClass: {
+                                    confirmButton: 'btn btn-primary'
+                                }
+                            });
+                        } else {
+                            // Show error message
+                            Swal.fire({
+                                icon: 'error',
+                                title: response.title,
+                                text: response.message,
+                                confirmButtonText: 'حسناً',
+                                customClass: {
+                                    confirmButton: 'btn btn-danger'
+                                }
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'خطأ',
+                            text: 'حدث خطأ أثناء الحفظ: ' + error,
+                            confirmButtonText: 'حسناً',
+                            customClass: {
+                                confirmButton: 'btn btn-danger'
+                            }
+                        });
+                    },
+                    complete: function() {
+                        // Re-enable submit button
+                        submitBtn.prop('disabled', false);
+                        submitBtn.html('<i class="ki-duotone ki-check fs-2"><span class="path1"></span><span class="path2"></span></i> حفظ الإعدادات');
+                    }
+                });
+            });
+
+            // Update display when time input changes
+            $('#AttendanceTime').on('change', function() {
+                var timeValue = $(this).val();
+                if (timeValue) {
+                    $('#currentTimeDisplay').text(timeValue);
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net7.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
+    <PackageReference Include="SaxonHE10Net31Api" Version="10.9.0.1" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="7.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ZatcaIntegrationSDK\ZatcaIntegrationSDK.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+
+    <Reference Include="BouncyCastle.Crypto">
+      <HintPath>DLL\BouncyCastle.Crypto.dll</HintPath>
+    </Reference>
+    <Reference Include="zxing">
+      <HintPath>DLL\zxing.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
