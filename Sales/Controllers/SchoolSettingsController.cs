@@ -14,14 +14,14 @@ namespace Sales.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SalesDBContext _context; // إضافة الـ context مباشرة
+        private readonly SalesDBContext _context;
         private const string AttendanceTimeKey = "AttendanceTime";
         string Title = "إعدادات المدرسة";
 
         public SchoolSettingsController(
             IUnitOfWork unitOfWork,
             UserManager<ApplicationUser> userManager,
-            SalesDBContext context) // إضافة الـ context
+            SalesDBContext context)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
@@ -33,7 +33,6 @@ namespace Sales.Controllers
         {
             try
             {
-                // جلب موعد الحضور من قاعدة البيانات مباشرة
                 var attendanceSetting = await _context.TblSchoolSettings
                     .Where(obj => obj.Setting_Key == AttendanceTimeKey && obj.Setting_Visible == "yes")
                     .FirstOrDefaultAsync();

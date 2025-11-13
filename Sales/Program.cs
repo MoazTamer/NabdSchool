@@ -1,5 +1,4 @@
-﻿
-using DinkToPdf;
+﻿using DinkToPdf;
 using DinkToPdf.Contracts;
 using Hangfire;
 using Hangfire.Dashboard;

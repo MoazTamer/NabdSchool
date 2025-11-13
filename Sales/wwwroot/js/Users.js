@@ -1,8 +1,4 @@
-﻿// ============================================
-// Users DataTable & CRUD Operations
-// ============================================
-
-"use strict";
+﻿"use strict";
 
 var KTUsersList = function () {
     var table;
