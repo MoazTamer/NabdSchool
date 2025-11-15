@@ -45,6 +45,29 @@
                 </div>
             </div>
 
+            <!-- QR Code Modal -->
+            <div class="modal fade" id="qrCodeModal" tabindex="-1" role="dialog" aria-labelledby="qrCodeModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:300px;">
+                    <div class="modal-content" style="background-color:#fce4ec; text-align:center;">
+                        <div class="modal-header" style="border-bottom:none; justify-content:center;">
+                            <h5 class="modal-title" id="qrCodeModalLabel">QR Code الطالبة</h5>
+                            <button type="button" class="btn-close" style="filter: invert(0);" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+
+                        </div>
+                        <div class="modal-body">
+                            <!-- هنا نعرض اسم الطالبة -->
+                            <h6 id="qrStudentName" style="margin-bottom:15px; color:#c2185b;"></h6>
+                            <canvas id="modalQRCode" style="margin:auto;"></canvas>
+                        </div>
+                        <div class="modal-footer" style="justify-content:center; border-top:none;">
+                            <button type="button" class="btn btn-sm" style="background-color:#f48fb1; color:#fff; border:none; border-radius:5px;" onclick="downloadModalQRCode()">تحميل QR</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
             <!-- Students Table -->
             <div class="table-responsive">
                 <table id="studentsTable" class="table table-bordered table-hover" style="width:100%; color: white;">
@@ -53,7 +76,6 @@
                             <th style="color: white;">رقم الطالب</th>
                             <th style="color: white;">اسم الطالب</th>
                             <th style="color: white;">رقم الجوال</th>
-                            <th style="color: white;">الجنس</th>
                             <th style="color: white;">الصف</th>
                             <th style="color: white;">الفصل</th>
                             <th style="color: white;">الإجراءات</th>
@@ -73,6 +95,10 @@
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+
+
     <script>
         var studentsTable;
 
@@ -90,32 +116,65 @@
                     { "data": "student_Code" },
                     { "data": "student_Name" },
                     { "data": "student_Phone" },
-                    {
-                        "data": "student_Gender",
-                        "render": function(data) {
-                            return data === "ذكر" ? '<span class="badge badge-primary">ذكر</span>' :
-                                   data === "أنثى" ? '<span class="badge badge-info">أنثى</span>' :
-                                   '<span class="badge badge-secondary">-</span>';
-                        }
-                    },
                     { "data": "className" },
                     { "data": "classRoomName" },
                     {
                         "data": null,
+                        "className": "text-center",
                         "render": function (data, type, row) {
-                            return `
-                                <button type="button" class="btn btn-sm btn-info" onclick="EditStudent(${row.student_ID})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-danger" onclick="DeleteStudent(${row.student_ID}, '${row.student_Name}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            `;
+                              return `
+                        <button type="button" class="btn btn-sm btn-info" onclick="EditStudent(${row.student_ID})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+
+                        <button type="button" class="btn btn-sm" style="background-color:#f5c6e0; color:#fff; border:none;"
+                                onclick="ShowQRCode(${row.student_ID}, '${row.student_Name}', '${row.student_Code}', '${row.student_Phone}')">
+                            <i class="fas fa-barcode"></i>
+                        </button>
+
+                        `;
                         }
                     }
                 ],
                 "order": [[1, "asc"]]
             });
+        }
+
+         
+
+
+        function ShowQRCode(studentId, studentName, studentCode, studentPhone) {
+            // تحديث اسم الطالبة
+            document.getElementById('qrStudentName').innerText = studentName;
+
+            const canvas = document.getElementById('modalQRCode');
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+
+            const studentData = `
+        الأسم: ${studentName}
+        رقم الطالبة: ${studentCode}
+        جوال: ${studentPhone}
+            `;
+
+            QRCode.toCanvas(canvas, studentData, {
+                width: 200,
+                margin: 2,
+                errorCorrectionLevel: 'H'
+            }, function (error) {
+                if (error) console.error(error);
+            });
+
+            canvas.dataset.filename = `${studentName}-QR.png`;
+            var qrModal = new bootstrap.Modal(document.getElementById('qrCodeModal'));
+            qrModal.show();
+        }
+
+        function downloadModalQRCode() {
+            const canvas = document.getElementById('modalQRCode');
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL("image/png");
+            link.download = canvas.dataset.filename;
+            link.click();
         }
 
         function LoadStudents() {

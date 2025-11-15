@@ -1,11 +1,11 @@
-﻿<div class="modal fade" id="importModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
+﻿<div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
+
+            <!-- Header -->
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title">استيراد الطلاب من Excel</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form asp-action="ImportStudents" asp-controller="Student" method="post" enctype="multipart/form-data" onsubmit="return ImportStudentsForm(this);">
                 @Html.AntiForgeryToken()
@@ -83,7 +83,10 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        إلغاء
+                    </button>
+
                     <button type="submit" class="btn btn-success" id="importBtn">
                         <i class="fas fa-upload"></i> استيراد البيانات
                     </button>
@@ -151,7 +154,7 @@
                         ShowToast('success', response.message);
                     }, 2000);
                 } else {
-                    $('#importResults').html('<div class="alert alert-danger">' + response.message + '</div>').removeClass('d-none');
+                    $('#importResults').html('<div class="alertlert-danger">' + response.message + '</div>').removeClass('d-none');
                 }
             },
             error: function(xhr) {

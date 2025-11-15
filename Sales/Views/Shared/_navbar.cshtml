@@ -23,7 +23,7 @@
 					<span class="path2"></span>
 				</i>
 			</span>
-			<span class="menu-title">التعليم</span>
+			<span class="menu-title">البيانات الاساسية</span>
 			<span class="menu-arrow"></span>
 		</span>
 		<!--end:Menu link-->
@@ -84,6 +84,86 @@
 		<!--end:Menu sub-->
 	</div>
 	<!--end:Menu item-->
+	<!--begin:Menu item - التقارير-->
+	<div data-kt-menu-trigger="click" class="@(Html.IsShow(controllers: "reports") == "reports" ? "menu-item here show menu-accordion" : "menu-item menu-accordion")">
+		<!--begin:Menu link-->
+		<span class="menu-link">
+			<span class="menu-icon">
+				<i class="ki-duotone ki-chart fs-1">
+					<span class="path1"></span>
+					<span class="path2"></span>
+				</i>
+			</span>
+			<span class="menu-title">التقارير</span>
+			<span class="menu-arrow"></span>
+		</span>
+		<!--end:Menu link-->
+		<!--begin:Menu sub-->
+		<div class="menu-sub menu-sub-accordion">
+			<!--begin:Menu item - الغياب اليومي-->
+			<div class="menu-item">
+				<a class="@Html.IsSelected(actions: "DailyAttendanceReport", controllers: "Reports")" asp-controller="Reports" asp-action="DailyAbsenceReport">
+					<span class="menu-bullet">
+						<span class="bullet bullet-dot"></span>
+					</span>
+					<span class="menu-title">تقرير الغياب اليومي لكل صف/مرحلة/مدرسة</span>
+				</a>
+			</div>
+			<!--end:Menu item-->
+			<!--begin:Menu item - الحضور اليومي-->
+			<div class="menu-item">
+				<a class="@Html.IsSelected(actions: "DailyAttendanceReport", controllers: "Reports")" asp-controller="Reports" asp-action="DailyAttendanceReport">
+					<span class="menu-bullet">
+						<span class="bullet bullet-dot"></span>
+					</span>
+					<span class="menu-title">تقرير بالتأخر اليومي لكل صف/مرحلة/مدرسة</span>
+				</a>
+			</div>
+			<!--end:Menu item-->
+			<!--begin:Menu item - تقرير طالب محدد-->
+			<div class="menu-item">
+				<a class="@Html.IsSelected(actions: "StudentReport", controllers: "Reports")" asp-controller="Reports" asp-action="StudentReport">
+					<span class="menu-bullet">
+						<span class="bullet bullet-dot"></span>
+					</span>
+					<span class="menu-title">تقرير عن طالب معين</span>
+				</a>
+			</div>
+			<!--end:Menu item-->
+			<!--begin:Menu item - أكثر الطلاب غيابًا-->
+			<div class="menu-item">
+				<a class="@Html.IsSelected(actions: "MostAbsentStudents", controllers: "Reports")" asp-controller="Reports" asp-action="MostAbsentStudents">
+					<span class="menu-bullet">
+						<span class="bullet bullet-dot"></span>
+					</span>
+					<span class="menu-title">تقرير أكثر الطلاب غيابًا</span>
+				</a>
+			</div>
+			<!--end:Menu item-->
+			<!--begin:Menu item - أكثر الطلاب تأخرًا-->
+			<div class="menu-item">
+				<a class="@Html.IsSelected(actions: "MostLateStudents", controllers: "Reports")" asp-controller="Reports" asp-action="MostLateStudents">
+					<span class="menu-bullet">
+						<span class="bullet bullet-dot"></span>
+					</span>
+					<span class="menu-title">تقرير أكثر الطلاب تأخرًا</span>
+				</a>
+			</div>
+			<!--end:Menu item-->
+			<!--begin:Menu item - أكثر الطلاب تأخرًا خلال يوم معين-->
+			<div class="menu-item">
+				<a class="@Html.IsSelected(actions: "MostLateByDay", controllers: "Reports")" asp-controller="Reports" asp-action="MostLateByDay">
+					<span class="menu-bullet">
+						<span class="bullet bullet-dot"></span>
+					</span>
+					<span class="menu-title">تقرير أكثر الطلاب تأخرًا خلال يوم معين من الأسبوع</span>
+				</a>
+			</div>
+			<!--end:Menu item-->
+		</div>
+		<!--end:Menu sub-->
+	</div>
+	<!--end:Menu item - التقارير-->
 	<!--begin:Menu item - الإعدادات-->
 	<div data-kt-menu-trigger="click" class="@(Html.IsShow(controllers: "users,schoolsettings") == "setting" ? "menu-item here show menu-accordion" : "menu-item menu-accordion")">
 		<!--begin:Menu link-->

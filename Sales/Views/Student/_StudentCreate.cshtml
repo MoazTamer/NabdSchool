@@ -3,11 +3,9 @@
 <div class="modal fade" id="studentModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header bg-info text-white">
                 <h5 class="modal-title">إضافة طالب جديد</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
             </div>
             <form asp-action="CreateStudent" asp-controller="Student" method="post" onsubmit="return SaveStudentForm(this);">
                 @Html.AntiForgeryToken()
@@ -60,19 +58,6 @@
                             <span asp-validation-for="Student_Phone" class="text-danger"></span>
                         </div>
 
-                        <!-- Gender -->
-                        <div class="col-md-6 form-group">
-                            <label asp-for="Student_Gender" class="control-label">الجنس</label>
-                            <select asp-for="Student_Gender" class="form-control">
-                                <option value="">اختر الجنس</option>
-                                <option value="ذكر">ذكر</option>
-                                <option value="أنثى">أنثى</option>
-                            </select>
-                            <span asp-validation-for="Student_Gender" class="text-danger"></span>
-                        </div>
-                    </div>
-
-                    <div class="row">
                         <!-- Birth Date -->
                         <div class="col-md-6 form-group">
                             <label asp-for="Student_BirthDate" class="control-label">تاريخ الميلاد</label>
@@ -81,7 +66,7 @@
                         </div>
 
                         <!-- Address -->
-                        <div class="col-md-6 form-group">
+                        <div class="col-md-12 form-group">
                             <label asp-for="Student_Address" class="control-label">العنوان</label>
                             <input asp-for="Student_Address" class="form-control" />
                             <span asp-validation-for="Student_Address" class="text-danger"></span>
@@ -99,7 +84,7 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
                     <button type="submit" class="btn btn-primary">حفظ</button>
                 </div>
             </form>
@@ -130,7 +115,111 @@
             }
         });
     }
+
+        function SaveStudentForm(form) {
+            // أولاً: تفريغ أي رسائل خطأ فرونت سابقة
+            $(form).find('.text-danger.front-validation').remove();
+
+            // client-side validation (زي ما عندك)
+            const studentName = $('[name="Student_Name"]').val().trim();
+            const classId = $('#Class_ID').val();
+            const classRoomId = $('#ClassRoom_ID').val();
+
+            let isValid = true;
+            let errors = [];
+
+            if (studentName === "") {
+                showError('[name="Student_Name"]', 'اسم الطالب مطلوب');
+                isValid = false;
+                errors.push('اسم الطالب مطلوب');
+            }
+            if (!classId) {
+                showError('#Class_ID', 'يجب اختيار الصف');
+                isValid = false;
+                errors.push('يجب اختيار الصف');
+            }
+            if (!classRoomId) {
+                showError('#ClassRoom_ID', 'يجب اختيار الفصل');
+                isValid = false;
+                errors.push('يجب اختيار الفصل');
+            }
+
+            if (!isValid) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ في الإدخال',
+                    html: errors.join('<br>'),
+                    confirmButtonText: 'موافق'
+                });
+                return false; // يمنع الإرسال
+            }
+
+            // لو كله تمام: ارسل عبر AJAX بدل submit عادي
+            const url = $(form).attr('action');
+            const formData = new FormData(form);
+
+            // قراءة توكن التحقق (AntiForgery) وإرساله في الهيدر
+            const token = $(form).find('input[name="__RequestVerificationToken"]').val();
+
+            // اغلاق زر الإرسال مؤقتاً
+            const $submit = $(form).find('button[type="submit"]');
+            $submit.prop('disabled', true);
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'RequestVerificationToken': token
+                },
+                success: function (response) {
+                    $submit.prop('disabled', false);
+
+                    if (response && response.isValid) {
+                        // نجاح: اغلاق المودال واعادة تحميل الجدول
+                        $('#studentModal').modal('hide');
+                        ShowToast('success', response.message || 'تم الحفظ بنجاح');
+                        // افعل إعادة تحميل الطلاب حسب طريقتك
+                        if (typeof LoadStudents === 'function') LoadStudents();
+                    } else {
+                        // فشل: عرض رسالة مفهومة للمستخدم
+                        const msg = (response && response.message) ? response.message : 'حدث خطأ أثناء الحفظ';
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'فشل الحفظ',
+                            text: msg
+                        });
+                    }
+                },
+                error: function (xhr) {
+                    $submit.prop('disabled', false);
+                    // حاول قراءة رسالة من السيرفر لو موجودة
+                    let errMsg = 'حدث خطأ غير متوقع';
+                    try {
+                        const json = JSON.parse(xhr.responseText);
+                        if (json && json.message) errMsg = json.message;
+                    } catch (e) { /* responseText may be HTML */ }
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطأ',
+                        text: errMsg
+                    });
+                }
+            });
+
+            return false; // منع الإرسال التقليدي
+        }
+
+        function showError(selector, message) {
+            const errorSpan = $('<span class="text-danger front-validation"></span>').text(message);
+            $(selector).closest('.form-group').append(errorSpan);
+        }
 </script>
+
+
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

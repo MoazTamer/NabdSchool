@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SalesRepository.Data;
 
@@ -11,9 +12,11 @@ using SalesRepository.Data;
 namespace SalesRepository.Migrations
 {
     [DbContext(typeof(SalesDBContext))]
-    partial class SalesDBContextModelSnapshot : ModelSnapshot
+    [Migration("20251114142434_AddTblAttendance")]
+    partial class AddTblAttendance
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

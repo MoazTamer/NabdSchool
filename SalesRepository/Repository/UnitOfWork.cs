@@ -20,6 +20,7 @@ namespace SalesRepository.Repository
         public IRepository<TblClassRoom> TblClassRoom { get; private set; }
         public IRepository<TblClass> TblClass { get; private set; }
         public IRepository<TblSchoolSettings> TblSchoolSettings { get; private set; }
+        public IRepository<TblAttendance> TblAttendance { get; private set; }
 
 
         public IRepository<AuditLog> AuditLog { get; private set; }
@@ -44,6 +45,7 @@ namespace SalesRepository.Repository
             TblClassRoom = new Repository<TblClassRoom>(_db);
             TblClass = new Repository<TblClass>(_db);
             TblSchoolSettings = new Repository<TblSchoolSettings>(_db);
+            TblAttendance = new Repository<TblAttendance>(_db);
 
             AuditLog = new Repository<AuditLog>(_db);
 

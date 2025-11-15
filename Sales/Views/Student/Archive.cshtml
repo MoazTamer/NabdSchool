@@ -39,12 +39,6 @@
                 </div>
             </div>
 
-            <!-- Alert -->
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                <strong>ملاحظة:</strong> هنا يتم عرض الطلاب المحذوفين. يمكنك استعادة الطالب أو حذفه نهائياً من قاعدة البيانات.
-            </div>
-
             <!-- Deleted Students Table -->
             <div class="table-responsive">
                 <table id="deletedStudentsTable" class="table table-bordered table-hover" style="width:100%">
@@ -53,7 +47,6 @@
                             <th>رقم الطالب</th>
                             <th>اسم الطالب</th>
                             <th>رقم الجوال</th>
-                            <th>الجنس</th>
                             <th>الصف</th>
                             <th>الفصل</th>
                             <th>حذف بواسطة</th>
@@ -89,14 +82,6 @@
                     { "data": "student_Code" },
                     { "data": "student_Name" },
                     { "data": "student_Phone" },
-                    {
-                        "data": "student_Gender",
-                        "render": function(data) {
-                            return data === "ذكر" ? '<span class="badge badge-primary">ذكر</span>' :
-                                   data === "أنثى" ? '<span class="badge badge-info">أنثى</span>' :
-                                   '<span class="badge badge-secondary">-</span>';
-                        }
-                    },
                     { "data": "className" },
                     { "data": "classRoomName" },
                     {
@@ -117,9 +102,6 @@
                             return `
                                 <button type="button" class="btn btn-sm btn-success" onclick="RestoreStudent(${row.student_ID}, '${row.student_Name}')" title="استعادة">
                                     <i class="fas fa-undo"></i> استعادة
-                                </button>
-                                <button type="button" class="btn btn-sm btn-danger" onclick="PermanentDeleteStudent(${row.student_ID}, '${row.student_Name}')" title="حذف نهائي">
-                                    <i class="fas fa-trash-alt"></i> حذف نهائي
                                 </button>
                             `;
                         }

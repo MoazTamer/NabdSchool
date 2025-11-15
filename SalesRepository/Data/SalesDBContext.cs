@@ -21,6 +21,7 @@ namespace SalesRepository.Data
         public DbSet<TblClass> TblClass { get; set; }
 		public DbSet<TblClassRoom> TblClassRoom { get; set; }
 		public DbSet<TblSchoolSettings> TblSchoolSettings { get; set; }
+		public DbSet<TblAttendance> TblAttendance { get; set; }
 
         public DbSet<AuditLog> AuditLog { get; set; }
     }

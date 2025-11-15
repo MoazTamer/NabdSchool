@@ -5,10 +5,9 @@
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title">تعديل بيانات الطالب</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <form asp-action="EditStudent" asp-controller="Student" method="post" onsubmit="return SaveStudentForm(this);">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Student_ID" />
@@ -71,28 +70,18 @@
                             <span asp-validation-for="Student_Phone" class="text-danger"></span>
                         </div>
 
-                        <!-- Gender -->
-                        <div class="col-md-6 form-group">
-                            <label asp-for="Student_Gender" class="control-label">الجنس</label>
-                            <select asp-for="Student_Gender" class="form-control">
-                                <option value="">اختر الجنس</option>
-                                <option value="ذكر">ذكر</option>
-                                <option value="أنثى">أنثى</option>
-                            </select>
-                            <span asp-validation-for="Student_Gender" class="text-danger"></span>
-                        </div>
-                    </div>
-
-                    <div class="row">
                         <!-- Birth Date -->
                         <div class="col-md-6 form-group">
                             <label asp-for="Student_BirthDate" class="control-label">تاريخ الميلاد</label>
                             <input asp-for="Student_BirthDate" type="date" class="form-control" />
                             <span asp-validation-for="Student_BirthDate" class="text-danger"></span>
                         </div>
+                    </div>
 
+                    <div class="row">
+                        
                         <!-- Address -->
-                        <div class="col-md-6 form-group">
+                        <div class="col-md-12 form-group">
                             <label asp-for="Student_Address" class="control-label">العنوان</label>
                             <input asp-for="Student_Address" class="form-control" />
                             <span asp-validation-for="Student_Address" class="text-danger"></span>
@@ -109,10 +98,20 @@
                     </div>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
-                    <button type="submit" class="btn btn-info">تحديث</button>
+                <div class="modal-footer d-flex justify-content-between">
+                    <div>
+                        <button type="button" class="btn btn-secondary m-3" data-bs-dismiss="modal">إلغاء</button>
+
+                        <button type="submit" class="btn btn-info">تحديث</button>
+                    </div>
+                    
+                    <button type="button" class="btn btn-danger"
+                            onclick="DeleteStudent(@Model.Student_ID, '@Model.Student_Name')">
+                        حذف
+                    </button>
+
                 </div>
+
             </form>
         </div>
     </div>
@@ -146,6 +145,39 @@
             }
         });
     }
+
+        function DeleteStudent(id, name) {
+            Swal.fire({
+                title: 'تأكيد الحذف',
+                text: `هل أنت متأكد من حذف الطالب: ${name}؟`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'نعم، احذف',
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteStudent", "Student")',
+                        type: 'POST',
+                        data: { id: id },
+                        headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (response) {
+                            if (response.isValid) {
+                                ShowToast('success', response.message);
+                                LoadStudents();
+                            } else {
+                                ShowToast('error', response.message);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
 </script>
 
 @section Scripts {

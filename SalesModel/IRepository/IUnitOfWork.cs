@@ -15,6 +15,7 @@ namespace SalesModel.IRepository
         IRepository<TblClass> TblClass { get; }
         IRepository<TblStudent> TblStudent { get; }
         IRepository<TblSchoolSettings> TblSchoolSettings { get; }
+        IRepository<TblAttendance> TblAttendance { get; }
         IRepository<AuditLog> AuditLog { get; }
 
 
