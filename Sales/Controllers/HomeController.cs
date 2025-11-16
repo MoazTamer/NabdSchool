@@ -52,6 +52,12 @@ namespace Sales.Controllers
                     .Count(a => a.Attendance_Visible == "yes" &&
                                 a.Attendance_Date.Date == today &&
                                 (a.Attendance_Status == "حضور" || a.Attendance_Status == "متأخر"));
+                
+                // عدد المتأخرين
+                var lateCount = _context.TblAttendance
+                    .Count(a => a.Attendance_Visible == "yes" &&
+                                a.Attendance_Date.Date == today &&
+                                a.Attendance_Status == "متأخر");
 
                 // عدد الغياب
                 var absentCount = _context.TblAttendance
@@ -64,6 +70,7 @@ namespace Sales.Controllers
                 {
                     TotalStudents = totalStudents,
                     Present = presentCount,
+                    Late = lateCount,
                     Absent = absentCount
                 };
 
@@ -82,6 +89,11 @@ namespace Sales.Controllers
             }
         }
 
+        [HttpGet]
+        public IActionResult Reports()
+        {
+            return View();
+        }
 
         [HttpGet]
         public IActionResult AttendanceRegistration()

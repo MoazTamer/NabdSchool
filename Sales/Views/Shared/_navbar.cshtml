@@ -84,6 +84,7 @@
 		<!--end:Menu sub-->
 	</div>
 	<!--end:Menu item-->
+
 	<!--begin:Menu item - التقارير-->
 	<div data-kt-menu-trigger="click" class="@(Html.IsShow(controllers: "reports") == "reports" ? "menu-item here show menu-accordion" : "menu-item menu-accordion")">
 		<!--begin:Menu link-->
@@ -100,33 +101,61 @@
 		<!--end:Menu link-->
 		<!--begin:Menu sub-->
 		<div class="menu-sub menu-sub-accordion">
+			<!--begin:Menu item - الرئيسية-->
+			<div class="menu-item">
+				<a class="@Html.IsSelected(actions: "Reports", controllers: "Home")" asp-controller="Home" asp-action="Reports">
+					<span class="menu-bullet">
+						<span class="bullet bullet-dot"></span>
+					</span>
+					<span class="menu-title">جميع التقارير</span>
+				</a>
+			</div>
+			<!--end:Menu item-->
+
+			<div class="menu-inner flex-column collapse">
+				<div class="menu-item">
+					<div class="menu-content">
+						<span class="menu-section text-muted text-uppercase fs-8 ls-1">تقارير يومية</span>
+					</div>
+				</div>
+			</div>
+
 			<!--begin:Menu item - الغياب اليومي-->
 			<div class="menu-item">
-				<a class="@Html.IsSelected(actions: "DailyAttendanceReport", controllers: "Reports")" asp-controller="Reports" asp-action="DailyAbsenceReport">
+				<a class="@Html.IsSelected(actions: "DailyAbsence", controllers: "Reports")" asp-controller="Reports" asp-action="DailyAbsence">
 					<span class="menu-bullet">
 						<span class="bullet bullet-dot"></span>
 					</span>
-					<span class="menu-title">تقرير الغياب اليومي لكل صف/مرحلة/مدرسة</span>
+					<span class="menu-title">الغياب اليومي</span>
 				</a>
 			</div>
 			<!--end:Menu item-->
-			<!--begin:Menu item - الحضور اليومي-->
+			<!--begin:Menu item - التأخر اليومي-->
 			<div class="menu-item">
-				<a class="@Html.IsSelected(actions: "DailyAttendanceReport", controllers: "Reports")" asp-controller="Reports" asp-action="DailyAttendanceReport">
+				<a class="@Html.IsSelected(actions: "DailyLate", controllers: "Reports")" asp-controller="Reports" asp-action="DailyLate">
 					<span class="menu-bullet">
 						<span class="bullet bullet-dot"></span>
 					</span>
-					<span class="menu-title">تقرير بالتأخر اليومي لكل صف/مرحلة/مدرسة</span>
+					<span class="menu-title">التأخر اليومي</span>
 				</a>
 			</div>
 			<!--end:Menu item-->
+
+			<div class="menu-inner flex-column collapse">
+				<div class="menu-item">
+					<div class="menu-content">
+						<span class="menu-section text-muted text-uppercase fs-8 ls-1">تقارير الطلاب</span>
+					</div>
+				</div>
+			</div>
+
 			<!--begin:Menu item - تقرير طالب محدد-->
 			<div class="menu-item">
 				<a class="@Html.IsSelected(actions: "StudentReport", controllers: "Reports")" asp-controller="Reports" asp-action="StudentReport">
 					<span class="menu-bullet">
 						<span class="bullet bullet-dot"></span>
 					</span>
-					<span class="menu-title">تقرير عن طالب معين</span>
+					<span class="menu-title">تقرير طالب معين</span>
 				</a>
 			</div>
 			<!--end:Menu item-->
@@ -136,7 +165,7 @@
 					<span class="menu-bullet">
 						<span class="bullet bullet-dot"></span>
 					</span>
-					<span class="menu-title">تقرير أكثر الطلاب غيابًا</span>
+					<span class="menu-title">أكثر الطلاب غيابًا</span>
 				</a>
 			</div>
 			<!--end:Menu item-->
@@ -146,17 +175,26 @@
 					<span class="menu-bullet">
 						<span class="bullet bullet-dot"></span>
 					</span>
-					<span class="menu-title">تقرير أكثر الطلاب تأخرًا</span>
+					<span class="menu-title">أكثر الطلاب تأخرًا</span>
 				</a>
 			</div>
 			<!--end:Menu item-->
-			<!--begin:Menu item - أكثر الطلاب تأخرًا خلال يوم معين-->
+
+			<div class="menu-inner flex-column collapse">
+				<div class="menu-item">
+					<div class="menu-content">
+						<span class="menu-section text-muted text-uppercase fs-8 ls-1">تقارير متقدمة</span>
+					</div>
+				</div>
+			</div>
+
+			<!--begin:Menu item - التأخر حسب اليوم-->
 			<div class="menu-item">
 				<a class="@Html.IsSelected(actions: "MostLateByDay", controllers: "Reports")" asp-controller="Reports" asp-action="MostLateByDay">
 					<span class="menu-bullet">
 						<span class="bullet bullet-dot"></span>
 					</span>
-					<span class="menu-title">تقرير أكثر الطلاب تأخرًا خلال يوم معين من الأسبوع</span>
+					<span class="menu-title">التأخر حسب يوم الأسبوع</span>
 				</a>
 			</div>
 			<!--end:Menu item-->
@@ -164,6 +202,7 @@
 		<!--end:Menu sub-->
 	</div>
 	<!--end:Menu item - التقارير-->
+	
 	<!--begin:Menu item - الإعدادات-->
 	<div data-kt-menu-trigger="click" class="@(Html.IsShow(controllers: "users,schoolsettings") == "setting" ? "menu-item here show menu-accordion" : "menu-item menu-accordion")">
 		<!--begin:Menu link-->

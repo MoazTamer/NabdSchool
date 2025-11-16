@@ -10,6 +10,7 @@ namespace SalesModel.ViewModels
     {
         public int TotalStudents { get; set; }
         public int Present { get; set; }
+        public int Late { get; set; }
         public int Absent { get; set; }
     }
 

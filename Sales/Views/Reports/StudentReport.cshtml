@@ -1,0 +1,117 @@
+﻿@{
+    ViewData["Title"] = "تقرير الطالب";
+}
+
+<div class="container mt-4">
+
+    <h3 class="text-center mb-4">تقرير الحضور والتأخر والغياب للطالب</h3>
+
+    <div class="card p-4 shadow">
+
+        <!-- 🔵 الصف الأول: رقم الطالب + التاريخ + الزرار -->
+        <div class="row mb-4">
+
+            <div class="col-md-4">
+                <label class="form-label">رقم الطالب</label>
+                <input type="number" id="studentId" class="form-control" placeholder="اكتب رقم الطالب" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">التاريخ</label>
+                <input type="date" id="reportDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+            </div>
+
+            <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-primary w-100" onclick="loadReport()">عرض التقرير</button>
+            </div>
+
+        </div>
+
+        <!-- 🔵 منطقة التقرير -->
+        <div id="reportArea" style="display:none">
+
+            <div class="d-flex justify-content-between mb-3">
+                <h5 id="studentName"></h5>
+                <button class="btn btn-danger btn-sm" onclick="printPdf()">طباعة PDF</button>
+            </div>
+
+            <div class="alert alert-info">
+                <span>حضور: </span><b id="statPresent"></b> —
+                <span>تأخر: </span><b id="statLate"></b> —
+                <span>غياب: </span><b id="statAbsent"></b> —
+                <span>تأخر متتالي: </span><b id="statConLate"></b> —
+                <span>غياب متتالي: </span><b id="statConAbsent"></b>
+            </div>
+
+            <table class="table table-bordered text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>اليوم</th>
+                        <th>الحالة</th>
+                        <th>الوقت</th>
+                        <th>ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody id="daysTable"></tbody>
+            </table>
+
+        </div>
+
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+
+        // ----------- تحميل التقرير -----------
+        function loadReport() {
+            let id = $("#studentId").val();
+            let date = $("#reportDate").val();
+
+            if (!id) return alert("اختر الطالب");
+
+            $.get("/Reports/GetStudentAttendanceReport",
+                { studentId: id, date: date },
+                function (res) {
+                    if (!res.success) {
+                        alert(res.message);
+                        return;
+                    }
+
+                    let r = res.data;
+
+                    $("#reportArea").show();
+
+                    $("#studentName").text(`${r.studentName} — (${r.studentCode})`);
+                    $("#statPresent").text(r.totalPresent);
+                    $("#statLate").text(r.totalLate);
+                    $("#statAbsent").text(r.totalAbsent);
+                    $("#statConLate").text(r.consecutiveLate);
+                    $("#statConAbsent").text(r.consecutiveAbsent);
+
+                    $("#daysTable").html("");
+
+                    $.each(r.days, function (i, d) {
+                        $("#daysTable").append(`
+                            <tr>
+                                <td>${d.date.substring(0,10)}</td>
+                                <td>${d.status}</td>
+                                <td>${d.time}</td>
+                                <td>${d.notes}</td>
+                            </tr>
+                        `);
+                    });
+                });
+
+        }
+
+        // ----------- طباعة PDF -----------
+        function printPdf() {
+            let id = $("#studentId").val();
+            let date = $("#reportDate").val();
+            window.open(`/Attendance/PrintStudentAttendancePdf?studentId=${id}&date=${date}`);
+        }
+
+    </script>
+}
