@@ -149,7 +149,7 @@ namespace Sales.Controllers
                     );
                     if (checkStudent != null)
                     {
-                        return Json(new { isValid = false, title = Title, message = "رقم الطالب موجود بالفعل" });
+                        return Json(new { isValid = false, title = Title, message = "رقم الطالبة موجودة بالفعل" });
                     }
                 }
 

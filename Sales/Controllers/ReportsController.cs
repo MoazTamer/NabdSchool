@@ -56,7 +56,7 @@ namespace Sales.Controllers
             }
         }
 
-        // 
+        [HttpGet]
         public IActionResult DailyAbsence()
         {
             return View();
@@ -744,7 +744,6 @@ namespace Sales.Controllers
             }
         }
 
-        //
         public IActionResult StudentReport()
         {
             return View();
@@ -758,9 +757,6 @@ namespace Sales.Controllers
                 var reportDate = date?.Date ?? DateTime.Today;
                 var minDate = reportDate.AddDays(-30);
 
-                // جلب بيانات الطالب
-                //var student = await _context.TblStudent
-                //    .FirstOrDefaultAsync(s => s.Student_Code == studentCode.Trim() && s.Student_Visible == "yes");
                 var code = studentCode.Trim();
 
                 var student = await _context.TblStudent
@@ -771,7 +767,7 @@ namespace Sales.Controllers
                 
 
                 if (student == null)
-                    return Json(new { success = false, message = "الطالب غير موجود" });
+                    return Json(new { success = false, message = "الطالبة غير موجود" });
 
                 // جلب سجلات آخر 30 يوم
                 var records = await _context.TblAttendance
@@ -800,14 +796,18 @@ namespace Sales.Controllers
                         .OrderByDescending(r => r.Attendance_Time)
                         .FirstOrDefault();
 
-                    result.Add(new StudentDayStatusViewModel
+                    if (record != null && !string.IsNullOrEmpty(record.Attendance_Status))
                     {
-                        Date = day,
-                        Status = record?.Attendance_Status ?? "غياب",
-                        Time = record?.Attendance_Time.ToString(@"hh\:mm") ?? "",
-                        Notes = ""
-                    });
+                        result.Add(new StudentDayStatusViewModel
+                        {
+                            Date = day,
+                            Status = record.Attendance_Status,
+                            Time = record.Attendance_Time.ToString(@"hh\:mm"),
+                            Notes = ""
+                        });
+                    }
                 }
+
 
                 // حساب الإحصائيات
                 int present = result.Count(r => r.Status == "حضور");
@@ -836,7 +836,7 @@ namespace Sales.Controllers
                     StudentName = student.Student_Name,
                     StudentCode = student.Student_Code,
                     ReportDate = reportDate,
-                    Days = result.OrderBy(r => r.Date).ToList(),
+                    Days = result.OrderByDescending(r => r.Date).ToList(),
                     TotalPresent = present,
                     TotalLate = late,
                     TotalAbsent = absent,
@@ -852,31 +852,357 @@ namespace Sales.Controllers
             }
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> PrintStudentAttendancePdf(int studentId, DateTime date)
-        //{
-        //    try
-        //    {
-        //        // استدعاء نفس API الخاصة بالتقرير
-        //        var result = await GetStudentAttendanceReport(studentId, date) as JsonResult;
-        //        dynamic data = result.Value;
+        [HttpPost]
+        public async Task<IActionResult> PrintStudentAttendancePdf(string studentCode, DateTime date)
+        {
+            try
+            {
+                var reportDate = date.Date;
+                var minDate = reportDate.AddDays(-30);
 
-        //        if (data.success == false)
-        //            return Content("Error: " + data.message);
+                var student = await _context.TblStudent
+                    .Include(s => s.ClassRoom)
+                    .ThenInclude(cr => cr.Class)
+                    .FirstOrDefaultAsync(s => s.Student_Code == studentCode.Trim() && s.Student_Visible == "yes");
 
-        //        var model = Newtonsoft.Json.JsonConvert
-        //            .DeserializeObject<StudentAttendanceReportViewModel>(data.data.ToString());
+                if (student == null)
+                {
+                    return Json(new { success = false, message = "الطالبة غير موجودة" });
+                }
 
-        //        // إنشاء PDF
-        //        var pdf = _pdfService.GenerateStudentReport(model);
+                // جلب سجلات آخر 30 يوم
+                var records = await _context.TblAttendance
+                    .Where(a =>
+                        a.Student_ID == student.Student_ID &&
+                        a.Attendance_Visible == "yes" &&
+                        a.Attendance_Date.Date >= minDate &&
+                        a.Attendance_Date.Date <= reportDate)
+                    .Select(a => new
+                    {
+                        Date = a.Attendance_Date.Date,
+                        a.Attendance_Status,
+                        a.Attendance_Time
+                    })
+                    .ToListAsync();
 
-        //        return File(pdf, "application/pdf", $"تقرير_{model.StudentName}.pdf");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return Content("PDF Error: " + ex.Message);
-        //    }
-        //}
+                // تجهيز جدول الأيام 30 يوم
+                var result = new List<StudentDayStatusViewModel>();
+
+                for (int i = 0; i <= 30; i++)
+                {
+                    var day = reportDate.AddDays(-i).Date;
+
+                    var record = records
+                        .Where(r => r.Date == day)
+                        .OrderByDescending(r => r.Attendance_Time)
+                        .FirstOrDefault();
+
+                    if (record != null && !string.IsNullOrEmpty(record.Attendance_Status))
+                    {
+                        result.Add(new StudentDayStatusViewModel
+                        {
+                            Date = day,
+                            Status = record.Attendance_Status,
+                            Time = record.Attendance_Time.ToString(@"hh\:mm"),
+                            Notes = ""
+                        });
+                    }
+                }
+
+                // حساب الإحصائيات
+                int present = result.Count(r => r.Status == "حضور");
+                int late = result.Count(r => r.Status == "متأخر");
+                int absent = result.Count(r => r.Status == "غياب");
+
+                // حساب التأخر المتتالي
+                int consecutiveLate = 0;
+                foreach (var row in result.OrderByDescending(r => r.Date))
+                {
+                    if (row.Status == "متأخر") consecutiveLate++;
+                    else break;
+                }
+
+                // حساب الغياب المتتالي
+                int consecutiveAbsent = 0;
+                foreach (var row in result.OrderByDescending(r => r.Date))
+                {
+                    if (row.Status == "غياب") consecutiveAbsent++;
+                    else break;
+                }
+
+                var viewModel = new StudentAttendanceReportViewModel
+                {
+                    StudentId = student.Student_ID,
+                    StudentName = student.Student_Name,
+                    StudentCode = student.Student_Code,
+                    ClassName = student.ClassRoom?.Class?.Class_Name ?? "غير محدد",
+                    ClassRoomName = student.ClassRoom?.ClassRoom_Name ?? "غير محدد",
+                    ReportDate = reportDate,
+                    Days = result.OrderByDescending(r => r.Date).ToList(),
+                    TotalPresent = present,
+                    TotalLate = late,
+                    TotalAbsent = absent,
+                    ConsecutiveLate = consecutiveLate,
+                    ConsecutiveAbsent = consecutiveAbsent
+                };
+
+                var pdfBytes = _pdfService.GenerateStudentAttendanceReport(viewModel);
+                return File(pdfBytes, "application/pdf", $"تقرير_حضور_{student.Student_Name}_{date:yyyy-MM-dd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                Response.ContentType = "application/json";
+                return Json(new { success = false, message = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult MostAbsentStudents()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetMostAbsentStudentsReport(DateTime? fromDate, DateTime? toDate, int? classId, int? classRoomId, int? topCount = 10)
+        {
+            try
+            {
+                var startDate = fromDate?.Date ?? DateTime.Today.AddDays(-30);
+                var endDate = toDate?.Date ?? DateTime.Today;
+                var top = topCount ?? 10;
+
+                // 1️⃣ استعلام واحد للطلاب مع الغياب
+                var query = _context.TblStudent
+                    .Include(s => s.ClassRoom)
+                    .ThenInclude(cr => cr.Class)
+                    .Where(s => s.Student_Visible == "yes");
+
+                if (classId.HasValue && classId.Value > 0)
+                    query = query.Where(s => s.ClassRoom.Class_ID == classId.Value);
+
+                if (classRoomId.HasValue && classRoomId.Value > 0)
+                    query = query.Where(s => s.ClassRoom_ID == classRoomId.Value);
+
+                // 2️⃣ join مع الحضور وحساب الغياب لكل طالب في استعلام واحد
+                var result = await query
+                    .Select(s => new MostAbsentStudentViewModel
+                    {
+                        StudentId = s.Student_ID,
+                        StudentName = s.Student_Name,
+                        StudentCode = s.Student_Code,
+                        ClassName = s.ClassRoom.Class.Class_Name,
+                        ClassRoomName = s.ClassRoom.ClassRoom_Name,
+                        AbsentDays = _context.TblAttendance
+                            .Count(a => a.Student_ID == s.Student_ID &&
+                                        a.Attendance_Visible == "yes" &&
+                                        a.Attendance_Status == "غياب" &&
+                                        a.Attendance_Date.Date >= startDate &&
+                                        a.Attendance_Date.Date <= endDate),
+                        TotalDays = (endDate - startDate).Days + 1
+                    })
+                    .OrderByDescending(s => s.AbsentDays)
+                    .ThenBy(s => s.StudentName)
+                    .Take(top)
+                    .ToListAsync();
+
+                return Json(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PrintMostAbsentStudentsPdf(DateTime fromDate, DateTime toDate, int? classId, int? classRoomId, int? topCount = 10)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date;
+                var top = topCount ?? 10;
+
+                // استعلام واحد للطلاب مع الغياب
+                var query = _context.TblStudent
+                    .Include(s => s.ClassRoom)
+                    .ThenInclude(cr => cr.Class)
+                    .Where(s => s.Student_Visible == "yes");
+
+                if (classId.HasValue && classId.Value > 0)
+                    query = query.Where(s => s.ClassRoom.Class_ID == classId.Value);
+
+                if (classRoomId.HasValue && classRoomId.Value > 0)
+                    query = query.Where(s => s.ClassRoom_ID == classRoomId.Value);
+
+                // join مع الحضور وحساب الغياب لكل طالب في استعلام واحد
+                var result = await query
+                    .Select(s => new MostAbsentStudentViewModel
+                    {
+                        StudentId = s.Student_ID,
+                        StudentName = s.Student_Name,
+                        StudentCode = s.Student_Code,
+                        ClassName = s.ClassRoom.Class.Class_Name,
+                        ClassRoomName = s.ClassRoom.ClassRoom_Name,
+                        AbsentDays = _context.TblAttendance
+                            .Count(a => a.Student_ID == s.Student_ID &&
+                                        a.Attendance_Visible == "yes" &&
+                                        a.Attendance_Status == "غياب" &&
+                                        a.Attendance_Date.Date >= startDate &&
+                                        a.Attendance_Date.Date <= endDate),
+                        TotalDays = (endDate - startDate).Days + 1
+                    })
+                    .Where(s => s.AbsentDays > 0) // فقط الطلاب الذين لديهم غياب
+                    .OrderByDescending(s => s.AbsentDays)
+                    .ThenBy(s => s.StudentName)
+                    .Take(top)
+                    .ToListAsync();
+
+                var viewModel = new MostAbsentStudentsReportViewModel
+                {
+                    FromDate = startDate,
+                    ToDate = endDate,
+                    ClassId = classId,
+                    ClassRoomId = classRoomId,
+                    TopCount = top,
+                    Students = result,
+                    TotalStudents = result.Count,
+                    TotalAbsentDays = result.Sum(s => s.AbsentDays)
+                };
+
+                var pdfBytes = _pdfService.GenerateMostAbsentStudentsReport(viewModel);
+                return File(pdfBytes, "application/pdf", $"أكثر_الطلاب_غياب_{fromDate:yyyy-MM-dd}_إلى_{toDate:yyyy-MM-dd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                Response.ContentType = "application/json";
+                return Json(new { success = false, message = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult MostLateStudents()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetMostLateStudentsReport(DateTime? fromDate, DateTime? toDate, int? classId, int? classRoomId, int? topCount = 10)
+        {
+            try
+            {
+                var startDate = fromDate?.Date ?? DateTime.Today.AddDays(-30);
+                var endDate = toDate?.Date ?? DateTime.Today;
+                var top = topCount ?? 10;
+
+                // 1️⃣ استعلام واحد للطلاب مع التأخر
+                var query = _context.TblStudent
+                    .Include(s => s.ClassRoom)
+                    .ThenInclude(cr => cr.Class)
+                    .Where(s => s.Student_Visible == "yes");
+
+                if (classId.HasValue && classId.Value > 0)
+                    query = query.Where(s => s.ClassRoom.Class_ID == classId.Value);
+
+                if (classRoomId.HasValue && classRoomId.Value > 0)
+                    query = query.Where(s => s.ClassRoom_ID == classRoomId.Value);
+
+                // 2️⃣ join مع الحضور وحساب التأخر لكل طالب في استعلام واحد
+                var result = await query
+                    .Select(s => new MostAbsentStudentViewModel
+                    {
+                        StudentId = s.Student_ID,
+                        StudentName = s.Student_Name,
+                        StudentCode = s.Student_Code,
+                        ClassName = s.ClassRoom.Class.Class_Name,
+                        ClassRoomName = s.ClassRoom.ClassRoom_Name,
+                        AbsentDays = _context.TblAttendance
+                            .Count(a => a.Student_ID == s.Student_ID &&
+                                        a.Attendance_Visible == "yes" &&
+                                        a.Attendance_Status == "متأخر" &&
+                                        a.Attendance_Date.Date >= startDate &&
+                                        a.Attendance_Date.Date <= endDate),
+                        TotalDays = (endDate - startDate).Days + 1
+                    })
+                    .Where(s => s.AbsentDays > 0) // ✅ مهم: نعرض فقط الطلاب اللي عندهم تأخر
+                    .OrderByDescending(s => s.AbsentDays)
+                    .ThenBy(s => s.StudentName)
+                    .Take(top)
+                    .ToListAsync();
+
+                return Json(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PrintMostLateStudentsPdf(DateTime fromDate, DateTime toDate, int? classId, int? classRoomId, int? topCount = 10)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date;
+                var top = topCount ?? 10;
+
+                // استعلام واحد للطلاب مع الغياب
+                var query = _context.TblStudent
+                    .Include(s => s.ClassRoom)
+                    .ThenInclude(cr => cr.Class)
+                    .Where(s => s.Student_Visible == "yes");
+
+                if (classId.HasValue && classId.Value > 0)
+                    query = query.Where(s => s.ClassRoom.Class_ID == classId.Value);
+
+                if (classRoomId.HasValue && classRoomId.Value > 0)
+                    query = query.Where(s => s.ClassRoom_ID == classRoomId.Value);
+
+                // join مع الحضور وحساب الغياب لكل طالب في استعلام واحد
+                var result = await query
+                    .Select(s => new MostAbsentStudentViewModel
+                    {
+                        StudentId = s.Student_ID,
+                        StudentName = s.Student_Name,
+                        StudentCode = s.Student_Code,
+                        ClassName = s.ClassRoom.Class.Class_Name,
+                        ClassRoomName = s.ClassRoom.ClassRoom_Name,
+                        AbsentDays = _context.TblAttendance
+                            .Count(a => a.Student_ID == s.Student_ID &&
+                                        a.Attendance_Visible == "yes" &&
+                                        a.Attendance_Status == "متأخر" &&
+                                        a.Attendance_Date.Date >= startDate &&
+                                        a.Attendance_Date.Date <= endDate),
+                        TotalDays = (endDate - startDate).Days + 1
+                    })
+                    .Where(s => s.AbsentDays > 0) // فقط الطلاب الذين لديهم غياب
+                    .OrderByDescending(s => s.AbsentDays)
+                    .ThenBy(s => s.StudentName)
+                    .Take(top)
+                    .ToListAsync();
+
+                var viewModel = new MostAbsentStudentsReportViewModel
+                {
+                    FromDate = startDate,
+                    ToDate = endDate,
+                    ClassId = classId,
+                    ClassRoomId = classRoomId,
+                    TopCount = top,
+                    Students = result,
+                    TotalStudents = result.Count,
+                    TotalAbsentDays = result.Sum(s => s.AbsentDays),
+                    ReportType = "تأخر"
+                };
+
+                var pdfBytes = _pdfService.GenerateMostLateStudentsReport(viewModel);
+                return File(pdfBytes, "application/pdf", $"أكثر_الطلاب_تأخر_{fromDate:yyyy-MM-dd}_إلى_{toDate:yyyy-MM-dd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                Response.ContentType = "application/json";
+                return Json(new { success = false, message = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
 
     }
 }

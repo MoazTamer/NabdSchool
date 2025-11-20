@@ -60,10 +60,7 @@ namespace Sales.Controllers
                                 a.Attendance_Status == "متأخر");
 
                 // عدد الغياب
-                var absentCount = _context.TblAttendance
-                    .Count(a => a.Attendance_Visible == "yes" &&
-                                a.Attendance_Date.Date == today &&
-                                a.Attendance_Status == "غياب");
+                var absentCount = totalStudents - presentCount;
 
                 // اعمل ViewModel
                 var model = new AttendanceViewModel
@@ -103,23 +100,19 @@ namespace Sales.Controllers
                 var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Arabian_Standard_Time);
                 var today = now.Date;
 
-                // IDs كل الطلاب
                 var studentIds = _context.TblStudent
                     .Where(s => s.Student_Visible == "yes")
                     .Select(s => s.Student_ID)
                     .ToList();
 
-                // الحضور الموجود اليوم
                 var existingAttendance = _context.TblAttendance
                     .Where(a => a.Attendance_Date >= today && a.Attendance_Date < today.AddDays(1))
                     .ToList();
 
-                // الطلاب اللي ما عندهمش حضور
                 var newAbsentStudents = studentIds
                     .Where(id => !existingAttendance.Any(a => a.Student_ID == id))
                     .ToList();
 
-                // تسجيل الغياب للطلاب الجدد
                 var attendanceList = newAbsentStudents.Select(id => new TblAttendance
                 {
                     Student_ID = id,
@@ -133,27 +126,27 @@ namespace Sales.Controllers
                 _context.TblAttendance.AddRange(attendanceList);
                 _unitOfWork.Complete();
 
-                // احسب الأرقام
                 int totalStudents = studentIds.Count;
                 int present = existingAttendance.Count(a => a.Attendance_Status == "حضور" || a.Attendance_Status == "متأخر");
                 int absent = totalStudents - present;
 
-                // ابعت موديل مع الفيو
                 var model = new AttendanceViewModel
                 {
                     TotalStudents = totalStudents,
                     Present = present,
                     Absent = absent
                 };
+                
+                return View("AttendanceRegistration", model);
 
-                return View(model);
             }
             catch (Exception ex)
             {
-                // ممكن تبعت ViewModel فيها 0 أو رسالة خطأ
+
                 var model = new AttendanceViewModel { TotalStudents = 0, Present = 0, Absent = 0 };
                 ViewBag.ErrorMessage = ex.Message;
-                return View(model);
+
+                return View("AttendanceRegistration", model);
             }
         }
 
@@ -171,7 +164,6 @@ namespace Sales.Controllers
                     });
                 }
 
-                // البحث عن الطالب
                 var student = await _context.TblStudent
                     .Include(s => s.ClassRoom)
                     .ThenInclude(c => c.Class)
@@ -187,12 +179,10 @@ namespace Sales.Controllers
                     });
                 }
 
-                // الحصول على التاريخ والوقت الحالي
                 var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Arabian_Standard_Time);
                 var today = now.Date;
                 var currentTime = now.TimeOfDay;
 
-                // التحقق من التسجيل المسبق اليوم
                 var existingAttendance = await _context.TblAttendance
                     .FirstOrDefaultAsync(a => a.Student_ID == student.Student_ID
                                            && a.Attendance_Date == today
@@ -208,10 +198,8 @@ namespace Sales.Controllers
                     });
                 }
 
-                // الحصول على موعد الحضور من الإعدادات
                 var attendanceTime = await SchoolSettingsController.GetAttendanceTimeAsync(_context);
 
-                // حساب دقائق التأخير
                 int lateMinutes = 0;
                 string status = "حضور";
 
@@ -221,7 +209,6 @@ namespace Sales.Controllers
                     status = "متأخر";
                 }
 
-                // تسجيل الحضور
                 var attendance = new TblAttendance
                 {
                     Student_ID = student.Student_ID,

@@ -2,6 +2,22 @@
     ViewData["Page"] = "التقارير";
 }
 
+<style>
+    .hover-elevate-up {
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+        .hover-elevate-up:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+        }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+</style>
+
 <!--begin::Content wrapper-->
 <div class="d-flex flex-column flex-column-fluid">
     <!--begin::Toolbar-->
@@ -146,7 +162,7 @@
                                 </div>
                                 <!--end::Student Report-->
                               
-                                @* <!--begin::Most Absent-->
+                                <!--begin::Most Absent-->
                                 <div class="col-md-6 col-xl-4">
                                     <a href="@Url.Action("MostAbsentStudents", "Reports")" class="card card-flush h-100 hover-elevate-up">
                                         <div class="card-body d-flex flex-column p-8">
@@ -172,9 +188,9 @@
                                         </div>
                                     </a>
                                 </div>
-                                <!--end::Most Absent--> *@
+                                <!--end::Most Absent--> 
                          
-                                @* <!--begin::Most Late-->
+                                <!--begin::Most Late-->
                                 <div class="col-md-6 col-xl-4">
                                     <a href="@Url.Action("MostLateStudents", "Reports")" class="card card-flush h-100 hover-elevate-up">
                                         <div class="card-body d-flex flex-column p-8">
@@ -200,7 +216,7 @@
                                         </div>
                                     </a>
                                 </div>
-                                <!--end::Most Late--> *@
+                                <!--end::Most Late-->
                             </div>
                         </div>
                     </div>
@@ -272,19 +288,3 @@
     <!--end::Content-->
 </div>
 <!--end::Content wrapper-->
-
-<style>
-    .hover-elevate-up {
-        transition: all 0.3s ease;
-        text-decoration: none;
-    }
-
-        .hover-elevate-up:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
-        }
-
-    .bg-gradient-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-</style>

@@ -1,117 +1,143 @@
 ﻿@{
-    ViewData["Title"] = "تقرير الطالب";
+    ViewData["Title"] = "تقرير حضور الطلاب";
 }
 
-<div class="container mt-4">
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" rel="stylesheet" />
 
-    <h3 class="text-center mb-4">تقرير الحضور والتأخر والغياب للطالب</h3>
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
 
-    <div class="card p-4 shadow">
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
 
-        <!-- 🔵 الصف الأول: رقم الطالب + التاريخ + الزرار -->
-        <div class="row mb-4">
+    .status-present {
+        color: #28a745;
+        font-weight: bold;
+    }
 
-            <div class="col-md-4">
-                <label class="form-label">رقم الطالب</label>
-                <input type="number" id="studentId" class="form-control" placeholder="اكتب رقم الطالب" />
+    .status-late {
+        color: #ffc107;
+        font-weight: bold;
+    }
+
+    .status-absent {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-primary text-white py-3">
+        <h4 class="mb-0"><i class="fas fa-chart-line"></i> تقرير حضور الطلاب</h4>
+    </div>
+
+    <div class="card-body">
+        <!-- فلتر البحث -->
+        <div class="filter-section">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="studentCodeFilter">كود الطالب</label>
+                        <input type="text" class="form-control" id="studentCodeFilter" placeholder="أدخل كود الطالب">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="dateFilter">التاريخ</label>
+                        <input type="date" class="form-control" id="dateFilter" value="@DateTime.Today.ToString("yyyy-MM-dd")">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <div>
+                            <button type="button" id="searchBtn" class="btn btn-primary">
+                                <i class="fas fa-search"></i> بحث
+                            </button>
+                            <button type="button" id="printBtn" class="btn btn-success">
+                                <i class="fas fa-print"></i> طباعة
+                            </button>
+                            <button type="button" id="resetBtn" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> إعادة تعيين
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <div class="col-md-4">
-                <label class="form-label">التاريخ</label>
-                <input type="date" id="reportDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
-            </div>
-
-            <div class="col-md-4 d-flex align-items-end">
-                <button class="btn btn-primary w-100" onclick="loadReport()">عرض التقرير</button>
-            </div>
-
         </div>
 
-        <!-- 🔵 منطقة التقرير -->
-        <div id="reportArea" style="display:none">
-
-            <div class="d-flex justify-content-between mb-3">
-                <h5 id="studentName"></h5>
-                <button class="btn btn-danger btn-sm" onclick="printPdf()">طباعة PDF</button>
-            </div>
-
-            <div class="alert alert-info">
-                <span>حضور: </span><b id="statPresent"></b> —
-                <span>تأخر: </span><b id="statLate"></b> —
-                <span>غياب: </span><b id="statAbsent"></b> —
-                <span>تأخر متتالي: </span><b id="statConLate"></b> —
-                <span>غياب متتالي: </span><b id="statConAbsent"></b>
-            </div>
-
-            <table class="table table-bordered text-center">
-                <thead class="table-dark">
+        <!-- الجدول -->
+        <div class="table-responsive">
+            <table id="studentAttendanceTable" class="table table-striped table-bordered" style="width:100%">
+                <thead class="bg-light">
                     <tr>
-                        <th>اليوم</th>
+                        <th>التاريخ</th>
                         <th>الحالة</th>
                         <th>الوقت</th>
                         <th>ملاحظات</th>
                     </tr>
                 </thead>
-                <tbody id="daysTable"></tbody>
             </table>
-
         </div>
 
+        <!-- الإحصائيات -->
+        <div class="row mt-4" id="statisticsSection" style="display: none;">
+            <div class="col-md-12">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title">إحصائيات الحضور</h5>
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="p-3 bg-success text-white rounded">
+                                    <h4 id="totalPresent">0</h4>
+                                    <p>أيام حضور</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 bg-warning text-white rounded">
+                                    <h4 id="totalLate">0</h4>
+                                    <p>أيام تأخر</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 bg-danger text-white rounded">
+                                    <h4 id="totalAbsent">0</h4>
+                                    <p>أيام غياب</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 bg-info text-white rounded">
+                                    <h4 id="consecutiveAbsent">0</h4>
+                                    <p>غياب متتالي</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-
 @section Scripts {
-    <script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        // ----------- تحميل التقرير -----------
-        function loadReport() {
-            let id = $("#studentId").val();
-            let date = $("#reportDate").val();
+    <script src="~/js/StudentReport.js"></script>
 
-            if (!id) return alert("اختر الطالب");
-
-            $.get("/Reports/GetStudentAttendanceReport",
-                { studentId: id, date: date },
-                function (res) {
-                    if (!res.success) {
-                        alert(res.message);
-                        return;
-                    }
-
-                    let r = res.data;
-
-                    $("#reportArea").show();
-
-                    $("#studentName").text(`${r.studentName} — (${r.studentCode})`);
-                    $("#statPresent").text(r.totalPresent);
-                    $("#statLate").text(r.totalLate);
-                    $("#statAbsent").text(r.totalAbsent);
-                    $("#statConLate").text(r.consecutiveLate);
-                    $("#statConAbsent").text(r.consecutiveAbsent);
-
-                    $("#daysTable").html("");
-
-                    $.each(r.days, function (i, d) {
-                        $("#daysTable").append(`
-                            <tr>
-                                <td>${d.date.substring(0,10)}</td>
-                                <td>${d.status}</td>
-                                <td>${d.time}</td>
-                                <td>${d.notes}</td>
-                            </tr>
-                        `);
-                    });
-                });
-
-        }
-
-        // ----------- طباعة PDF -----------
-        function printPdf() {
-            let id = $("#studentId").val();
-            let date = $("#reportDate").val();
-            window.open(`/Attendance/PrintStudentAttendancePdf?studentId=${id}&date=${date}`);
-        }
-
-    </script>
 }

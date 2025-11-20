@@ -1,4 +1,5 @@
 ﻿@model AttendanceViewModel
+
 @{
 	ViewData["Page"] = "تسجيل حضور الطلاب";
 }
@@ -162,21 +163,4 @@
 @section Scripts
 {
 	<script src="/js/AttendanceRegistration.js"></script>
-	<script>
-		// Update current time and date
-		function updateDateTime() {
-			const now = new Date();
-			const timeString = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-			const dateString = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-			document.getElementById('currentTime').textContent = timeString;
-			document.getElementById('currentDate').textContent = dateString;
-		}
-
-		// Update time every second
-		updateDateTime();
-		setInterval(updateDateTime, 6000);
-
-		// Load today's attendance count
-	</script>
 }

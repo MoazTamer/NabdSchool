@@ -1,0 +1,136 @@
+﻿@{
+    ViewData["Title"] = "أكثر الطلاب تأخرا";
+}
+
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" rel="stylesheet" />
+
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+
+    .high-absence {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .medium-absence {
+        color: #ffc107;
+        font-weight: bold;
+    }
+
+    .low-absence {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .progress {
+        height: 10px;
+    }
+</style>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-primary text-white py-3">
+        <h4 class="mb-0"><i class="fas fa-chart-bar"></i> أكثر الطلاب تأخرا</h4>
+    </div>
+
+    <div class="card-body">
+        <!-- فلتر البحث -->
+        <div class="filter-section p-3 mb-4" style="background:#f8f9fa; border-radius: 10px;">
+            <div class="row g-3">
+
+                <div class="col-md-2">
+                    <label for="fromDate" class="form-label">من تاريخ</label>
+                    <input type="date" class="form-control" id="fromDate"
+                           value="@DateTime.Today.AddDays(-30).ToString("yyyy-MM-dd")">
+                </div>
+
+                <div class="col-md-2">
+                    <label for="toDate" class="form-label">إلى تاريخ</label>
+                    <input type="date" class="form-control" id="toDate"
+                           value="@DateTime.Today.ToString("yyyy-MM-dd")">
+                </div>
+
+                <div class="col-md-2">
+                    <label for="classFilter" class="form-label">الصف</label>
+                    <select class="form-control" id="classFilter">
+                        <option value="">جميع الصفوف</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label for="classRoomFilter" class="form-label">الفصل</label>
+                    <select class="form-control" id="classRoomFilter">
+                        <option value="">جميع الفصول</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label for="topCount" class="form-label">عدد الطلاب</label>
+                    <select class="form-control" id="topCount">
+                        <option value="10">أعلى 10</option>
+                        <option value="20">أعلى 20</option>
+                        <option value="50">أعلى 50</option>
+                        <option value="100">أعلى 100</option>
+                    </select>
+                </div>
+
+                <!-- أزرار البحث -->
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="btn-group w-100">
+                        <button type="button" id="searchBtn" class="btn btn-warning">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button type="button" id="printBtn" class="btn btn-success">
+                            <i class="fas fa-print"></i>
+                        </button>
+                        <button type="button" id="resetBtn" class="btn btn-secondary">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- الجدول -->
+        <div class="table-responsive">
+            <table id="mostAbsentTable" class="table table-striped table-bordered" style="width:100%">
+                <thead class="bg-light">
+                    <tr>
+                        <th>#</th>
+                        <th>كود الطالب</th>
+                        <th>اسم الطالب</th>
+                        <th>الصف</th>
+                        <th>الفصل</th>
+                        <th>أيام التأخر</th>
+                        <th>نسبة التأخر</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="~/js/MostLateStudents.js"></script>
+}

@@ -1,4 +1,23 @@
 ﻿$(document).ready(function () {
+
+    function updateDateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        const dateString = now.toLocaleDateString('ar-EG', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        document.getElementById('currentTime').textContent = timeString;
+        document.getElementById('currentDate').textContent = dateString;
+    }
+
+    updateDateTime();
+    setInterval(updateDateTime, 60000);
+
+
     const studentCodeInput = $('#studentCodeInput');
     const alertContainer = $('#alertContainer');
     const recentRegistrations = $('#recentRegistrations');
