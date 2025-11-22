@@ -251,7 +251,7 @@ namespace SalesRepository.Repository
         }
 
         // قسم كل صف
-        private void ComposeClassSection(IContainer container, ClassAbsenceViewModel classData, string type)
+        private void ComposeClassSectionOld(IContainer container, ClassAbsenceViewModel classData, string type)
         {
             container.Column(column =>
             {
@@ -327,6 +327,118 @@ namespace SalesRepository.Repository
                             .AlignCenter().Text($"{st.ConsecutiveAbsenceDays} يوم")
                             .FontSize(9)
                             .FontColor(st.ConsecutiveAbsenceDays >= 3 ? Colors.Red.Darken2 : Colors.Black);
+
+                        table.Cell().Background(bgColor).Padding(5)
+                            .AlignRight().Text(st.StudentPhone ?? "-").FontSize(9);
+
+                        table.Cell().Background(bgColor).Padding(5)
+                            .AlignRight().Text(st.StudentCode ?? "-").FontSize(9);
+
+                        table.Cell().Background(bgColor).Padding(5)
+                            .AlignRight().Text(st.StudentName).FontSize(9);
+
+                        table.Cell().Background(bgColor).Padding(5)
+                            .AlignCenter().Text(index.ToString()).FontSize(9);
+
+                        index++;
+                    }
+                });
+            });
+        }
+
+        // قسم كل صف - معدلة لإضافة معاد الحضور
+        private void ComposeClassSection(IContainer container, ClassAbsenceViewModel classData, string type)
+        {
+            container.Column(column =>
+            {
+                // عنوان الصف
+                column.Item().Background(Colors.Blue.Lighten3)
+                    .Padding(8)
+                    .Row(row =>
+                    {
+                        row.ConstantItem(300).AlignLeft().Text(
+                            $"النسبة: {classData.AbsencePercentage}% | " +
+                            $"{type}: {classData.AbsentStudents} | " +
+                            $"إجمالي الطلاب: {classData.TotalStudents}")
+                            .FontSize(10)
+                            .AlignRight()
+                            .FontColor(Colors.Red.Darken2);
+
+                        row.RelativeItem().AlignRight().Text($"{classData.ClassName} - {classData.ClassRoomName}")
+                           .FontSize(14)
+                           .Bold()
+                           .FontColor(Colors.Blue.Darken3);
+                    });
+
+                // جدول التأخر RTL - معدل لإضافة معاد الحضور
+                column.Item().Table(table =>
+                {
+                    // الأعمدة (مقلوبة) - إضافة عمود معاد الحضور
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn(3);   // ملاحظات
+                        columns.RelativeColumn(2);   // أيام التأخر المتتالية
+                        columns.RelativeColumn(2);   // معاد الحضور - جديد
+                        columns.RelativeColumn(2);   // الهاتف
+                        columns.RelativeColumn(2);   // الكود
+                        columns.RelativeColumn(3);   // الاسم
+                        columns.ConstantColumn(40);  // #
+                    });
+
+                    // Header RTL - إضافة عنوان معاد الحضور
+                    table.Header(header =>
+                    {
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
+                            .AlignCenter().Text("ملاحظات").FontColor(Colors.White).Bold().FontSize(10);
+
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
+                            .AlignCenter().Text("أيام " + type + " المتتالية").FontColor(Colors.White).Bold().FontSize(10);
+
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
+                            .AlignCenter().Text("معاد الحضور").FontColor(Colors.White).Bold().FontSize(10); // جديد
+
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
+                            .AlignCenter().Text("رقم الهاتف").FontColor(Colors.White).Bold().FontSize(10);
+
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
+                            .AlignCenter().Text("كود الطالب").FontColor(Colors.White).Bold().FontSize(10);
+
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
+                            .AlignCenter().Text("اسم الطالب").FontColor(Colors.White).Bold().FontSize(10);
+
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
+                            .AlignCenter().Text("#").FontColor(Colors.White).Bold().FontSize(10);
+                    });
+
+                    // Rows RTL - إضافة معاد الحضور
+                    int index = 1;
+                    foreach (var st in classData.AbsentStudentsList)
+                    {
+                        var bgColor = st.ConsecutiveAbsenceDays >= 3
+                            ? Colors.Red.Lighten4
+                            : (index % 2 == 0 ? Colors.Grey.Lighten4 : Colors.White);
+
+                        // تنسيق معاد الحضور
+                        string attendanceTimeDisplay = "-";
+                        if (st.AttendanceTime.HasValue)
+                        {
+                            var time = st.AttendanceTime.Value;
+                            attendanceTimeDisplay = $"{time.Hours:00}:{time.Minutes:00}";
+                        }
+
+                        table.Cell().Background(bgColor).Padding(5)
+                            .AlignRight().Text(st.Notes ?? "-").FontSize(9);
+
+                        table.Cell().Background(bgColor).Padding(5)
+                            .AlignCenter().Text($"{st.ConsecutiveAbsenceDays} يوم")
+                            .FontSize(9)
+                            .FontColor(st.ConsecutiveAbsenceDays >= 3 ? Colors.Red.Darken2 : Colors.Black);
+
+                        table.Cell().Background(bgColor).Padding(5) // خلية معاد الحضور الجديدة
+                            .AlignCenter().Text(attendanceTimeDisplay)
+                            .FontSize(9)
+                            .FontColor(Colors.Blue.Darken2)
+                            .Bold();
 
                         table.Cell().Background(bgColor).Padding(5)
                             .AlignRight().Text(st.StudentPhone ?? "-").FontSize(9);
@@ -1105,7 +1217,9 @@ namespace SalesRepository.Repository
                 // فترة التقرير
                 var arabicCulture = new System.Globalization.CultureInfo("ar-EG");
                 column.Item().PaddingTop(1).AlignCenter()
-                    .Text($"آخر 30 يوم حتى: {data.ReportDate.ToString("dddd، dd MMMM yyyy", arabicCulture)}")
+                .Text($"من تاريخ: {data.FromDate.ToString("dddd، dd MMMM yyyy", arabicCulture)}  حتى تاريخ: {data.ReportDate.ToString("dddd، dd MMMM yyyy", arabicCulture)}")
+
+                    //.Text($"آخر 30 يوم حتى: {data.ReportDate.ToString("dddd، dd MMMM yyyy", arabicCulture)}")
                     .FontSize(10)
                     .FontColor(Colors.Grey.Darken1);
 

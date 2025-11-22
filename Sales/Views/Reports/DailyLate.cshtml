@@ -299,16 +299,31 @@
         }
 
         // Build class card HTML
+           // Build class card HTML
         function buildClassCard(classData) {
             let studentsRows = '';
             classData.absentStudentsList.forEach(function(student, index) {
                 const warningClass = student.consecutiveAbsenceDays >= 3 ? 'bg-light-danger' : '';
+
+                // تنسيق معاد الحضور
+                let attendanceTime = '-';
+                if (student.attendanceTime) {
+                    // تحويل TimeSpan إلى تنسيق الوقت
+                    const timeParts = student.attendanceTime.split(':');
+                    if (timeParts.length >= 2) {
+                        attendanceTime = timeParts[0] + ':' + timeParts[1];
+                    }
+                }
+
                 studentsRows += `
                     <tr class="${warningClass}">
                         <td class="text-center">${index + 1}</td>
                         <td>${student.studentName}</td>
                         <td class="text-center">${student.studentCode || '-'}</td>
                         <td class="text-center">${student.studentPhone || '-'}</td>
+                        <td class="text-center">
+                            <span class="badge badge-light-primary fw-bold">${attendanceTime}</span>
+                        </td>
                         <td class="text-center">
                             <span class="badge badge-danger">${student.consecutiveAbsenceDays} يوم</span>
                         </td>
@@ -347,11 +362,12 @@
                         <div class="table-responsive">
                             <table class="table table-row-bordered table-row-gray-100 align-middle gy-4 gs-9 mb-0">
                                 <thead>
-                                    <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
+                                    <tr class="fw-bold fs-6 text-light border-bottom-2 border-gray-200">
                                         <th class="text-center" width="50">#</th>
                                         <th>اسم الطالب</th>
                                         <th class="text-center" width="150">كود الطالب</th>
                                         <th class="text-center" width="150">رقم الهاتف</th>
+                                        <th class="text-center" width="150">وقت الحضور</th>
                                         <th class="text-center" width="150">الأيام المتأخرة المتتالية</th>
                                         <th width="200">ملاحظات</th>
                                     </tr>

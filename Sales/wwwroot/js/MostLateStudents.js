@@ -3,6 +3,16 @@
             var table = $('#mostAbsentTable');
             var datatable;
 
+
+            var getFromDate = function () {
+                return $("#fromDate").val() || '@DateTime.Today.AddDays(-30).ToString("yyyy-MM-dd")';
+            };
+
+            var getToDate = function () {
+                return $("#toDate").val() || '@DateTime.Today.ToString("yyyy-MM-dd")';
+            };
+
+
             var initTable = function () {
                 datatable = table.DataTable({
                     responsive: true,
@@ -27,7 +37,7 @@
                         zeroRecords: "لا توجد طلاب مطابقة للبحث"
                     },
                     pageLength: 10,
-                    order: [[5, "desc"]], // الترتيب حسب أيام الغياب تنازلي
+                    order: [[5, "desc"]],
                     columns: [
                         {
                             data: null,
@@ -74,6 +84,14 @@
                             },
                             className: "text-center"
                         },
+                        {
+                            data: null,
+                            render: function (data, type, row) {
+                                return `<a href="/Reports/StudentReport?studentCode=${row.studentCode}&fromDate=${getFromDate()}&toDate=${getToDate()}" 
+                              class="btn btn-sm btn-primary">التفاصيل</a>`;
+                            },
+                            className: "text-center"
+                        }
                     ]
                 });
             };
@@ -81,7 +99,7 @@
             // تحميل قائمة الصفوف
             var loadClasses = function () {
                 $.ajax({
-                    url: "/Reports/GetClasses", // تحتاج تعمل هذا الـaction
+                    url: "/Reports/GetClasses", 
                     type: "GET",
                     success: function (json) {
                         if (json.success) {
@@ -95,10 +113,9 @@
                 });
             };
 
-            // تحميل قائمة الفصول بناءً على الصف المحدد
             var loadClassRooms = function (classId) {
                 $.ajax({
-                    url: "/Reports/GetClassRooms?classId=" + (classId || ''), // تحتاج تعمل هذا الـaction
+                    url: "/Reports/GetClassRooms?classId=" + (classId || ''), 
                     type: "GET",
                     success: function (json) {
                         if (json.success) {
@@ -164,13 +181,11 @@
                     datatable.clear().draw();
                 });
 
-                // عند تغيير الصف، تحديث قائمة الفصول
                 $("#classFilter").on("change", function () {
                     loadClassRooms($(this).val());
                 });
 
 
-           // في قسم handleEvents أضف:
            $("#printBtn").on("click", function () {
                const fromDate = $("#fromDate").val();
                const toDate = $("#toDate").val();

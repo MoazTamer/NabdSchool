@@ -1,5 +1,7 @@
 ﻿@{
     ViewData["Title"] = "تقرير حضور الطلاب";
+    ViewData["Page"] = "تقرير حضور الطلاب";
+
 }
 
 <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
@@ -51,15 +53,24 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label for="studentCodeFilter">كود الطالب</label>
-                        <input type="text" class="form-control" id="studentCodeFilter" placeholder="أدخل كود الطالب">
+                        <input type="text" class="form-control" id="studentCodeFilter" placeholder="أدخل كود الطالب" value="@ViewBag.StudentCode">
                     </div>
                 </div>
-                <div class="col-md-4">
+
+                <div class="col-md-3">
                     <div class="form-group">
-                        <label for="dateFilter">التاريخ</label>
-                        <input type="date" class="form-control" id="dateFilter" value="@DateTime.Today.ToString("yyyy-MM-dd")">
+                        <label for="startDateFilter">من تاريخ</label>
+                        <input type="date" class="form-control" id="startDateFilter" value="@ViewBag.FromDate">
                     </div>
                 </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="endDateFilter">إلى تاريخ</label>
+                        <input type="date" class="form-control" id="endDateFilter" value="@ViewBag.Date">
+                    </div>
+                </div>
+
+
                 <div class="col-md-4">
                     <div class="form-group">
                         <label>&nbsp;</label>

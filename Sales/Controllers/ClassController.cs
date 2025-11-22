@@ -72,6 +72,7 @@ namespace Sales.Controllers
 
         #region Class CRUD
 
+        [Authorize (Policy = "Class_Create")]
         [HttpGet]
         public IActionResult CreateClass()
         {

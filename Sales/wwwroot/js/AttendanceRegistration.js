@@ -67,6 +67,12 @@
                     // Clear input
                     studentCodeInput.val('');
 
+                    // update total present counter
+                    currentPresent = parseInt($('#totalAttendance').text());
+                    if (response.isValid) {
+                        $('#totalAttendance').text(currentPresent + 1);
+                    }
+
                     // Play success sound (optional)
                     playSuccessSound();
                 } else {

@@ -427,12 +427,16 @@ namespace Sales.Controllers
 
                 var classRooms = await query.ToListAsync();
 
-                // 2) Today's attendance (present/late) set
+                // 2) Today's attendance (present/late) set - جلب معاد الحضور أيضاً
                 var todayAttendance = await _context.TblAttendance
                     .Where(a =>
                         a.Attendance_Date.Date == reportDate.Date &&
                         a.Attendance_Visible == "yes")
-                    .Select(a => new { a.Student_ID, a.Attendance_Status })
+                    .Select(a => new {
+                        a.Student_ID,
+                        a.Attendance_Status,
+                        a.Attendance_Time // إضافة معاد الحضور
+                    })
                     .ToListAsync();
 
                 if (!todayAttendance.Any())
@@ -450,11 +454,16 @@ namespace Sales.Controllers
                     });
                 }
 
-                // الطلاب المتأخرين اليوم
-                var lateTodayIds = todayAttendance
+                // الطلاب المتأخرين اليوم مع معاد الحضور
+                var lateToday = todayAttendance
                     .Where(x => x.Attendance_Status == "متأخر")
-                    .Select(x => x.Student_ID)
+                    .Select(x => new {
+                        StudentId = x.Student_ID,
+                        AttendanceTime = x.Attendance_Time
+                    })
                     .ToList();
+
+                var lateTodayIds = lateToday.Select(x => x.StudentId).ToList();
 
                 // 3) Get all attendance records (any status) for last 30 days for all relevant students
                 var minDate = reportDate.AddDays(-30);
@@ -493,6 +502,10 @@ namespace Sales.Controllers
                                     .Status
                             )
                     );
+
+                // إنشاء dictionary لمعاد الحضور اليوم
+                var studentAttendanceTime = lateToday
+                    .ToDictionary(x => x.StudentId, x => x.AttendanceTime);
 
                 var classesAbsence = new List<ClassAbsenceViewModel>();
 
@@ -540,13 +553,21 @@ namespace Sales.Controllers
 
                         var st = activeStudents.First(s => s.Student_ID == sid);
 
+                        // جلب معاد الحضور
+                        TimeSpan? attendanceTime = null;
+                        if (studentAttendanceTime.TryGetValue(sid, out var time))
+                        {
+                            attendanceTime = time;
+                        }
+
                         lateList.Add(new AbsentStudentViewModel
                         {
                             StudentId = sid,
                             StudentName = st.Student_Name,
                             StudentCode = st.Student_Code,
                             StudentPhone = st.Student_Phone,
-                            ConsecutiveAbsenceDays = consecutive, 
+                            AttendanceTime = attendanceTime, // إضافة معاد الحضور
+                            ConsecutiveAbsenceDays = consecutive,
                             Notes = consecutive >= 3 ? "تحذير: تأخر متكرر" : ""
                         });
                     }
@@ -581,7 +602,7 @@ namespace Sales.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
-
+      
         [HttpPost]
         public async Task<IActionResult> PrintDailyLatePdf(DateTime date, int? classId, int? classRoomId)
         {
@@ -610,20 +631,33 @@ namespace Sales.Controllers
                     .Distinct()
                     .ToList();
 
-                // جلب سجلات الحضور لليوم المطلوب (حضور/متأخر) لتحديد المتأخرين
+                // جلب سجلات الحضور لليوم المطلوب (حضور/متأخر) لتحديد المتأخرين - مع إضافة معاد الحضور
                 var todayRecords = await _context.TblAttendance
                     .Where(a =>
                         a.Attendance_Date.Date == reportDate &&
                         a.Attendance_Visible == "yes" &&
                         relevantStudentIds.Contains(a.Student_ID))
-                    .Select(a => new { a.Student_ID, a.Attendance_Status })
+                    .Select(a => new {
+                        a.Student_ID,
+                        a.Attendance_Status,
+                        a.Attendance_Time // إضافة معاد الحضور
+                    })
                     .ToListAsync();
 
-                // الطلاب المتأخرين اليوم
-                var lateTodayIds = todayRecords
+                // الطلاب المتأخرين اليوم مع معاد الحضور
+                var lateToday = todayRecords
                     .Where(x => x.Attendance_Status == "متأخر")
-                    .Select(x => x.Student_ID)
+                    .Select(x => new {
+                        StudentId = x.Student_ID,
+                        AttendanceTime = x.Attendance_Time
+                    })
                     .ToList();
+
+                var lateTodayIds = lateToday.Select(x => x.StudentId).ToList();
+
+                // إنشاء dictionary لمعاد الحضور اليوم
+                var studentAttendanceTime = lateToday
+                    .ToDictionary(x => x.StudentId, x => x.AttendanceTime);
 
                 // جلب كل سجلات آخر 30 يوم للطلاب المعنيين
                 var minDate = reportDate.AddDays(-30);
@@ -698,13 +732,21 @@ namespace Sales.Controllers
 
                         var st = activeStudents.First(s => s.Student_ID == sid);
 
+                        // جلب معاد الحضور
+                        TimeSpan? attendanceTime = null;
+                        if (studentAttendanceTime.TryGetValue(sid, out var time))
+                        {
+                            attendanceTime = time;
+                        }
+
                         lateList.Add(new AbsentStudentViewModel
                         {
                             StudentId = st.Student_ID,
                             StudentName = st.Student_Name,
                             StudentCode = st.Student_Code,
                             StudentPhone = st.Student_Phone,
-                            ConsecutiveAbsenceDays = consecutive, // ممكن تسميها ConsecutiveLateDays
+                            AttendanceTime = attendanceTime, // إضافة معاد الحضور
+                            ConsecutiveAbsenceDays = consecutive,
                             Notes = consecutive >= 3 ? "تحذير: تأخر متكرر" : ""
                         });
                     }
@@ -744,18 +786,23 @@ namespace Sales.Controllers
             }
         }
 
-        public IActionResult StudentReport()
+        public IActionResult StudentReport(string studentCode, DateTime? fromDate, DateTime? date)
         {
+            ViewBag.StudentCode = studentCode;
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd") ?? DateTime.Today.AddDays(-30).ToString("yyyy-MM-dd");
+            ViewBag.Date = date?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd");
             return View();
         }
 
+
         [HttpGet]
-        public async Task<IActionResult> GetStudentAttendanceReport(string studentCode, DateTime? date)
+        public async Task<IActionResult> GetStudentAttendanceReport(string studentCode, DateTime? date, DateTime? fromDate)
         {
             try
             {
                 var reportDate = date?.Date ?? DateTime.Today;
-                var minDate = reportDate.AddDays(-30);
+                var minDate = fromDate?.Date ?? reportDate.AddDays(-30);
+                //var minDate = reportDate.AddDays(-30);
 
                 var code = studentCode.Trim();
 
@@ -853,12 +900,13 @@ namespace Sales.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PrintStudentAttendancePdf(string studentCode, DateTime date)
+        public async Task<IActionResult> PrintStudentAttendancePdf(string studentCode, DateTime date, DateTime? fromDate)
         {
             try
             {
                 var reportDate = date.Date;
-                var minDate = reportDate.AddDays(-30);
+                var minDate = fromDate?.Date ?? reportDate.AddDays(-30);
+                //var minDate = reportDate.AddDays(-30);
 
                 var student = await _context.TblStudent
                     .Include(s => s.ClassRoom)
@@ -938,6 +986,7 @@ namespace Sales.Controllers
                     ClassName = student.ClassRoom?.Class?.Class_Name ?? "غير محدد",
                     ClassRoomName = student.ClassRoom?.ClassRoom_Name ?? "غير محدد",
                     ReportDate = reportDate,
+                    FromDate = minDate,
                     Days = result.OrderByDescending(r => r.Date).ToList(),
                     TotalPresent = present,
                     TotalLate = late,
@@ -1204,6 +1253,374 @@ namespace Sales.Controllers
             }
         }
 
+
+
+        [HttpGet]
+        public async Task<IActionResult> WeeklyLatePatternReport()
+        {
+            ViewBag.ReportType = "late";
+            ViewBag.ReportTitle = "تقرير التأخر الأسبوعية";
+            ViewBag.Classes = await _context.TblClass
+                .Where(c => c.Class_Visible == "yes")
+                .Select(c => new { id = c.Class_ID, name = c.Class_Name })
+                .ToListAsync();
+
+            return View("WeeklyPatternReport");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> WeeklyAbsentPatternReport()
+        {
+            ViewBag.ReportType = "absent";
+            ViewBag.ReportTitle = "تقرير الغياب الأسبوعية";
+            ViewBag.Classes = await _context.TblClass
+                .Where(c => c.Class_Visible == "yes")
+                .Select(c => new { id = c.Class_ID, name = c.Class_Name })
+                .ToListAsync();
+
+            return View("WeeklyPatternReport");
+        }
+
+        //public async Task<IActionResult> GetWeeklyPatternReport(DateTime startDate, DateTime endDate, int? classId, int? classRoomId, string reportType = "both")
+        //{
+        //    try
+        //    {
+        //        if (startDate >= endDate)
+        //        {
+        //            return Json(new { success = false, message = "تاريخ البداية يجب أن يكون قبل تاريخ النهاية" });
+        //        }
+
+        //        var totalWeeks = (endDate - startDate).Days / 7;
+        //        if (totalWeeks < 2)
+        //        {
+        //            return Json(new { success = false, message = "الفترة يجب أن تشمل أسبوعين على الأقل لتحليل الأنماط" });
+        //        }
+
+        //        var query = _context.TblStudent
+        //            .Include(s => s.ClassRoom)
+        //            .ThenInclude(cr => cr.Class)
+        //            .Where(s => s.Student_Visible == "yes");
+
+        //        if (classId.HasValue)
+        //            query = query.Where(s => s.ClassRoom.Class_ID == classId.Value);
+
+        //        if (classRoomId.HasValue)
+        //            query = query.Where(s => s.ClassRoom_ID == classRoomId.Value);
+
+        //        // ✅ تجنب تكرار الطلاب
+        //        var students = await query
+        //            .GroupBy(s => s.Student_ID)
+        //            .Select(g => g.First())
+        //            .ToListAsync();
+
+        //        var studentIds = students.Select(s => s.Student_ID).ToList();
+
+        //        var attendanceQuery = _context.TblAttendance
+        //            .Where(a =>
+        //                a.Attendance_Date.Date >= startDate.Date &&
+        //                a.Attendance_Date.Date <= endDate.Date &&
+        //                a.Attendance_Visible == "yes" &&
+        //                studentIds.Contains(a.Student_ID)
+        //            );
+
+        //        if (reportType == "late")
+        //        {
+        //            attendanceQuery = attendanceQuery.Where(a => a.Attendance_Status == "متأخر");
+        //        }
+        //        else if (reportType == "absent")
+        //        {
+        //            attendanceQuery = attendanceQuery.Where(a => a.Attendance_Status == "غياب");
+        //        }
+        //        else
+        //        {
+        //            attendanceQuery = attendanceQuery.Where(a => a.Attendance_Status == "متأخر" || a.Attendance_Status == "غياب");
+        //        }
+
+        //        var attendanceRecords = await attendanceQuery
+        //            .Select(a => new
+        //            {
+        //                a.Student_ID,
+        //                a.Attendance_Date,
+        //                a.Attendance_Status,
+        //                DayOfWeek = a.Attendance_Date.DayOfWeek
+        //            })
+        //            .ToListAsync();
+
+        //        var result = new List<StudentWeeklyPatternViewModel>();
+
+        //        var arabicDays = new Dictionary<DayOfWeek, string>
+        //{
+        //    { DayOfWeek.Sunday, "الأحد" },
+        //    { DayOfWeek.Monday, "الإثنين" },
+        //    { DayOfWeek.Tuesday, "الثلاثاء" },
+        //    { DayOfWeek.Wednesday, "الأربعاء" },
+        //    { DayOfWeek.Thursday, "الخميس" },
+        //    { DayOfWeek.Friday, "الجمعة" },
+        //    { DayOfWeek.Saturday, "السبت" }
+        //};
+
+        //        foreach (var student in students)
+        //        {
+        //            var studentRecords = attendanceRecords
+        //                .Where(r => r.Student_ID == student.Student_ID)
+        //                .GroupBy(r => r.Attendance_Date.Date)
+        //                .Select(g => g.OrderByDescending(x => x.Attendance_Date).First())
+        //                .ToList();
+
+        //            // ✅ تجاهل الطلاب بدون أي سجل
+        //            if (!studentRecords.Any())
+        //                continue;
+
+        //            var dayPatterns = new List<DayPatternViewModel>();
+
+        //            var totalOccurrences = studentRecords.Count;
+
+        //            // تجميع الأيام الفعلية فقط
+        //            var daysWithRecords = studentRecords
+        //                .GroupBy(r => r.DayOfWeek)
+        //                .ToDictionary(g => g.Key, g => g.ToList());
+
+        //            foreach (var day in daysWithRecords)
+        //            {
+        //                var dayRecords = day.Value;
+        //                if (!dayRecords.Any()) continue; // تجاهل الأيام بدون سجلات فعلية
+
+        //                var lateCount = dayRecords.Count(r => r.Attendance_Status == "متأخر");
+        //                var absentCount = dayRecords.Count(r => r.Attendance_Status == "غياب");
+        //                var dayTotal = dayRecords.Count;
+        //                var percentage = (double)dayTotal / totalOccurrences * 100;
+
+        //                string patternType;
+        //                if (reportType == "late")
+        //                    patternType = "late";
+        //                else if (reportType == "absent")
+        //                    patternType = "absent";
+        //                else
+        //                    patternType = lateCount > 0 && absentCount > 0 ? "mixed" :
+        //                                  lateCount > 0 ? "late" : "absent";
+
+        //                dayPatterns.Add(new DayPatternViewModel
+        //                {
+        //                    DayName = arabicDays[day.Key],
+        //                    DayNameEnglish = day.Key.ToString(),
+        //                    LateCount = lateCount,
+        //                    AbsentCount = absentCount,
+        //                    TotalOccurrences = dayTotal,
+        //                    Percentage = Math.Round(percentage, 1),
+        //                    PatternType = patternType
+        //                });
+        //            }
+
+        //            if (!dayPatterns.Any())
+        //                continue;
+
+        //            var mostFrequentDay = dayPatterns
+        //                .OrderByDescending(d => d.TotalOccurrences)
+        //                .FirstOrDefault();
+
+        //            var totalLate = studentRecords.Count(r => r.Attendance_Status == "متأخر");
+        //            var totalAbsent = studentRecords.Count(r => r.Attendance_Status == "غياب");
+
+        //            string mostFrequentType = reportType == "late" ? "تأخر" :
+        //                                      reportType == "absent" ? "غياب" :
+        //                                      mostFrequentDay.PatternType == "mixed" ? "تأخر وغياب" :
+        //                                      mostFrequentDay.PatternType == "late" ? "تأخر" : "غياب";
+
+        //            result.Add(new StudentWeeklyPatternViewModel
+        //            {
+        //                StudentId = student.Student_ID,
+        //                StudentName = student.Student_Name,
+        //                StudentCode = student.Student_Code,
+        //                ClassName = student.ClassRoom?.Class?.Class_Name ?? "غير محدد",
+        //                ClassRoomName = student.ClassRoom?.ClassRoom_Name ?? "غير محدد",
+        //                DayPatterns = dayPatterns.OrderByDescending(d => d.TotalOccurrences).ToList(),
+        //                TotalLate = totalLate,
+        //                TotalAbsent = totalAbsent,
+        //                MostFrequentDay = mostFrequentDay.DayName,
+        //                MostFrequentType = mostFrequentType,
+        //                PatternStrength = (int)mostFrequentDay.Percentage
+        //            });
+        //        }
+
+        //        var summary = CreateWeeklySummary(result, reportType);
+
+        //        var viewModel = new WeeklyPatternReportViewModel
+        //        {
+        //            StartDate = startDate,
+        //            EndDate = endDate,
+        //            ClassId = classId,
+        //            ClassRoomId = classRoomId,
+        //            ClassName = classId.HasValue ? students.FirstOrDefault()?.ClassRoom?.Class?.Class_Name : "جميع الصفوف",
+        //            ClassRoomName = classRoomId.HasValue ? students.FirstOrDefault()?.ClassRoom?.ClassRoom_Name : "جميع الفصول",
+        //            Students = result.OrderByDescending(r => r.PatternStrength).ToList(),
+        //            Summary = summary,
+        //            ReportType = reportType
+        //        };
+
+        //        return Json(new { success = true, data = viewModel });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Json(new { success = false, message = ex.Message });
+        //    }
+        //}
+
+
+        public async Task<IActionResult> GetWeeklyPatternReportStrict(DateTime startDate, DateTime endDate, int? classId, int? classRoomId, string reportType = "both")
+        {
+            try
+            {
+                if (startDate >= endDate)
+                    return Json(new { success = false, message = "تاريخ البداية يجب أن يكون قبل تاريخ النهاية" });
+
+                // حساب عدد الأسابيع الكاملة
+                int totalWeeks = (int)Math.Ceiling((endDate - startDate).TotalDays / 7.0);
+                if (totalWeeks < 2)
+                    return Json(new { success = false, message = "الفترة يجب أن تشمل أسبوعين على الأقل لتحليل الأنماط" });
+
+                // جلب الطلاب
+                var query = _context.TblStudent
+                    .Include(s => s.ClassRoom)
+                    .ThenInclude(cr => cr.Class)
+                    .Where(s => s.Student_Visible == "yes");
+
+                if (classId.HasValue)
+                    query = query.Where(s => s.ClassRoom.Class_ID == classId.Value);
+
+                if (classRoomId.HasValue)
+                    query = query.Where(s => s.ClassRoom_ID == classRoomId.Value);
+
+                var students = await query.ToListAsync();
+                var studentIds = students.Select(s => s.Student_ID).ToList();
+
+                // جلب الحضور حسب الفترة
+                var attendanceRecords = await _context.TblAttendance
+                    .Where(a => a.Attendance_Date.Date >= startDate.Date &&
+                                a.Attendance_Date.Date <= endDate.Date &&
+                                a.Attendance_Visible == "yes" &&
+                                studentIds.Contains(a.Student_ID))
+                    .Select(a => new
+                    {
+                        a.Student_ID,
+                        a.Attendance_Date,
+                        a.Attendance_Status,
+                        WeekNumber = EF.Functions.DateDiffWeek(startDate.Date, a.Attendance_Date.Date) // رقم الأسبوع بالنسبة للبداية
+                    })
+                    .ToListAsync();
+
+                var arabicDays = new Dictionary<DayOfWeek, string>
+        {
+            { DayOfWeek.Sunday, "الأحد" },
+            { DayOfWeek.Monday, "الإثنين" },
+            { DayOfWeek.Tuesday, "الثلاثاء" },
+            { DayOfWeek.Wednesday, "الأربعاء" },
+            { DayOfWeek.Thursday, "الخميس" },
+            { DayOfWeek.Friday, "الجمعة" },
+            { DayOfWeek.Saturday, "السبت" }
+        };
+
+                var result = new List<StudentWeeklyPatternViewModel>();
+
+                foreach (var student in students)
+                {
+                    var studentRecords = attendanceRecords
+                        .Where(r => r.Student_ID == student.Student_ID)
+                        .ToList();
+
+                    if (!studentRecords.Any())
+                        continue;
+
+                    // نجمع لكل يوم الأسبوع عدد الأسابيع اللي ظهر فيها الغياب/التأخر
+                    var dayWeekCounts = new Dictionary<DayOfWeek, int>();
+
+                    foreach (var record in studentRecords)
+                    {
+                        if (reportType == "late" && record.Attendance_Status != "متأخر") continue;
+                        if (reportType == "absent" && record.Attendance_Status != "غياب") continue;
+                        if (reportType == "both" && record.Attendance_Status != "غياب" && record.Attendance_Status != "متأخر") continue;
+
+                        var day = record.Attendance_Date.DayOfWeek;
+                        if (!dayWeekCounts.ContainsKey(day))
+                            dayWeekCounts[day] = 0;
+                        dayWeekCounts[day] = dayWeekCounts[day] + 1; // كل مرة في أسبوع مختلف نزيد
+                    }
+
+                    // احتفظ بالأيام اللي تكررت في كل أسبوع
+                    var repeatedDays = dayWeekCounts.Where(d => d.Value == totalWeeks).ToList();
+                    if (!repeatedDays.Any())
+                        continue; // الطالب ما عندوش نمط ثابت
+
+                    var dayPatterns = new List<DayPatternViewModel>();
+                    foreach (var day in repeatedDays)
+                    {
+                        dayPatterns.Add(new DayPatternViewModel
+                        {
+                            DayName = arabicDays[day.Key],
+                            DayNameEnglish = day.Key.ToString(),
+                            LateCount = studentRecords.Count(r => r.Attendance_Date.DayOfWeek == day.Key && r.Attendance_Status == "متأخر"),
+                            AbsentCount = studentRecords.Count(r => r.Attendance_Date.DayOfWeek == day.Key && r.Attendance_Status == "غياب"),
+                            TotalOccurrences = totalWeeks,
+                            Percentage = 100, // لأنه متكرر في كل أسبوع
+                            PatternType = reportType == "late" ? "late" :
+                                          reportType == "absent" ? "absent" :
+                                          "mixed"
+                        });
+                    }
+
+                    result.Add(new StudentWeeklyPatternViewModel
+                    {
+                        StudentId = student.Student_ID,
+                        StudentName = student.Student_Name,
+                        StudentCode = student.Student_Code,
+                        ClassName = student.ClassRoom?.Class?.Class_Name ?? "غير محدد",
+                        ClassRoomName = student.ClassRoom?.ClassRoom_Name ?? "غير محدد",
+                        DayPatterns = dayPatterns,
+                        TotalLate = studentRecords.Count(r => r.Attendance_Status == "متأخر"),
+                        TotalAbsent = studentRecords.Count(r => r.Attendance_Status == "غياب")
+                    });
+                }
+
+                return Json(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        private WeeklySummaryViewModel CreateWeeklySummary(List<StudentWeeklyPatternViewModel> students, string reportType)
+        {
+            var strongPatternStudents = students
+                .Where(r => r.PatternStrength >= 30)
+                .OrderByDescending(r => r.PatternStrength)
+                .Take(10)
+                .Select(r => new StrongPatternStudentViewModel
+                {
+                    StudentId = r.StudentId,
+                    StudentName = r.StudentName,
+                    StudentCode = r.StudentCode,
+                    PatternDay = r.MostFrequentDay,
+                    PatternType = r.MostFrequentType,
+                    OccurrenceCount = r.DayPatterns.First(d => d.DayName == r.MostFrequentDay).TotalOccurrences,
+                    Percentage = r.PatternStrength
+                })
+                .ToList();
+
+            return new WeeklySummaryViewModel
+            {
+                TotalStudents = students.Count > 0 ? students.First().TotalStudents : 0,
+                StudentsWithPatterns = students.Count,
+                DayPatternsCount = students.GroupBy(r => r.MostFrequentDay)
+                    .ToDictionary(g => g.Key, g => g.Count()),
+                MostFrequentDays = students.GroupBy(r => r.MostFrequentDay)
+                    .OrderByDescending(g => g.Count())
+                    .Take(5)
+                    .ToDictionary(g => g.Key, g => g.Count()),
+                StrongPatternStudents = strongPatternStudents
+            };
+        }
+
+   
     }
 }
 

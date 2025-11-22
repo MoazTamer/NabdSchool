@@ -21,3 +21,6 @@ function loadAttendanceCounts() {
         })
         .catch(err => console.error("Error loading attendance:", err));
 }
+
+
+

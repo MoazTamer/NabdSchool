@@ -1,0 +1,333 @@
+﻿@{
+    var reportType = ViewBag.ReportType as string ?? "both";
+    var reportTitle = ViewBag.ReportTitle as string ?? "تقرير الأنماط الأسبوعية الثابتة";
+    ViewData["Title"] = reportTitle;
+    ViewData["Page"] = reportTitle;
+}
+
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/chart.js" rel="stylesheet" />
+
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .pattern-late {
+        background-color: #fff3cd !important;
+    }
+
+    .pattern-absent {
+        background-color: #f8d7da !important;
+    }
+
+    .pattern-mixed {
+        background-color: #ffeaa7 !important;
+    }
+
+    .pattern-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .badge-late {
+        background-color: #ffc107;
+        color: #000;
+    }
+
+    .badge-absent {
+        background-color: #dc3545;
+        color: #fff;
+    }
+
+    .badge-mixed {
+        background-color: #fd7e14;
+        color: #fff;
+    }
+
+    .day-cell {
+        text-align: center;
+        padding: 8px 4px;
+        border-radius: 4px;
+    }
+
+    .strength-high {
+        background-color: #d4edda;
+    }
+
+    .strength-medium {
+        background-color: #fff3cd;
+    }
+
+    .strength-low {
+        background-color: #f8d7da;
+    }
+
+    .report-tabs {
+        border-bottom: 2px solid #dee2e6;
+        margin-bottom: 20px;
+    }
+
+    .report-tab {
+        padding: 10px 20px;
+        margin-right: 5px;
+        border: 1px solid transparent;
+        border-radius: 5px 5px 0 0;
+        cursor: pointer;
+        background-color: #f8f9fa;
+    }
+
+        .report-tab.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+    table.table-bordered.dataTable thead tr:first-child th, table.table-bordered.dataTable thead tr:first-child td {
+        color: white;
+    }
+</style>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-primary text-white py-3">
+        <h4 class="mb-0"><i class="fas fa-chart-line"></i> @reportTitle</h4>
+    </div>
+
+    <div class="card-body mt-12">
+        <!-- تبويبات التقارير -->
+        <div class="report-tabs">
+            <span class="report-tab @(reportType == "late" ? "active" : "")"
+                  onclick="location.href='@Url.Action("WeeklyLatePatternReport", "Reports")'">
+                <i class="fas fa-clock"></i> تقرير التأخر
+            </span>
+            <span class="report-tab @(reportType == "absent" ? "active" : "")"
+                  onclick="location.href='@Url.Action("WeeklyAbsentPatternReport", "Reports")'">
+                <i class="fas fa-user-times"></i> تقرير الغياب
+            </span>
+        </div>
+
+        <!-- فلتر البحث -->
+        <div class="filter-section bg-light p-4 rounded mb-4">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="startDate">من تاريخ</label>
+                    <input type="date" class="form-control" id="startDate" value="@DateTime.Today.AddDays(-60).ToString("yyyy-MM-dd")">
+                </div>
+                <div class="col-md-3">
+                    <label for="endDate">إلى تاريخ</label>
+                    <input type="date" class="form-control" id="endDate" value="@DateTime.Today.ToString("yyyy-MM-dd")">
+                </div>
+                <div class="col-md-3">
+                    <label for="classFilter">الصف</label>
+                    <select class="form-control" id="classFilter"><option value="">جميع الصفوف</option></select>
+                </div>
+                <div class="col-md-3">
+                    <label for="classRoomFilter">الفصل</label>
+                    <select class="form-control" id="classRoomFilter" disabled><option value="">جميع الفصول</option></select>
+                </div>
+            </div>
+            <div class="row mt-3 text-center">
+                <button id="searchBtn" class="btn btn-primary"><i class="fas fa-search"></i> بحث</button>
+                <button id="resetBtn" class="btn btn-secondary"><i class="fas fa-redo"></i> إعادة تعيين</button>
+            </div>
+        </div>
+
+        <!-- الإحصائيات -->
+        <div id="summarySection" style="display: none;">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card bg-light-info text-center p-3">
+                        <h3 class="text-warning" id="studentsWithPatterns">0</h3>
+                        <p>الطلاب ذوي النمط الثابت</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-light-primary text-center p-3">
+                        <h5 class="text-primary" id="periodDisplay">-</h5>
+                        <p>فترة التقرير</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- الرسم البياني -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header"><h5 class="card-title mb-0">أكثر الأيام تكراراً</h5></div>
+                        <div class="card-body"><canvas id="daysChart" height="250"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الجدول -->
+        <div id="resultsSection" class="mt-4" style="display: none;">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">تفاصيل الأنماط الأسبوعية للطلاب</h5></div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="patternsTable" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>اسم الطالب</th>
+                                    <th>الكود</th>
+                                    <th>الفصل</th>
+                                    <th>اليوم المتكرر</th>
+                                    <th>النوع</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- حالة عدم وجود بيانات -->
+        <div id="emptyState" class="text-center py-5">
+            <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">لا توجد بيانات للعرض</h4>
+            <p class="text-muted">اختر الفترة والفلاتر ثم اضغط على بحث</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        let patternsTable;
+        let daysChart = null;
+        const reportType = '@reportType';
+
+        $(document).ready(function() {
+            loadClasses();
+            initializeTable();
+
+            $('#classFilter').change(function() {
+                const classId = $(this).val();
+                if (classId) {
+                    loadClassRooms(classId);
+                    $('#classRoomFilter').prop('disabled', false);
+                } else {
+                    $('#classRoomFilter').html('<option value="">جميع الفصول</option>').prop('disabled', true);
+                }
+            });
+
+            $('#searchBtn').click(loadReport);
+            $('#resetBtn').click(resetFilters);
+        });
+
+        function loadClasses() {
+            $.get('/Reports/GetClasses', function(response) {
+                if (response.success) {
+                    response.data.forEach(item => $('#classFilter').append(`<option value="${item.id}">${item.name}</option>`));
+                }
+            });
+        }
+
+        function loadClassRooms(classId) {
+            $.get('/Reports/GetClassRooms', { classId }, function(response) {
+                const select = $('#classRoomFilter').html('<option value="">جميع الفصول</option>');
+                if (response.success) response.data.forEach(item => select.append(`<option value="${item.id}">${item.name}</option>`));
+            });
+        }
+
+        function initializeTable() {
+            patternsTable = $('#patternsTable').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json' },
+                pageLength: 10,
+                order: [[3, 'desc']]
+            });
+        }
+
+        function loadReport() {
+            const startDate = $('#startDate').val();
+            const endDate = $('#endDate').val();
+            const classId = $('#classFilter').val() || '';
+            const classRoomId = $('#classRoomFilter').val() || '';
+
+            if (!startDate || !endDate) { Swal.fire('تنبيه', 'اختر الفترة', 'warning'); return; }
+
+            Swal.fire({ title: 'جاري التحميل...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            $.get('/Reports/GetWeeklyPatternReportStrict', { startDate, endDate, classId, classRoomId, reportType }, function(response) {
+                Swal.close();
+                if (response.success) displayReport(response.data);
+                else { Swal.fire('خطأ', response.message, 'error'); hideSections(); }
+            }).fail(() => { Swal.close(); Swal.fire('خطأ', 'حدث خطأ أثناء التحميل', 'error'); hideSections(); });
+        }
+
+        function displayReport(data) {
+            if (!data || !data.length) { hideSections(); Swal.fire('معلومة', 'لا توجد أنماط متكررة', 'info'); return; }
+
+            updateSummary(data);
+            updateTable(data);
+            updateCharts(data);
+
+            $('#emptyState').hide();
+            $('#summarySection').show();
+            $('#resultsSection').show();
+        }
+
+        function updateSummary(students) {
+            $('#studentsWithPatterns').text(students.length);
+            const start = $('#startDate').val(), end = $('#endDate').val();
+            $('#periodDisplay').text(`${start} - ${end}`);
+        }
+
+        function updateTable(students) {
+            patternsTable.clear();
+            students.forEach(s => {
+                s.dayPatterns.forEach(p => {
+                    const patternClass = p.PatternType === 'late' ? 'badge-late' :
+                                         p.PatternType === 'absent' ? 'badge-absent' : 'badge-mixed';
+                    patternsTable.row.add([
+                        s.StudentName,
+                        s.StudentCode,
+                        `${s.ClassName} - ${s.ClassRoomName}`,
+                        p.DayName,
+                        `<span class="pattern-badge ${patternClass}">${p.PatternType === 'late' ? 'تأخر' : p.PatternType === 'absent' ? 'غياب' : 'مختلط'}</span>`
+                    ]);
+                });
+            });
+            patternsTable.draw();
+        }
+
+        function updateCharts(students) {
+            if (daysChart) daysChart.destroy();
+
+            const dayCounts = {};
+            students.forEach(s => s.dayPatterns.forEach(p => { dayCounts[p.DayName] = (dayCounts[p.DayName] || 0) + 1; }));
+
+            const ctx = document.getElementById('daysChart').getContext('2d');
+            daysChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: Object.keys(dayCounts), datasets: [{ label: 'عدد الطلاب', data: Object.values(dayCounts), backgroundColor: ['#ff6384','#36a2eb','#cc65fe','#ffce56','#4bc0c0','#8e5ea2','#3cba9f'] }] },
+                options: { responsive: true, plugins: { title: { display: true, text: 'توزيع الأنماط على أيام الأسبوع' }, legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+        }
+
+        function resetFilters() {
+            $('#startDate').val('@DateTime.Today.AddDays(-60).ToString("yyyy-MM-dd")');
+            $('#endDate').val('@DateTime.Today.ToString("yyyy-MM-dd")');
+            $('#classFilter').val('');
+            $('#classRoomFilter').val('').prop('disabled', true);
+            hideSections();
+        }
+
+        function hideSections() {
+            $('#summarySection').hide();
+            $('#resultsSection').hide();
+            $('#emptyState').show();
+            if (daysChart) { daysChart.destroy(); daysChart = null; }
+        }
+    </script>
+}

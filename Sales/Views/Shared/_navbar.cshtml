@@ -178,6 +178,7 @@
 					<span class="menu-title">أكثر الطلاب تأخرًا</span>
 				</a>
 			</div>
+		
 			<!--end:Menu item-->
 
 			<div class="menu-inner flex-column collapse">
@@ -190,11 +191,20 @@
 
 			<!--begin:Menu item - التأخر حسب اليوم-->
 			<div class="menu-item">
-				<a class="@Html.IsSelected(actions: "MostLateByDay", controllers: "Reports")" asp-controller="Reports" asp-action="MostLateByDay">
+				<a class="@Html.IsSelected(actions: "WeeklyLatePatternReport", controllers: "Reports")" asp-controller="Reports" asp-action="WeeklyLatePatternReport">
 					<span class="menu-bullet">
 						<span class="bullet bullet-dot"></span>
 					</span>
 					<span class="menu-title">التأخر حسب يوم الأسبوع</span>
+				</a>
+			</div>
+
+			<div class="menu-item">
+				<a class="@Html.IsSelected(actions: "WeeklyAbsentPatternReport", controllers: "Reports")" asp-controller="Reports" asp-action="WeeklyAbsentPatternReport">
+					<span class="menu-bullet">
+						<span class="bullet bullet-dot"></span>
+					</span>
+					<span class="menu-title">الغياب حسب يوم الأسبوع</span>
 				</a>
 			</div>
 			<!--end:Menu item-->

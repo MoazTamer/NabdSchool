@@ -12,6 +12,7 @@ namespace SalesModel.ViewModels.Reports
         public string StudentName { get; set; }
         public string StudentCode { get; set; }
         public string StudentPhone { get; set; }
+        public TimeSpan? AttendanceTime { get; set; }
         public int ConsecutiveAbsenceDays { get; set; }
         public string Notes { get; set; }
     }

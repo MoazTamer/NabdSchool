@@ -351,7 +351,7 @@
                         <div class="table-responsive">
                             <table class="table table-row-bordered table-row-gray-100 align-middle gy-4 gs-9 mb-0">
                                 <thead>
-                                    <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
+                                    <tr class="fw-bold fs-6 text-ligth border-bottom-2 border-gray-200">
                                         <th class="text-center" width="50">#</th>
                                         <th>اسم الطالب</th>
                                         <th class="text-center" width="150">كود الطالب</th>
@@ -428,7 +428,6 @@
                         };
                         reader.readAsText(xhr.response);
                     } else {
-                        // الاستجابة PDF (نجاح)
                         const blob = xhr.response;
                         const url = window.URL.createObjectURL(blob);
                         const a = document.createElement('a');

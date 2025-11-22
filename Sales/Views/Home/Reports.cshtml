@@ -223,7 +223,7 @@
                 </div>
                 <!--end::Student Reports-->
              
-                @* <!--begin::Advanced Reports-->
+                <!--begin::Advanced Reports-->
                 <div class="col-12">
                     <div class="card shadow-sm">
                         <div class="card-header bg-light-success">
@@ -236,7 +236,7 @@
                             <div class="row g-5">
                                 <!--begin::Most Late By Day-->
                                 <div class="col-md-6 col-xl-4">
-                                    <a href="@Url.Action("MostLateByDay", "Reports")" class="card card-flush h-100 hover-elevate-up">
+                                    <a href="@Url.Action("WeeklyLatePatternReport", "Reports")" class="card card-flush h-100 hover-elevate-up">
                                         <div class="card-body d-flex flex-column p-8">
                                             <div class="d-flex align-items-center mb-5">
                                                 <div class="symbol symbol-60px me-5">
@@ -245,12 +245,12 @@
                                                     </span>
                                                 </div>
                                                 <div class="flex-grow-1">
-                                                    <span class="text-gray-800 fw-bold fs-5 d-block">التأخر حسب يوم الأسبوع</span>
+                                                    <span class="text-gray-800 fw-bold fs-5 d-block">التأخر او الغياب حسب يوم الأسبوع</span>
                                                     <span class="text-gray-500 fw-semibold fs-7">تحليلي</span>
                                                 </div>
                                             </div>
                                             <p class="text-gray-600 fs-7 mb-5">
-                                                تحليل الطلاب الأكثر تأخرًا في يوم معين من أيام الأسبوع (مثل: السبت، الأحد)
+                                                تحليل الطلاب الأكثر تأخرًا او غيابا في يوم معين من أيام الأسبوع (مثل: السبت، الأحد)
                                             </p>
                                             <div class="d-flex align-items-center mt-auto">
                                                 <span class="badge badge-light-success fs-8 me-2">أسبوعي</span>
@@ -261,24 +261,13 @@
                                     </a>
                                 </div>
                                 <!--end::Most Late By Day-->
-                              <!--
-                                <!--begin::Placeholder for future reports-->
-                                <div class="col-md-6 col-xl-4">
-                                    <div class="card card-flush h-100 bg-light-secondary">
-                                        <div class="card-body d-flex flex-column justify-content-center align-items-center p-8">
-                                            <i class="ki-outline ki-plus-circle fs-5x text-gray-400 mb-5"></i>
-                                            <span class="text-gray-600 fw-bold fs-6">قريباً</span>
-                                            <span class="text-gray-500 fs-7 mt-2">تقارير إضافية</span>
-                                        </div>
-                                    </div>
-                                </div>
+                             
                                 <!--end::Placeholder-->
-                                -->
                             </div>
                         </div>
                     </div>
                 </div>
-                <!--end::Advanced Reports--> *@
+                <!--end::Advanced Reports-->
             </div>
             <!--end::Categories-->
        

@@ -1,5 +1,7 @@
 ﻿@{
     ViewData["Title"] = "أكثر الطلاب غياب";
+    ViewData["Page"] = "أكثر الطلاب غباب";
+
 }
 
 <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
@@ -22,9 +24,11 @@
     }
 
     .medium-absence {
-        color: #ffc107;
+        color: #0d6efd !important; 
         font-weight: bold;
     }
+
+
 
     .low-absence {
         color: #28a745;
@@ -41,6 +45,9 @@
     .progress {
         height: 10px;
     }
+
+    
+
 </style>
 
 <div class="card shadow-sm mt-4">
@@ -120,6 +127,7 @@
                         <th>الفصل</th>
                         <th>أيام الغياب</th>
                         <th>نسبة الغياب</th>
+                        <th>التفاصيل</th>
                     </tr>
                 </thead>
             </table>
