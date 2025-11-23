@@ -24,7 +24,8 @@ namespace Sales.Controllers
             _authorizationService = authorizationService;
         }
 
-        [Authorize(Policy = "Class_View")]
+        //[Authorize(Policy = "Class_View")]
+        [Authorize]
         [HttpGet]
         public IActionResult Index()
         {
@@ -73,7 +74,8 @@ namespace Sales.Controllers
 
         #region Class CRUD
 
-        [Authorize (Policy = "Class_Create")]
+        //[Authorize (Policy = "Class_Create")]
+        [Authorize]
         [HttpGet]
         public IActionResult CreateClass()
         {

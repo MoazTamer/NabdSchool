@@ -19,32 +19,32 @@ namespace SalesModel.ViewModels
 			new Claim("UsersPermissionDelete","0"),
             //-----------------------------------------------------------------------------------
             new Claim("الصفوف","Class"),
-            new Claim("Class_View","Class_View"),
-            new Claim("Class_Create","Class_Create"),
-            new Claim("Class_Edit","Class_Edit"),
-            new Claim("Class_Delete","Class_Delete"),
+            new Claim("Class_View1","Class_View1"),
+            new Claim("Class_Create1","Class_Create1"),
+            new Claim("Class_Edit1","Class_Edit1"),
+            new Claim("Class_Delete1","Class_Delete1"),
 
 			//-----------------------------------------------------------------------------------
 			new Claim("الفصول","ClassRoom"),
-			new Claim("ClassRoom_View","ClassRoom_View"),
-			new Claim("ClassRoom_Create","ClassRoom_Create"),
-			new Claim("ClassRoom_Edit","ClassRoom_Edit"),
-			new Claim("ClassRoom_Delete","ClassRoom_Delete"),
+			new Claim("ClassRoom_View1","ClassRoom_View1"),
+			new Claim("ClassRoom_Create1","ClassRoom_Create1"),
+			new Claim("ClassRoom_Edit1","ClassRoom_Edit1"),
+			new Claim("ClassRoom_Delete1","ClassRoom_Delete1"),
 
 			//-----------------------------------------------------------------------------------
 			new Claim("الطلاب","Student"),
-			new Claim("Student_View","Student_View"),
-			new Claim("Student_Create","Student_Create"),
-			new Claim("Student_Edit","Student_Edit"),
-			new Claim("Student_Delete","Student_Delete"),
+			new Claim("Student_View1","Student_View1"),
+			new Claim("Student_Create1","Student_Create1"),
+			new Claim("Student_Edit1","Student_Edit1"),
+			new Claim("Student_Delete1","Student_Delete1"),
 
             //-----------------------------------------------------------------------------------
 			
-			new Claim("اعدادات المدرسة","SchoolSettings"),
-			new Claim("SchoolSettings.View","SchoolSettings.View"),
-			new Claim("SchoolSettings.Edit","SchoolSettings.Edit"),
-			new Claim("SchoolSettings.Edit","SchoolSettings.Edit"),
-			new Claim("SchoolSettings.Edit","SchoolSettings.Edit"),
+			new Claim("اعدادات المدرسة","اعدادات المدرسة"),
+			new Claim("SchoolSettings.View1","SchoolSettings.View"),
+			new Claim("SchoolSettings.Edit1","0"),
+			new Claim("SchoolSettings.Edit1","SchoolSettings.Edit1"),
+			new Claim("SchoolSettings.Edit1","0"),
 
         };
 	}

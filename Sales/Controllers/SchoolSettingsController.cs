@@ -28,7 +28,8 @@ namespace Sales.Controllers
             _context = context;
         }
 
-        [Authorize(Roles = "SchoolSettings.View")]
+        //[Authorize (Policy = "SchoolSettings.View")]
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -56,7 +57,8 @@ namespace Sales.Controllers
             }
         }
 
-        [Authorize(Roles = "SchoolSettings.Edit")]
+        //[Authorize (Policy = "SchoolSettings.Edit")]
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveAttendanceTime(ModelSchoolSettings model)

@@ -62,23 +62,23 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("UsersPermission_Edit", policy => policy.RequireClaim("UsersPermissionEdit", "True"));
 
     
-    options.AddPolicy("Class_View", policy => policy.RequireClaim("Permission", "Class_View"));
-    options.AddPolicy("Class_Create", policy => policy.RequireClaim("Permission", "Class_Create"));
-    options.AddPolicy("Class_Edit", policy => policy.RequireClaim("Permission", "Class_Edit"));
-    options.AddPolicy("Class_Delete", policy => policy.RequireClaim("Permission", "Class_Delete"));
+    options.AddPolicy("Class_View1", policy => policy.RequireClaim("Class_View1", "True"));
+    options.AddPolicy("Class_Create1", policy => policy.RequireClaim("Class_Create1", "True"));
+    options.AddPolicy("Class_Edit1", policy => policy.RequireClaim("Class_Edit1", "True"));
+    options.AddPolicy("Class_Delete1", policy => policy.RequireClaim("Class_Delete1", "True"));
 
-    options.AddPolicy("ClassRoom_View", policy => policy.RequireClaim("Permission", "ClassRoom_View"));
-    options.AddPolicy("ClassRoom_Create", policy => policy.RequireClaim("Permission", "ClassRoom_Create"));
-    options.AddPolicy("ClassRoom_Edit", policy => policy.RequireClaim("Permission", "ClassRoom_Edit"));
-    options.AddPolicy("ClassRoom_Delete", policy => policy.RequireClaim("Permission", "ClassRoom_Delete"));
+    options.AddPolicy("ClassRoom_View1", policy => policy.RequireClaim("ClassRoom_View1", "True"));
+    options.AddPolicy("ClassRoom_Create1", policy => policy.RequireClaim("ClassRoom_Create1", "True"));
+    options.AddPolicy("ClassRoom_Edit1", policy => policy.RequireClaim("ClassRoom_Edit1", "True"));
+    options.AddPolicy("ClassRoom_Delete1", policy => policy.RequireClaim("ClassRoom_Delete1", "True"));
 
-    options.AddPolicy("Student_View", policy => policy.RequireClaim("Permission", "Student_View"));
-    options.AddPolicy("Student_Create", policy => policy.RequireClaim("Permission", "Student_Create"));
-    options.AddPolicy("Student_Edit", policy => policy.RequireClaim("Permission", "Student_Edit"));
-    options.AddPolicy("Student_Delete", policy => policy.RequireClaim("Permission", "Student_Delete"));
+    options.AddPolicy("Student_View1", policy => policy.RequireClaim("Student_View1", "True"));
+    options.AddPolicy("Student_Create1", policy => policy.RequireClaim("Student_Create1", "True"));
+    options.AddPolicy("Student_Edit1", policy => policy.RequireClaim("Student_Edit1", "True"));
+    options.AddPolicy("Student_Delete1", policy => policy.RequireClaim("Student_Delete1", "True"));
 
-    options.AddPolicy("SchoolSettings.View", policy => policy.RequireClaim("SchoolSettings.View", "True"));
-    options.AddPolicy("SchoolSettings.Edit", policy => policy.RequireClaim("SchoolSettings.Edit", "True"));
+    options.AddPolicy("SchoolSettings.View1", policy => policy.RequireClaim("SchoolSettings.View1", "True"));
+    options.AddPolicy("SchoolSettings.Edit1", policy => policy.RequireClaim("SchoolSettings.Edit1", "True"));
 
     options.AddPolicy("HangfirePolicy", p =>
         p.RequireAuthenticatedUser()
