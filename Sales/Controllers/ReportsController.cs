@@ -800,7 +800,7 @@ namespace Sales.Controllers
         public IActionResult StudentReport(string studentCode, DateTime? fromDate, DateTime? date)
         {
             ViewBag.StudentCode = studentCode;
-            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd") ?? DateTime.Today.AddDays(-30).ToString("yyyy-MM-dd");
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd");
             ViewBag.Date = date?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd");
             return View();
         }
@@ -812,7 +812,8 @@ namespace Sales.Controllers
             try
             {
                 var reportDate = date?.Date ?? DateTime.Today;
-                var minDate = fromDate?.Date ?? reportDate.AddDays(-30);
+                var minDate = reportDate;
+                //var minDate = fromDate?.Date ?? reportDate.AddDays(-30);
                 //var minDate = reportDate.AddDays(-30);
 
                 var code = studentCode.Trim();
