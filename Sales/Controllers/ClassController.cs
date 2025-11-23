@@ -24,8 +24,8 @@ namespace Sales.Controllers
             _authorizationService = authorizationService;
         }
 
-        //[Authorize(Policy = "Class_View")]
-        [Authorize]
+        [Authorize(Policy = "Class_View1")]
+        //[Authorize]
         [HttpGet]
         public IActionResult Index()
         {
@@ -74,14 +74,14 @@ namespace Sales.Controllers
 
         #region Class CRUD
 
-        //[Authorize (Policy = "Class_Create")]
-        [Authorize]
+        [Authorize (Policy = "Class_Create1")]
+        //[Authorize]
         [HttpGet]
         public IActionResult CreateClass()
         {
             try
             {
-                if (!(_authorizationService.AuthorizeAsync(User, "Class_Create").Result).Succeeded)
+                if (!(_authorizationService.AuthorizeAsync(User, "Class_Create1").Result).Succeeded)
                 {
                     return PartialView("_AuthorizedAdd");
                 }
@@ -101,7 +101,7 @@ namespace Sales.Controllers
         {
             try
             {
-                if (!(_authorizationService.AuthorizeAsync(User, "Class_Create").Result).Succeeded)
+                if (!(_authorizationService.AuthorizeAsync(User, "Class_Create1").Result).Succeeded)
                 {
                     return Json(new { isValid = false, title = Title, message = "من فضلك تأكد من وجود صلاحية لفتح هذة النافذة" });
                 }
@@ -140,7 +140,7 @@ namespace Sales.Controllers
         {
             try
             {
-                if (!(_authorizationService.AuthorizeAsync(User, "Class_Edit").Result).Succeeded)
+                if (!(_authorizationService.AuthorizeAsync(User, "Class_Edit1").Result).Succeeded)
                 {
                     return PartialView("_AuthorizedEdit");
                 }
@@ -175,7 +175,7 @@ namespace Sales.Controllers
         {
             try
             {
-                if (!(_authorizationService.AuthorizeAsync(User, "Class_Edit").Result).Succeeded)
+                if (!(_authorizationService.AuthorizeAsync(User, "Class_Edit1").Result).Succeeded)
                 {
                     return Json(new { isValid = false, title = Title, message = "من فضلك تأكد من وجود صلاحية لفتح هذة النافذة" });
                 }
@@ -204,12 +204,13 @@ namespace Sales.Controllers
             }
         }
 
+        [Authorize (Policy = "Class_Delete1")]
         [HttpPost]
         public async Task<IActionResult> DeleteClass(int id)
         {
             try
             {
-                if (!(_authorizationService.AuthorizeAsync(User, "Class_Delete").Result).Succeeded)
+                if (!(_authorizationService.AuthorizeAsync(User, "Class_Delete1").Result).Succeeded)
                 {
                     return Json(new { isValid = false, title = Title, message = "من فضلك تأكد من وجود صلاحية لفتح هذة النافذة" });
                 }
@@ -236,12 +237,13 @@ namespace Sales.Controllers
 
         #region ClassRoom CRUD
 
+        [Authorize (Policy = "ClassRoom_Create1")]
         [HttpGet]
         public IActionResult CreateClassRoom(int classId)
         {
             try
             {
-                if (!(_authorizationService.AuthorizeAsync(User, "ClassRoom_Create").Result).Succeeded)
+                if (!(_authorizationService.AuthorizeAsync(User, "ClassRoom_Create1").Result).Succeeded)
                 {
                     return PartialView("_AuthorizedAdd");
                 }
@@ -263,7 +265,7 @@ namespace Sales.Controllers
         {
             try
             {
-                if (!(_authorizationService.AuthorizeAsync(User, "ClassRoom_Create").Result).Succeeded)
+                if (!(_authorizationService.AuthorizeAsync(User, "ClassRoom_Create1").Result).Succeeded)
                 {
                     return Json(new { isValid = false, title = "الفصول", message = "من فضلك تأكد من وجود صلاحية لفتح هذة النافذة" });
                 }
@@ -303,7 +305,7 @@ namespace Sales.Controllers
         {
             try
             {
-                if (!(_authorizationService.AuthorizeAsync(User, "ClassRoom_Edit").Result).Succeeded)
+                if (!(_authorizationService.AuthorizeAsync(User, "ClassRoom_Edit1").Result).Succeeded)
                 {
                     return PartialView("_AuthorizedEdit");
                 }
@@ -343,7 +345,7 @@ namespace Sales.Controllers
         {
             try
             {
-                if (!(_authorizationService.AuthorizeAsync(User, "ClassRoom_Edit").Result).Succeeded)
+                if (!(_authorizationService.AuthorizeAsync(User, "ClassRoom_Edit1").Result).Succeeded)
                 {
                     return Json(new { isValid = false, title = "الفصول", message = "من فضلك تأكد من وجود صلاحية لفتح هذة النافذة" });
                 }
@@ -377,7 +379,7 @@ namespace Sales.Controllers
         {
             try
             {
-                if (!(_authorizationService.AuthorizeAsync(User, "ClassRoom_Delete").Result).Succeeded)
+                if (!(_authorizationService.AuthorizeAsync(User, "ClassRoom_Delete1").Result).Succeeded)
                 {
                     return Json(new { isValid = false, title = "الفصول", message = "من فضلك تأكد من وجود صلاحية لفتح هذة النافذة" });
                 }

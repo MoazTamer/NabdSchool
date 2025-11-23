@@ -77,8 +77,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Student_Edit1", policy => policy.RequireClaim("Student_Edit1", "True"));
     options.AddPolicy("Student_Delete1", policy => policy.RequireClaim("Student_Delete1", "True"));
 
-    options.AddPolicy("SchoolSettings.View1", policy => policy.RequireClaim("SchoolSettings.View1", "True"));
-    options.AddPolicy("SchoolSettings.Edit1", policy => policy.RequireClaim("SchoolSettings.Edit1", "True"));
+    options.AddPolicy("SchoolSettings_View", policy => policy.RequireClaim("SchoolSettings_View", "True"));
+    options.AddPolicy("SchoolSettings_Edit", policy => policy.RequireClaim("SchoolSettings_Edit", "True"));
 
     options.AddPolicy("HangfirePolicy", p =>
         p.RequireAuthenticatedUser()

@@ -111,7 +111,7 @@ namespace Sales.Controllers
 
         #region Student CRUD
 
-        //[Authorize (Policy = "Student_Create")]
+        [Authorize (Policy = "Student_Create1")]
         [HttpGet]
         public IActionResult CreateStudent()
         {
@@ -136,7 +136,7 @@ namespace Sales.Controllers
             }
         }
 
-        //[Authorize(Policy = "Student_Create")]
+        [Authorize(Policy = "Student_Create1")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateStudent(ModelStudent model)
@@ -185,7 +185,7 @@ namespace Sales.Controllers
             }
         }
 
-        //[Authorize (Policy = "Student_Edit")]
+        [Authorize (Policy = "Student_Edit1")]
         [HttpGet]
         public IActionResult EditStudent(int id)
         {
@@ -292,7 +292,7 @@ namespace Sales.Controllers
             }
         }
 
-        //[Authorize (Policy = "Student_Delete")]
+        [Authorize (Policy = "Student_Delete1")]
         [HttpPost]
         public async Task<IActionResult> DeleteStudent(int id)
         {
@@ -327,7 +327,7 @@ namespace Sales.Controllers
 
         #region Import from Excel
 
-        //[Authorize (Policy = "Student_Create")]
+        [Authorize (Policy = "Student_Create1")]
         [Authorize]
         [HttpGet]
         public IActionResult ImportStudents()

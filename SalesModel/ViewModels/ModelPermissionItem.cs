@@ -41,9 +41,9 @@ namespace SalesModel.ViewModels
             //-----------------------------------------------------------------------------------
 			
 			new Claim("اعدادات المدرسة","اعدادات المدرسة"),
-			new Claim("SchoolSettings.View1","SchoolSettings.View"),
+			new Claim("SchoolSettings_View","SchoolSettings_View"),
 			new Claim("SchoolSettings.Edit1","0"),
-			new Claim("SchoolSettings.Edit1","SchoolSettings.Edit1"),
+			new Claim("SchoolSettings_Edit","SchoolSettings_Edit"),
 			new Claim("SchoolSettings.Edit1","0"),
 
         };
