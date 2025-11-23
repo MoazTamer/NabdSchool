@@ -315,104 +315,17 @@
 <!--end::Content wrapper-->
 @section Scripts
 {
-	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-	<script>
-		// Update current time and date
-		function updateDateTime() {
-			const now = new Date();
-			const timeString = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-			const dateString = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-			document.getElementById('currentTime').textContent = timeString;
-			document.getElementById('currentDate').textContent = dateString;
-		}
+    <script>
+        window.dashboardData = {
+            totalStudents: @Model.TotalStudents,
+            present: @Model.Present,
+            absent: @Model.Absent
+        };
+    </script>
 
-		updateDateTime();
-		setInterval(updateDateTime, 1000);
-
-		// Initialize data from model
-		let totalStudents = @Model.TotalStudents;
-		let presentCount = @Model.Present;
-		let absentCount = @Model.Absent;
-
-		// Calculate percentages
-		function updateStatistics() {
-			const presentPercentage = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
-			const absentPercentage = totalStudents > 0 ? Math.round((absentCount / totalStudents) * 100) : 0;
-
-			// Update progress bars
-			document.getElementById('presentProgress').style.width = presentPercentage + '%';
-			document.getElementById('absentProgress').style.width = absentPercentage + '%';
-
-			// Update attendance percentage
-			document.getElementById('attendancePercentage').textContent = presentPercentage + '%';
-			document.getElementById('chartPercentage').textContent = presentPercentage + '%';
-		}
-
-		// Initialize Chart.js
-		const ctx = document.getElementById('attendanceChart');
-		const attendanceChart = new Chart(ctx, {
-			type: 'doughnut',
-			data: {
-				labels: ['حاضر', 'غائب'],
-				datasets: [{
-					data: [presentCount, absentCount],
-					backgroundColor: ['#50cd89', '#f1416c'],
-					borderWidth: 0
-				}]
-			},
-			options: {
-				responsive: true,
-				maintainAspectRatio: true,
-				cutout: '75%',
-				plugins: {
-					legend: {
-						display: false
-					},
-					tooltip: {
-						enabled: true,
-						rtl: true,
-						textDirection: 'rtl'
-					}
-				}
-			}
-		});
-
-		// Load fresh data from server
-		function loadAttendanceData() {
-			fetch('@Url.Action("GetTodayAttendanceStats", "Home")')
-				.then(response => response.json())
-				.then(data => {
-					// Update values
-					totalStudents = data.totalStudents;
-					presentCount = data.present;
-					absentCount = data.absent;
-
-					// Update UI
-					document.getElementById('presentCount').textContent = presentCount;
-					document.getElementById('absentCount').textContent = absentCount;
-					document.getElementById('totalStudents').textContent = totalStudents;
-					document.getElementById('presentBadge').textContent = presentCount;
-					document.getElementById('absentBadge').textContent = absentCount;
-
-					// Update chart
-					attendanceChart.data.datasets[0].data = [presentCount, absentCount];
-					attendanceChart.update();
-
-					// Update statistics
-					updateStatistics();
-				})
-				.catch(error => {
-					console.error('Error loading attendance data:', error);
-				});
-		}
-
-		// Initial update
-		updateStatistics();
-
-		// Reload data every 30 seconds
-		setInterval(loadAttendanceData, 30000);
-	</script>
+    <script src="~/js/Home.js"></script>
 }
 
 

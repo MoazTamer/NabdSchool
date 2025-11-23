@@ -162,31 +162,32 @@ namespace Sales.Controllers
 
                     foreach (var sid in absentIds)
                     {
-                        int consecutive = 0;
-                        var current = reportDate.Date;
-
                         studentDateStatus.TryGetValue(sid, out var dateStatusMap);
 
-                        // count consecutive days: only count when there is a record AND status == "غياب"
-                        for (int i = 0; i < 30; i++)
+                        int maxConsecutive = 0;
+                        int currentStreak = 0;
+
+                        // نمشي من أقدم يوم إلى أحدث يوم
+                        for (int i = 30; i >= 0; i--)
                         {
-                            if (dateStatusMap != null && dateStatusMap.TryGetValue(current, out var statusOnDay))
+                            var day = reportDate.AddDays(-i).Date;
+
+                            if (dateStatusMap != null && dateStatusMap.TryGetValue(day, out var statusOnDay))
                             {
-                                // there is a record for this date
                                 if (string.Equals(statusOnDay, "غياب", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    consecutive++;
-                                    current = current.AddDays(-1);
-                                    continue;
+                                    currentStreak++;
+                                    if (currentStreak > maxConsecutive)
+                                        maxConsecutive = currentStreak;
                                 }
                                 else
                                 {
-                                    break;
+                                    currentStreak = 0;
                                 }
                             }
                             else
                             {
-                                break;
+                                currentStreak = 0;
                             }
                         }
 
@@ -198,8 +199,8 @@ namespace Sales.Controllers
                             StudentName = st.Student_Name,
                             StudentCode = st.Student_Code,
                             StudentPhone = st.Student_Phone,
-                            ConsecutiveAbsenceDays = consecutive,
-                            Notes = consecutive >= 3 ? "تحذير: غياب متكرر" : ""
+                            ConsecutiveAbsenceDays = maxConsecutive,
+                            Notes = maxConsecutive >= 3 ? "تحذير: غياب متكرر" : ""
                         });
                     }
 
@@ -325,33 +326,32 @@ namespace Sales.Controllers
 
                     foreach (var sid in absentStudentIds)
                     {
-                        // نحسب الأيام المتتالية للغياب: نتحقق يومًا يومًا للخلف حتى نجد يوم فيه سجل مختلف عن "غياب" أو لا يوجد سجل
-                        int consecutive = 0;
-                        var current = reportDate;
+                        studentDateStatus.TryGetValue(sid, out var dateStatusMap);
 
-                        studentDateStatus.TryGetValue(sid, out var dateStatusMap); // قد يكون null
+                        int maxConsecutive = 0;
+                        int currentStreak = 0;
 
-                        for (int i = 0; i < 30; i++)
+                        // نمشي من أقدم يوم إلى أحدث يوم
+                        for (int i = 30; i >= 0; i--)
                         {
-                            if (dateStatusMap != null && dateStatusMap.TryGetValue(current, out var statusOnDay))
+                            var day = reportDate.AddDays(-i).Date;
+
+                            if (dateStatusMap != null && dateStatusMap.TryGetValue(day, out var statusOnDay))
                             {
-                                // if status exists and is 'غياب' -> count it and move to previous day
                                 if (string.Equals(statusOnDay, "غياب", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    consecutive++;
-                                    current = current.AddDays(-1);
-                                    continue;
+                                    currentStreak++;
+                                    if (currentStreak > maxConsecutive)
+                                        maxConsecutive = currentStreak;
                                 }
                                 else
                                 {
-                                    // found a presence (حضور/متأخر/غيره) -> stop counting
-                                    break;
+                                    currentStreak = 0;
                                 }
                             }
                             else
                             {
-                                // no record for this date => stop counting (we treat absence sequence as broken)
-                                break;
+                                currentStreak = 0;
                             }
                         }
 
@@ -363,8 +363,8 @@ namespace Sales.Controllers
                             StudentName = st.Student_Name,
                             StudentCode = st.Student_Code,
                             StudentPhone = st.Student_Phone,
-                            ConsecutiveAbsenceDays = consecutive,
-                            Notes = consecutive >= 3 ? "تحذير: غياب متكرر" : ""
+                            ConsecutiveAbsenceDays = maxConsecutive,
+                            Notes = maxConsecutive >= 3 ? "تحذير: غياب متكرر" : ""
                         });
                     }
 
@@ -524,30 +524,32 @@ namespace Sales.Controllers
 
                     foreach (var sid in classLateIds)
                     {
-                        int consecutive = 0;
-                        var current = reportDate.Date;
-
                         studentDateStatus.TryGetValue(sid, out var dateStatusMap);
 
-                        // count consecutive late days
-                        for (int i = 0; i < 30; i++)
+                        int maxConsecutive = 0;
+                        int currentStreak = 0;
+
+                        // loop from oldest day to newest within last 30 days
+                        for (int i = 30; i >= 0; i--)
                         {
-                            if (dateStatusMap != null && dateStatusMap.TryGetValue(current, out var statusOnDay))
+                            var day = reportDate.AddDays(-i).Date;
+
+                            if (dateStatusMap != null && dateStatusMap.TryGetValue(day, out var statusOnDay))
                             {
                                 if (string.Equals(statusOnDay, "متأخر", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    consecutive++;
-                                    current = current.AddDays(-1);
-                                    continue;
+                                    currentStreak++;
+                                    if (currentStreak > maxConsecutive)
+                                        maxConsecutive = currentStreak;
                                 }
                                 else
                                 {
-                                    break;
+                                    currentStreak = 0;
                                 }
                             }
                             else
                             {
-                                break;
+                                currentStreak = 0;
                             }
                         }
 
@@ -567,8 +569,8 @@ namespace Sales.Controllers
                             StudentCode = st.Student_Code,
                             StudentPhone = st.Student_Phone,
                             AttendanceTime = attendanceTime, // إضافة معاد الحضور
-                            ConsecutiveAbsenceDays = consecutive,
-                            Notes = consecutive >= 3 ? "تحذير: تأخر متكرر" : ""
+                            ConsecutiveAbsenceDays = maxConsecutive,
+                            Notes = maxConsecutive >= 3 ? "تحذير: تأخر متكرر" : ""
                         });
                     }
 
@@ -709,26 +711,35 @@ namespace Sales.Controllers
 
                     foreach (var sid in classLateIds)
                     {
-                        int consecutive = 0;
-                        var current = reportDate;
-
                         studentDateStatus.TryGetValue(sid, out var dateStatusMap);
 
-                        // حساب الأيام المتتالية للتأخر
-                        for (int i = 0; i < 30; i++)
+                        int maxConsecutive = 0;
+                        int currentStreak = 0;
+
+                        // loop from oldest day to newest within last 30 days
+                        for (int i = 30; i >= 0; i--)
                         {
-                            if (dateStatusMap != null && dateStatusMap.TryGetValue(current, out var statusOnDay))
+                            var day = reportDate.AddDays(-i).Date;
+
+                            if (dateStatusMap != null && dateStatusMap.TryGetValue(day, out var statusOnDay))
                             {
                                 if (string.Equals(statusOnDay, "متأخر", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    consecutive++;
-                                    current = current.AddDays(-1);
-                                    continue;
+                                    currentStreak++;
+                                    if (currentStreak > maxConsecutive)
+                                        maxConsecutive = currentStreak;
                                 }
-                                else break;
+                                else
+                                {
+                                    currentStreak = 0;
+                                }
                             }
-                            else break;
+                            else
+                            {
+                                currentStreak = 0;
+                            }
                         }
+
 
                         var st = activeStudents.First(s => s.Student_ID == sid);
 
@@ -746,8 +757,8 @@ namespace Sales.Controllers
                             StudentCode = st.Student_Code,
                             StudentPhone = st.Student_Phone,
                             AttendanceTime = attendanceTime, // إضافة معاد الحضور
-                            ConsecutiveAbsenceDays = consecutive,
-                            Notes = consecutive >= 3 ? "تحذير: تأخر متكرر" : ""
+                            ConsecutiveAbsenceDays = maxConsecutive,
+                            Notes = maxConsecutive >= 3 ? "تحذير: تأخر متكرر" : ""
                         });
                     }
 
