@@ -87,6 +87,10 @@
 
                     // تحديث الإحصائيات
                     updateStatistics(json.data);
+
+                    $("#studentNameHeader").show();
+                    $("#studentNameDisplay").text(json.data.studentName);
+
                 } else {
                     Swal.fire({ text: json.message, icon: "error", confirmButtonText: "موافق" });
                     datatable.clear().draw();
@@ -107,6 +111,10 @@
         $("#totalAbsent").text(data.totalAbsent || 0);
         $("#consecutiveLate").text(data.consecutiveLate || 0);
         $("#consecutiveAbsent").text(data.consecutiveAbsent || 0);
+
+        $("#studentNameHeader").show();
+        $("#studentNameDisplay").text(data.StudentName);
+
 
         // حساب إجمالي الأيام
         const totalDays = (data.totalPresent || 0) + (data.totalLate || 0) + (data.totalAbsent || 0);

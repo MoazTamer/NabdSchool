@@ -1,5 +1,5 @@
 ﻿$(document).ready(function () {
-
+    
     function updateDateTime() {
         const now = new Date();
         const timeString = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });

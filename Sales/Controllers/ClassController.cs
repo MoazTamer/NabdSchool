@@ -45,20 +45,21 @@ namespace Sales.Controllers
         {
             try
             {
-                var classes = _unitOfWork.TblClass.GetAll(obj => obj.Class_Visible == "yes").ToList();
+                var classes = _unitOfWork.TblClass.GetAll(c => c.Class_Visible == "yes").ToList();
+                var classRooms = _unitOfWork.TblClassRoom.GetAll(cr => cr.ClassRoom_Visible == "yes").ToList();
+                var students = _unitOfWork.TblStudent.GetAll(s => s.Student_Visible == "yes").ToList();
 
                 var data = classes.Select(c => new
                 {
                     class_ID = c.Class_ID,
                     class_Name = c.Class_Name,
-                    classRooms = _unitOfWork.TblClassRoom.GetAll(cr => cr.Class_ID == c.Class_ID && cr.ClassRoom_Visible == "yes")
+                    classRooms = classRooms
+                        .Where(cr => cr.Class_ID == c.Class_ID)
                         .Select(cr => new
                         {
                             classRoom_ID = cr.ClassRoom_ID,
                             classRoom_Name = cr.ClassRoom_Name,
-                            studentsCount = _unitOfWork.TblStudent != null
-                                ? _unitOfWork.TblStudent.GetAll(s => s.ClassRoom_ID == cr.ClassRoom_ID && s.Student_Visible == "yes").Count()
-                                : 0
+                            studentsCount = students.Count(s => s.ClassRoom_ID == cr.ClassRoom_ID)
                         }).ToList()
                 }).ToList();
 

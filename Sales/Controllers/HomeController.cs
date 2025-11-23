@@ -95,60 +95,68 @@ namespace Sales.Controllers
         [HttpGet]
         public IActionResult AttendanceRegistration()
         {
-            try
+            var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Arabian_Standard_Time);
+            var today = now.Date;
+
+            bool dailyAbsenceExists = _context.TblAttendance
+                .Any(a => a.Attendance_Date == today);
+
+            if (!dailyAbsenceExists)
             {
-                var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Arabian_Standard_Time);
-                var today = now.Date;
-
-                var studentIds = _context.TblStudent
-                    .Where(s => s.Student_Visible == "yes")
-                    .Select(s => s.Student_ID)
-                    .ToList();
-
-                var existingAttendance = _context.TblAttendance
-                    .Where(a => a.Attendance_Date >= today && a.Attendance_Date < today.AddDays(1))
-                    .ToList();
-
-                var newAbsentStudents = studentIds
-                    .Where(id => !existingAttendance.Any(a => a.Student_ID == id))
-                    .ToList();
-
-                var attendanceList = newAbsentStudents.Select(id => new TblAttendance
-                {
-                    Student_ID = id,
-                    Attendance_Date = today,
-                    Attendance_Status = "غياب",
-                    Attendance_AddDate = now,
-                    Attendance_AddUserID = _userManager.GetUserId(User),
-                    Attendance_Visible = "yes"
-                }).ToList();
-
-                _context.TblAttendance.AddRange(attendanceList);
-                _unitOfWork.Complete();
-
-                int totalStudents = studentIds.Count;
-                int present = existingAttendance.Count(a => a.Attendance_Status == "حضور" || a.Attendance_Status == "متأخر");
-                int absent = totalStudents - present;
-
-                var model = new AttendanceViewModel
-                {
-                    TotalStudents = totalStudents,
-                    Present = present,
-                    Absent = absent
-                };
-                
-                return View("AttendanceRegistration", model);
-
+                InsertDailyAbsence(now, today); 
             }
-            catch (Exception ex)
+
+            var totalStudents = _context.TblStudent.Count(s => s.Student_Visible == "yes");
+
+            var present = _context.TblAttendance
+                .Count(a => a.Attendance_Date == today &&
+                            (a.Attendance_Status == "حضور" || a.Attendance_Status == "متأخر"));
+
+            var absent = totalStudents - present;
+
+            var model = new AttendanceViewModel
             {
+                TotalStudents = totalStudents,
+                Present = present,
+                Absent = absent
+            };
 
-                var model = new AttendanceViewModel { TotalStudents = 0, Present = 0, Absent = 0 };
-                ViewBag.ErrorMessage = ex.Message;
+            return View(model);
+        }
 
-                return View("AttendanceRegistration", model);
+        private void InsertDailyAbsence(DateTime now, DateTime today)
+        {
+            var studentIds = _context.TblStudent
+                .Where(s => s.Student_Visible == "yes")
+                .Select(s => s.Student_ID)
+                .ToList();
+
+            var existingAttendance = _context.TblAttendance
+                .Where(a => a.Attendance_Date >= today && a.Attendance_Date < today.AddDays(1))
+                .Select(a => a.Student_ID)
+                .ToList();
+
+            var newAbsentStudents = studentIds
+                .Where(id => !existingAttendance.Contains(id))
+                .ToList();
+
+            var attendanceList = newAbsentStudents.Select(id => new TblAttendance
+            {
+                Student_ID = id,
+                Attendance_Date = today,
+                Attendance_Status = "غياب",
+                Attendance_AddDate = now,
+                Attendance_AddUserID = "SYSTEM",
+                Attendance_Visible = "yes"
+            }).ToList();
+
+            if (attendanceList.Count > 0)
+            {
+                _context.TblAttendance.AddRange(attendanceList);
+                _context.SaveChanges();
             }
         }
+
 
         [HttpPost]
         public async Task<IActionResult> RegisterAttendance(string studentCode)

@@ -3,6 +3,23 @@
     ViewData["Page"] = "إدارة الطلاب";
 }
 
+<style>
+    #studentsTable tbody tr:nth-child(odd) {
+        background-color: #f2f2f2; 
+        color: #000; 
+    }
+
+    #studentsTable tbody tr:nth-child(even) {
+        background-color: #ffffff; 
+        color: #000;
+    }
+
+    #studentsTable tbody tr:hover {
+        background-color: #cce5ff;
+        color: #000;
+    }
+
+</style>
 <div class="container-fluid">
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">

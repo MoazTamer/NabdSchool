@@ -862,20 +862,42 @@ namespace Sales.Controllers
                 int absent = result.Count(r => r.Status == "غياب");
 
                 // حساب التأخر المتتالي
-                int consecutiveLate = 0;
+                int maxConsecutiveLate = 0;
+                int currentLateCount = 0;
+
                 foreach (var row in result.OrderByDescending(r => r.Date))
                 {
-                    if (row.Status == "متأخر") consecutiveLate++;
-                    else break;
+                    if (row.Status == "متأخر")
+                    {
+                        currentLateCount++;
+                        if (currentLateCount > maxConsecutiveLate)
+                            maxConsecutiveLate = currentLateCount;
+                    }
+                    else
+                    {
+                        currentLateCount = 0;
+                    }
                 }
 
+
                 // حساب الغياب المتتالي
-                int consecutiveAbsent = 0;
+                int maxConsecutiveAbsent = 0;
+                int currentAbsentCount = 0;
+
                 foreach (var row in result.OrderByDescending(r => r.Date))
                 {
-                    if (row.Status == "غياب") consecutiveAbsent++;
-                    else break;
+                    if (row.Status == "غياب")
+                    {
+                        currentAbsentCount++;
+                        if (currentAbsentCount > maxConsecutiveAbsent)
+                            maxConsecutiveAbsent = currentAbsentCount;
+                    }
+                    else
+                    {
+                        currentAbsentCount = 0;
+                    }
                 }
+
 
                 var viewModel = new StudentAttendanceReportViewModel
                 {
@@ -887,8 +909,8 @@ namespace Sales.Controllers
                     TotalPresent = present,
                     TotalLate = late,
                     TotalAbsent = absent,
-                    ConsecutiveLate = consecutiveLate,
-                    ConsecutiveAbsent = consecutiveAbsent
+                    ConsecutiveLate = maxConsecutiveLate,
+                    ConsecutiveAbsent = maxConsecutiveAbsent
                 };
 
                 return Json(new { success = true, data = viewModel });

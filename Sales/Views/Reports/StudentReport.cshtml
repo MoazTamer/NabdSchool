@@ -39,10 +39,27 @@
         padding: 20px;
         margin-bottom: 20px;
     }
+
+    body, .card, .table, label, input, button, h4, h5, p, span {
+        font-size: 1.3rem !important;
+    }
+    label {
+        font-weight: bold !important;
+    }
+
+    #studentNameDisplay {
+        font-size: 2rem !important;
+    }
+
+    #statisticsSection h4 {
+        font-size: 1.8rem !important;
+        font-weight: bold;
+    }
+
 </style>
 
 <div class="card shadow-sm mt-4">
-    <div class="card-header bg-primary text-white py-3">
+    <div class="card-header bg-primary text-white py-6">
         <h4 class="mb-0"><i class="fas fa-chart-line"></i> تقرير حضور الطلاب</h4>
     </div>
 
@@ -53,20 +70,20 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label for="studentCodeFilter">كود الطالب</label>
-                        <input type="text" class="form-control" id="studentCodeFilter" placeholder="أدخل كود الطالب" value="@ViewBag.StudentCode">
+                        <input type="text" class="form-control py-3" id="studentCodeFilter" placeholder="أدخل كود الطالب" value="@ViewBag.StudentCode">
                     </div>
                 </div>
 
                 <div class="col-md-3">
                     <div class="form-group">
                         <label for="startDateFilter">من تاريخ</label>
-                        <input type="date" class="form-control" id="startDateFilter" value="@ViewBag.FromDate">
+                        <input type="date" class="form-control py-3" id="startDateFilter" value="@ViewBag.FromDate">
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
                         <label for="endDateFilter">إلى تاريخ</label>
-                        <input type="date" class="form-control" id="endDateFilter" value="@ViewBag.Date">
+                        <input type="date" class="form-control py-3" id="endDateFilter" value="@ViewBag.Date">
                     </div>
                 </div>
 
@@ -89,6 +106,13 @@
                 </div>
             </div>
         </div>
+
+        <!-- اسم الطالبة -->
+        <div id="studentNameHeader" class="mb-4" style="display:none;">
+            <h2 class="fw-bold" id="studentNameDisplay"></h2>
+        </div>
+
+       
 
         <!-- الجدول -->
         <div class="table-responsive">
@@ -114,25 +138,25 @@
                             <div class="col-md-3">
                                 <div class="p-3 bg-success text-white rounded">
                                     <h4 id="totalPresent">0</h4>
-                                    <p>أيام حضور</p>
+                                    <p class="fw-bold">أيام حضور</p>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="p-3 bg-warning text-white rounded">
                                     <h4 id="totalLate">0</h4>
-                                    <p>أيام تأخر</p>
+                                    <p class="fw-bold">أيام تأخر</p>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="p-3 bg-danger text-white rounded">
                                     <h4 id="totalAbsent">0</h4>
-                                    <p>أيام غياب</p>
+                                    <p class="fw-bold">أيام غياب</p>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="p-3 bg-info text-white rounded">
                                     <h4 id="consecutiveAbsent">0</h4>
-                                    <p>غياب متتالي</p>
+                                    <p class="fw-bold">غياب متتالي</p>
                                 </div>
                             </div>
                         </div>
