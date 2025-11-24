@@ -19,6 +19,11 @@
         color: #000;
     }
 
+    table.table-bordered.dataTable tbody th, table.table-bordered.dataTable tbody td{
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
 </style>
 <div class="container-fluid">
     <div class="card shadow mb-4">
@@ -55,10 +60,16 @@
                         <option value="">الكل</option>
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-2">
                     <label>&nbsp;</label>
                     <button type="button" class="btn btn-primary btn-block" onclick="LoadStudents()">
                         <i class="fas fa-search"></i> بحث
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn btn-success btn-block" onclick="PrintAllCards()">
+                        <i class="fas fa-print"></i> طباعة البطاقات
                     </button>
                 </div>
             </div>
@@ -116,7 +127,6 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
 
-
     <script>
         var studentsTable;
 
@@ -149,16 +159,34 @@
                                 onclick="ShowQRCode(${row.student_ID}, '${row.student_Name}', '${row.student_Code}', '${row.student_Phone}')">
                             <i class="fas fa-barcode"></i>
                         </button>
+                        <button type="button" class="btn btn-sm btn-success"
+                            onclick="PrintSingleCard(${row.student_ID}, '${row.student_Name}', '${row.student_Code}', '${row.className}', '${row.classRoomName}')">
+                        <i class="fas fa-id-card"></i>
+                    </button>
 
                         `;
                         }
-                    }
+                    },
+
                 ],
                 "order": [[1, "asc"]]
             });
         }
 
-         
+
+                // طباعة جميع البطاقات حسب الفلتر
+        function PrintAllCards() {
+            var classId = $('#filterClass').val() || '';
+            var classRoomId = $('#filterClassRoom').val() || '';
+
+            // فتح الـ PDF في نافذة جديدة
+            window.open(`@Url.Action("PrintStudentCards", "Student")?classId=${classId}&classRoomId=${classRoomId}`, '_blank');
+        }
+
+        // طباعة بطاقة طالب واحد
+        function PrintSingleCard(studentId, studentName, studentCode, className, classRoomName) {
+            window.open(`@Url.Action("PrintSingleStudentCard", "Student")?studentId=${studentId}`, '_blank');
+        }
 
 
         function ShowQRCode(studentId, studentName, studentCode, studentPhone) {
@@ -339,6 +367,11 @@
                 title: message
             });
         }
+
+
+
+
+
     </script>
 }
 

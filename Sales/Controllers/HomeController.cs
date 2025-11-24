@@ -124,6 +124,51 @@ namespace Sales.Controllers
             return View(model);
         }
 
+        [HttpPost]
+        public IActionResult RegistrationAllStudents()
+        {
+            var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Arabian_Standard_Time);
+            var today = now.Date;
+
+            // جلب كل الطلاب الظاهرين
+            var students = _context.TblStudent
+                .Where(s => s.Student_Visible == "yes")
+                .Select(s => new { s.Student_ID })
+                .ToList();
+
+            // جلب سجلات اليوم
+            var todaysRecords = _context.TblAttendance
+                .Where(a => a.Attendance_Date == today)
+                .Select(a => a.Student_ID)
+                .ToHashSet(); // نستخدم HashSet للبحث السريع
+
+            var newAttendances = new List<TblAttendance>();
+
+            foreach (var student in students)
+            {
+                // إذا ما عندوش سجل اليوم، نضيف سجل حضور جديد
+                if (!todaysRecords.Contains(student.Student_ID))
+                {
+                    newAttendances.Add(new TblAttendance
+                    {
+                        Student_ID = student.Student_ID,
+                        Attendance_Status = "حضور",
+                        Attendance_Date = today,
+                        Attendance_Time = now.TimeOfDay,
+                        Attendance_Visible = "yes",
+                    });
+                }
+                // لو عنده سجل، لا نغير أي شيء
+            }
+
+            if (newAttendances.Count > 0)
+                _context.TblAttendance.AddRange(newAttendances);
+
+            _context.SaveChanges();
+
+            return Json(new { success = true });
+        }
+
         private void InsertDailyAbsence(DateTime now, DateTime today)
         {
             var studentIds = _context.TblStudent

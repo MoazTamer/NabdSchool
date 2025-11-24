@@ -6,6 +6,7 @@ using OfficeOpenXml;
 using SalesModel.IRepository;
 using SalesModel.Models;
 using SalesModel.ViewModels;
+using SalesRepository.Repository;
 
 namespace Sales.Controllers
 {
@@ -665,6 +666,107 @@ namespace Sales.Controllers
                 return Json(new { error = true, message = ex.Message });
             }
         }
-            #endregion
+        #endregion
+
+
+        #region Print Student Cards
+
+        [HttpGet]
+        public async Task<IActionResult> PrintStudentCards(int? classId, int? classRoomId)
+        {
+            try
+            {
+                // 1. استعلام محسّن - نجلب فقط الحقول المطلوبة
+                var studentsQuery = _unitOfWork.TblStudent.GetAll(
+                    obj => obj.Student_Visible == "yes",
+                    new[] { "ClassRoom.Class" } // include واحد فقط بدلاً من اثنين
+                );
+
+                // 2. تطبيق الفلتر على IQueryable قبل التنفيذ
+                if (classId.HasValue)
+                {
+                    studentsQuery = studentsQuery.Where(s => s.ClassRoom.Class_ID == classId.Value);
+                }
+
+                if (classRoomId.HasValue)
+                {
+                    studentsQuery = studentsQuery.Where(s => s.ClassRoom_ID == classRoomId.Value);
+                }
+
+                // 3. Projection مباشر في الاستعلام (يجلب فقط الحقول المطلوبة)
+                var students = await Task.Run(() => studentsQuery
+                    //.AsNoTracking() // لا نحتاج tracking
+                    .Select(s => new StudentCardViewModel
+                    {
+                        StudentName = s.Student_Name,
+                        StudentCode = s.Student_Code,
+                        StudentPhone = s.Student_Phone,
+                        ClassName = s.ClassRoom.Class.Class_Name ?? "",
+                        ClassRoomName = s.ClassRoom.ClassRoom_Name ?? ""
+                    })
+                    .ToList());
+
+                if (!students.Any())
+                {
+                    return Content("لا يوجد طلاب للطباعة");
+                }
+
+                // 4. توليد PDF في Thread منفصل
+                byte[] pdfBytes = await Task.Run(() =>
+                {
+                    var pdfService = new ReportPdfService();
+                    return pdfService.GenerateStudentCards(students);
+                });
+
+                return File(pdfBytes, "application/pdf", $"بطاقات_الطلاب_{DateTime.Now:yyyyMMdd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return Content($"خطأ: {ex.Message}");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PrintSingleStudentCard(int studentId)
+        {
+            try
+            {
+                // استعلام محسّن
+                var student = await Task.Run(() => _unitOfWork.TblStudent
+                    .GetAll(
+                        obj => obj.Student_ID == studentId && obj.Student_Visible == "yes",
+                        new[] { "ClassRoom.Class" }
+                    )
+                    //.AsNoTracking()
+                    .Select(s => new StudentCardViewModel
+                    {
+                        StudentName = s.Student_Name,
+                        StudentCode = s.Student_Code,
+                        StudentPhone = s.Student_Phone,
+                        ClassName = s.ClassRoom.Class.Class_Name ?? "",
+                        ClassRoomName = s.ClassRoom.ClassRoom_Name ?? ""
+                    })
+                    .FirstOrDefault());
+
+                if (student == null)
+                {
+                    return Content("الطالب غير موجود");
+                }
+
+                // توليد PDF في Thread منفصل
+                byte[] pdfBytes = await Task.Run(() =>
+                {
+                    var pdfService = new ReportPdfService();
+                    return pdfService.GenerateStudentCards(new List<StudentCardViewModel> { student });
+                });
+
+                return File(pdfBytes, "application/pdf", $"بطاقة_{student.StudentName}_{DateTime.Now:yyyyMMdd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return Content($"خطأ: {ex.Message}");
+            }
+        }
+        #endregion
     }
 }

@@ -49,3 +49,49 @@
 
 	updateStatistics();
 });
+
+
+
+function registerAllStudents() {
+
+	Swal.fire({
+		title: 'جارٍ التسجيل...',
+		text: 'يتم الآن تسجيل حضور جميع الطلاب',
+		allowOutsideClick: false,
+		didOpen: () => {
+			Swal.showLoading();
+		}
+	});
+
+	$.ajax({
+		url: '/Home/RegistrationAllStudents',
+		type: 'POST',
+		success: function (response) {
+
+			if (response.success) {
+				Swal.fire({
+					icon: 'success',
+					title: 'تم بنجاح',
+					text: response.message,
+					confirmButtonText: 'تمام'
+				}).then(() => {
+					location.reload();
+				});
+
+			} else {
+				Swal.fire({
+					icon: 'error',
+					title: 'خطأ',
+					text: response.message
+				});
+			}
+		},
+		error: function () {
+			Swal.fire({
+				icon: 'error',
+				title: 'خطأ في الاتصال',
+				text: 'تأكد من الاتصال وحاول مرة أخرى'
+			});
+		}
+	});
+}

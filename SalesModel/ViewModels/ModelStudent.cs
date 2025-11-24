@@ -41,4 +41,13 @@ namespace SalesModel.ViewModels
         public string? ClassName { get; set; }
         public string? ClassRoomName { get; set; }
     }
+
+    public class StudentCardViewModel
+    {
+        public string StudentName { get; set; }
+        public string StudentCode { get; set; }
+        public string StudentPhone { get; set; }
+        public string ClassName { get; set; }
+        public string ClassRoomName { get; set; }
+    }
 }

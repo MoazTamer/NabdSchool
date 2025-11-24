@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using QRCoder;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using SalesModel.ViewModels;
 using SalesModel.ViewModels.Reports;
 
 
@@ -1434,6 +1436,304 @@ namespace SalesRepository.Repository
                     index++;
                 }
             });
+        }
+
+
+
+        // cards
+
+
+        //public byte[] GenerateStudentCards(List<StudentCardViewModel> students)
+        //{
+        //    // Cache للـ QR Codes لتجنب إعادة التوليد
+        //    var qrCache = new Dictionary<string, byte[]>();
+
+        //    var document = Document.Create(container =>
+        //    {
+        //        container.Page(page =>
+        //        {
+        //            page.Size(PageSizes.A4);
+        //            page.Margin(1, Unit.Centimetre);
+        //            page.PageColor(Colors.White);
+        //            page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(11));
+        //            page.DefaultTextStyle(x => x.DirectionFromRightToLeft());
+
+        //            page.Content().Column(column =>
+        //            {
+        //                // معالجة متوازية للبطاقات
+        //                var cardsPerRow = 2;
+        //                var rows = (int)Math.Ceiling(students.Count / (double)cardsPerRow);
+
+        //                for (int i = 0; i < rows; i++)
+        //                {
+        //                    var rowIndex = i;
+        //                    column.Item().Row(row =>
+        //                    {
+        //                        for (int j = 0; j < cardsPerRow; j++)
+        //                        {
+        //                            var studentIndex = rowIndex * cardsPerRow + j;
+        //                            if (studentIndex < students.Count)
+        //                            {
+        //                                var student = students[studentIndex];
+        //                                row.RelativeItem().Padding(5)
+        //                                    .Element(c => ComposeStudentCard(c, student, qrCache));
+        //                            }
+        //                            else
+        //                            {
+        //                                row.RelativeItem();
+        //                            }
+        //                        }
+        //                    });
+
+        //                    if (i < rows - 1)
+        //                    {
+        //                        column.Item().PaddingVertical(10);
+        //                    }
+        //                }
+        //            });
+
+        //            page.Footer().AlignCenter().Text($"تم الطباعة في: {DateTime.Now:yyyy/MM/dd hh:mm tt}")
+        //                .FontSize(8)
+        //                .FontColor(Colors.Grey.Medium);
+        //        });
+        //    });
+
+        //    return document.GeneratePdf();
+        //}
+
+        //private void ComposeStudentCard(IContainer container, StudentCardViewModel student, Dictionary<string, byte[]> qrCache)
+        //{
+        //    container.Border(2)
+        //        .BorderColor(Colors.Blue.Darken2)
+        //        .Background(Colors.Grey.Lighten4)
+        //        .Padding(15)
+        //        .Column(column =>
+        //        {
+        //            // اسم الطالبة
+        //            column.Item().AlignCenter().Text(student.StudentName)
+        //                .FontSize(16)
+        //                .Bold()
+        //                .FontColor(Colors.Blue.Darken3);
+
+        //            column.Item().PaddingTop(10);
+
+        //            // QR Code مع Cache
+        //            column.Item().AlignCenter().Height(120).Width(120)
+        //                .Element(c =>
+        //                {
+        //                    var qrKey = $"{student.StudentCode}_{student.StudentName}";
+
+        //                    if (!qrCache.ContainsKey(qrKey))
+        //                    {
+        //                        var qrGenerator = new QRCodeGenerator();
+        //                        var qrData = $"الأسم: {student.StudentName}\nرقم الطالبة: {student.StudentCode}\nجوال: {student.StudentPhone}";
+        //                        var qrCodeData = qrGenerator.CreateQrCode(qrData, QRCodeGenerator.ECCLevel.H);
+        //                        var qrCode = new QRCode(qrCodeData);
+        //                        var qrBitmap = qrCode.GetGraphic(20);
+
+        //                        using (var ms = new MemoryStream())
+        //                        {
+        //                            qrBitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+        //                            qrCache[qrKey] = ms.ToArray();
+        //                        }
+        //                    }
+
+        //                    c.Image(qrCache[qrKey]);
+        //                });
+
+        //            column.Item().PaddingTop(10);
+
+        //            // رقم الطالب
+        //            column.Item().AlignCenter().Text($"رقم الطالبة: {student.StudentCode}")
+        //                .FontSize(12)
+        //                .Bold()
+        //                .FontColor(Colors.Grey.Darken2);
+
+        //            // الصف والفصل
+        //            column.Item().AlignCenter().Text($"{student.ClassName} - {student.ClassRoomName}")
+        //                .FontSize(11)
+        //                .FontColor(Colors.Grey.Darken1);
+
+        //            // رقم الجوال
+        //            if (!string.IsNullOrEmpty(student.StudentPhone))
+        //            {
+        //                column.Item().AlignCenter().Text($"رقم الجوال: {student.StudentPhone}")
+        //                    .FontSize(10)
+        //                    .FontColor(Colors.Grey.Darken1);
+        //            }
+        //        });
+        //}
+
+
+        public byte[] GenerateStudentCards(List<StudentCardViewModel> students)
+        {
+            var qrCache = new Dictionary<string, byte[]>();
+
+            int cardsPerPage = 6; // ← عدد البطاقات في الصفحة (3 صفوف × 2 كارت)
+
+            var document = Document.Create(container =>
+            {
+                // تقسيم الطلاب إلى صفحات — كل صفحة تحتوي 6 طلاب فقط
+                var pages = students
+                    .Select((s, index) => new { s, index })
+                    .GroupBy(x => x.index / cardsPerPage)
+                    .Select(g => g.Select(x => x.s).ToList())
+                    .ToList();
+
+                foreach (var pageStudents in pages)
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.A4);
+                        page.Margin(1.5f, Unit.Centimetre);
+                        page.PageColor(Colors.White);
+                        page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(11));
+                        page.DefaultTextStyle(x => x.DirectionFromRightToLeft());
+
+                        page.Content().Column(column =>
+                        {
+                            for (int i = 0; i < pageStudents.Count; i += 2)
+                            {
+                                column.Item().Row(row =>
+                                {
+                                    row.RelativeItem().MaxWidth(270).Padding(5)
+                                        .Element(c => ComposeStudentCard(c, pageStudents[i], qrCache));
+
+                                    if (i + 1 < pageStudents.Count)
+                                    {
+                                        row.RelativeItem().MaxWidth(270).Padding(5)
+                                            .Element(c => ComposeStudentCard(c, pageStudents[i + 1], qrCache));
+                                    }
+                                    else
+                                    {
+                                        row.RelativeItem();
+                                    }
+                                });
+
+                                // مسافة بين الصفوف
+                                if (i + 2 < pageStudents.Count)
+                                {
+                                    column.Item().PaddingVertical(10);
+                                }
+                            }
+                        });
+
+                        page.Footer()
+                            .AlignCenter()
+                            .Text($"تم الطباعة في: {DateTime.Now:yyyy/MM/dd hh:mm tt}")
+                            .FontSize(8)
+                            .FontColor(Colors.Grey.Medium);
+                    });
+                }
+            });
+
+            return document.GeneratePdf();
+        }
+
+        private void ComposeStudentCard(IContainer container, StudentCardViewModel student, Dictionary<string, byte[]> qrCache)
+        {
+            container.Border(2)
+                .BorderColor(Colors.Blue.Darken2)
+                .Background(Colors.White)
+                .Column(column =>
+                {
+                    // Header مع الشريط العلوي
+                    column.Item().Height(35).Background(Colors.Blue.Darken2)
+                        .Padding(5)
+                        .AlignCenter() // محاذاة المركز
+                        .AlignMiddle()
+                        .Text(_schoolName)
+                        .FontSize(12)
+                        .Bold()
+                        .FontColor(Colors.White);
+
+                    // اسم الطالبة على سطر منفصل
+                    column.Item().Padding(10).PaddingBottom(5)
+                        .AlignCenter()
+                        .Text(student.StudentName)
+                        .FontSize(14)
+                        .Bold()
+                        .FontColor(Colors.Blue.Darken3);
+
+                    // خط فاصل
+                    column.Item().PaddingHorizontal(10).PaddingBottom(8)
+                        .LineHorizontal(1)
+                        .LineColor(Colors.Grey.Lighten2);
+
+                    // محتوى البطاقة - البيانات والـ QR
+                    column.Item().PaddingHorizontal(10).PaddingBottom(10).Row(row =>
+                    {
+
+                        // القسم الأيسر - QR Code
+                        row.RelativeItem().AlignLeft().AlignTop().Column(qrColumn =>
+                        {
+                            qrColumn.Item().AlignCenter().Width(85).Height(85)
+                                .Border(2)
+                                .BorderColor(Colors.Blue.Lighten2)
+                                .Background(Colors.White)
+                                .Padding(2)
+                                .Element(c =>
+                                {
+                                    var qrKey = $"{student.StudentCode}_{student.StudentName}";
+
+                                    if (!qrCache.ContainsKey(qrKey))
+                                    {
+                                        var qrGenerator = new QRCodeGenerator();
+                                        var qrData = $"الأسم: {student.StudentName}\nرقم الطالبة: {student.StudentCode}\nجوال: {student.StudentPhone}";
+                                        var qrCodeData = qrGenerator.CreateQrCode(qrData, QRCodeGenerator.ECCLevel.H);
+                                        var qrCode = new QRCode(qrCodeData);
+                                        var qrBitmap = qrCode.GetGraphic(20);
+
+                                        using (var ms = new MemoryStream())
+                                        {
+                                            qrBitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                                            qrCache[qrKey] = ms.ToArray();
+                                        }
+                                    }
+
+                                    c.Image(qrCache[qrKey]);
+                                });
+                        });
+
+
+                        
+                        // القسم الأيمن - المعلومات
+                        row.RelativeItem(1).AlignRight().Column(infoColumn =>
+                        {
+                            infoColumn.Item().PaddingBottom(6).AlignRight().Text(text =>
+                            {
+                                text.Span("رقم الطالبة: ").FontSize(9).FontColor(Colors.Black).Bold();
+                                text.Span(" ");
+                                text.Span(student.StudentCode ?? "-").FontSize(9).FontColor(Colors.Black).Bold();
+                            });
+
+                            infoColumn.Item().PaddingBottom(6).AlignRight().Text(text =>
+                            {
+                                text.Span("الصف: ").FontSize(9).FontColor(Colors.Black).Bold();
+                                text.Span(" ");
+                                text.Span(student.ClassName ?? "-").FontSize(9).FontColor(Colors.Black).Bold();
+                            });
+
+                            //infoColumn.Item().PaddingBottom(6).AlignRight().Text(text =>
+                            //{
+                            //    text.Span("الفصل: ").FontSize(9).FontColor(Colors.Black).Bold();
+                            //    text.Span(" ");
+                            //    text.Span(student.ClassRoomName ?? "-").FontSize(9).FontColor(Colors.Black).Bold();
+                            //});
+
+                            //infoColumn.Item().PaddingBottom(6).AlignRight().Text(text =>
+                            //{
+                            //    text.Span("رقم الجوال: ").FontSize(9).FontColor(Colors.Black).Bold();
+                            //    text.Span(" ");
+                            //    text.Span(student.StudentPhone ?? "-").FontSize(9).FontColor(Colors.Black).Bold();
+                            //});
+
+
+                        });
+
+                    });
+
+                });
         }
     }
 }
