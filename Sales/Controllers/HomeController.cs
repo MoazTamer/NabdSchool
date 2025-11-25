@@ -140,13 +140,12 @@ namespace Sales.Controllers
             var todaysRecords = _context.TblAttendance
                 .Where(a => a.Attendance_Date == today)
                 .Select(a => a.Student_ID)
-                .ToHashSet(); // نستخدم HashSet للبحث السريع
+                .ToHashSet(); 
 
             var newAttendances = new List<TblAttendance>();
 
             foreach (var student in students)
             {
-                // إذا ما عندوش سجل اليوم، نضيف سجل حضور جديد
                 if (!todaysRecords.Contains(student.Student_ID))
                 {
                     newAttendances.Add(new TblAttendance
@@ -156,9 +155,11 @@ namespace Sales.Controllers
                         Attendance_Date = today,
                         Attendance_Time = now.TimeOfDay,
                         Attendance_Visible = "yes",
+                        Attendance_AddUserID = "SYSTEM",
                     });
                 }
                 // لو عنده سجل، لا نغير أي شيء
+
             }
 
             if (newAttendances.Count > 0)
@@ -244,11 +245,17 @@ namespace Sales.Controllers
 
                 if (existingAttendance != null)
                 {
-                    return Json(new
-                    {
-                        isValid = false,
-                        message = $"الطالبة {student.Student_Name} سجلت حضورها مسبقاً اليوم الساعة {existingAttendance.Attendance_Time:hh\\:mm}"
-                    });
+                    return await RegisterExcuse(studentCode);
+
+                    //await RegisterExcuse(studentCode);
+                    //return Json(new
+                    //{
+                    //    isValid = false,
+                    //    message = $"تم تسجيل حضور الطالبة مسبقاً اليوم الساعة {existingAttendance.Attendance_Time:hh\\:mm}، " +
+                    //              $"{DateTime.Now} وتم الآن تسجيل استئذان للطالبة بناءً على تكرار التسجيل."
+
+                    //    //message = $"الطالبة {student.Student_Name} سجلت حضورها مسبقاً اليوم الساعة {existingAttendance.Attendance_Time:hh\\:mm} وتم تسجيلها استأذان"
+                    //});
                 }
 
                 var attendanceTime = await SchoolSettingsController.GetAttendanceTimeAsync(_context);
@@ -306,6 +313,72 @@ namespace Sales.Controllers
                 });
             }
         }
+
+        [HttpPost]
+        public async Task<IActionResult> RegisterExcuse(string studentCode)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(studentCode))
+                    return Json(new { isValid = false, message = "الرجاء إدخال كود الطالبة" });
+
+                studentCode = studentCode.Trim();
+
+                var student = await _context.TblStudent
+                    .Include(s => s.ClassRoom)
+                    .ThenInclude(c => c.Class)
+                    .FirstOrDefaultAsync(s => s.Student_Code == studentCode && s.Student_Visible == "yes");
+
+                if (student == null)
+                    return Json(new { isValid = false, message = "الطالبة غير موجود أو تم حذفها" });
+
+                var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Arabian_Standard_Time);
+                var today = now.Date;
+                var currentTime = now.TimeOfDay;
+
+                // هل في استئذان مسجل بالفعل اليوم؟
+                var existingExcuse = await _context.TblAttendance
+                    .FirstOrDefaultAsync(a =>
+                        a.Student_ID == student.Student_ID &&
+                        a.Attendance_Date == today &&
+                        a.Attendance_Status == "استئذان" &&
+                        a.Attendance_Visible == "yes");
+
+                if (existingExcuse != null)
+                    return Json(new { isValid = false, message = "تم تسجيل استئذان للطالبة مسبقاً اليوم" });
+
+                // إنشاء سجل استئذان جديد
+                var excuse = new TblAttendance
+                {
+                    Student_ID = student.Student_ID,
+                    Attendance_Date = today,
+                    Attendance_Time = currentTime,
+                    Attendance_LateMinutes = 0,
+                    Attendance_Status = "استئذان",
+                    Attendance_Visible = "yes",
+                    Attendance_AddUserID = _userManager.GetUserId(User),
+                    Attendance_AddDate = now
+                };
+
+                await _context.TblAttendance.AddAsync(excuse);
+                await _context.SaveChangesAsync();
+
+                return Json(new
+                {
+                    isValid = true,
+                    message = $"تم تسجيل استئذان للطالبة: {student.Student_Name}",
+                    studentName = student.Student_Name,
+                    className = $"{student.ClassRoom?.Class?.Class_Name} - {student.ClassRoom?.ClassRoom_Name}",
+                    status = "استئذان",
+                    attendanceTime = currentTime, 
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { isValid = false, message = "خطأ في تسجيل الاستئذان: " + ex.Message });
+            }
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> SignOut()

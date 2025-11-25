@@ -179,6 +179,31 @@
 				</a>
 			</div>
 		
+			
+			<!--begin:Menu item - أكثر الطلاب تأخرًا-->
+			<div class="menu-item">
+				<a class="@Html.IsSelected(actions: "MostDisciplinedStudents", controllers: "Reports")" asp-controller="Reports" asp-action="MostDisciplinedStudents">
+					<span class="menu-bullet">
+						<span class="bullet bullet-dot"></span>
+					</span>
+					<span class="menu-title">الطلاب الأكثر انضباطاً</span>
+
+
+				</a>
+			</div>
+		
+			<!--begin:Menu item - أكثر الطلاب تأخرًا-->
+			<div class="menu-item">
+				<a class="@Html.IsSelected(actions: "MostDisciplinedClasses", controllers: "Reports")" asp-controller="Reports" asp-action="MostDisciplinedClasses">
+					<span class="menu-bullet">
+						<span class="bullet bullet-dot"></span>
+					</span>				
+					<span class="menu-title">الفصول الأكثر انضباطاً</span>
+
+				</a>
+			</div>
+		
+
 			<!--end:Menu item-->
 
 			<div class="menu-inner flex-column collapse">

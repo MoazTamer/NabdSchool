@@ -13,9 +13,12 @@ namespace SalesRepository.Repository
     public class ReportPdfService
     {
         private readonly string _schoolName = "نبض المدرسة";
-        private readonly string _schoolAddress = "العنوان الكامل للمدرسة";
-        private readonly string _schoolPhone = "0123456789";
-        private readonly string _logoPath = "wwwroot/images/school-logo.png";
+        private readonly string _logoPath = "wwwroot/images/school-logo-bg.png";
+
+
+        // إضافة هذه المتغيرات في الكلاس
+        private readonly string _ministryLogoPath = "wwwroot/images/ministry-of-education-saudi-arabia-bg.png";
+        private readonly string _schoolLogoPath = "wwwroot/images/school-logo-bg.png";
 
 
         public ReportPdfService()
@@ -80,7 +83,7 @@ namespace SalesRepository.Repository
 
         // تكوين Header التقرير
 
-        private void ComposeHeader(IContainer container, DateTime reportDate, string reportTitle)
+        private void OldComposeHeader(IContainer container, DateTime reportDate, string reportTitle)
         {
             container.Column(column =>
             {
@@ -192,6 +195,146 @@ namespace SalesRepository.Repository
                     .LineColor(Colors.Grey.Lighten1);
             });
         }
+
+        // تكوين Header التقرير بشكل رسمي
+        private void ComposeHeader(IContainer container, DateTime reportDate, string reportTitle)
+        {
+            container.Column(column =>
+            {
+                column.Spacing(0);
+
+                // الصف الأول: الشعارات والمعلومات الأساسية
+                column.Item().Row(row =>
+                {
+                    row.Spacing(0);
+
+                    // شعار المدرسة على اليسار
+
+                    row.RelativeItem().AlignLeft().Column(schoolColumn =>
+                    {
+                        schoolColumn.Spacing(0);
+                        schoolColumn.Item().PaddingTop(-5).AlignTop().Row(r =>
+                        {
+                            r.Spacing(0);
+                            r.ConstantItem(70).Height(70).AlignTop().Column(c =>
+                            {
+                                c.Spacing(0);
+                                if (File.Exists(_schoolLogoPath)) // مسار شعار المدرسة
+                                {
+                                    c.Item().PaddingTop(-2)
+                                        .Width(70)
+                                        .Height(70)
+                                        .Image(_schoolLogoPath, ImageScaling.FitArea);
+                                }
+                                else
+                                {
+                                    c.Item().PaddingTop(-2)
+                                        .Width(50)
+                                        .Height(50)
+                                        .Border(1)
+                                        .BorderColor(Colors.Grey.Lighten2)
+                                        .AlignCenter()
+                                        .AlignMiddle()
+                                        .Text("شعار المدرسة")
+                                        .FontSize(7)
+                                        .FontColor(Colors.Grey.Medium);
+                                }
+                            });
+                        });
+
+                    });
+
+                    // المعلومات الرسمية في المنتصف
+                    row.RelativeItem(2).AlignCenter().Column(infoColumn =>
+                    {
+                        infoColumn.Spacing(0);
+
+                        // المملكة العربية السعودية
+                        infoColumn.Item().PaddingTop(-5).Text("المملكة العربية السعودية")
+                            .FontSize(16)
+                            .Bold()
+                            .FontColor(Colors.Green.Darken2); // اللون الأخضر الرسمي
+
+                        // وزارة التعليم
+                        infoColumn.Item().PaddingTop(2).Text("وزارة التعليم")
+                            .FontSize(14)
+                            .Bold()
+                            .FontColor(Colors.Black).AlignRight();
+
+                        // إدارة التعليم بالطائف
+                        infoColumn.Item().PaddingTop(1).Text("إدارة التعليم بالطائف")
+                            .FontSize(12)
+                            .Bold()
+                            .FontColor(Colors.Grey.Darken2).AlignRight();
+
+                        // المتوسطة الخامسة عشر
+                        infoColumn.Item().PaddingTop(1).Text("المتوسطة الخامسة عشر")
+                            .FontSize(11)
+                            .FontColor(Colors.Grey.Darken1).AlignRight();
+                    });
+
+                    // شعار الوزارة على اليمين
+                    row.RelativeItem().AlignRight().Column(ministryColumn =>
+                    {
+                        ministryColumn.Spacing(0);
+                        ministryColumn.Item().PaddingTop(-5).AlignTop().Row(r =>
+                        {
+                            r.Spacing(0);
+                            r.ConstantItem(80).Height(80).AlignTop().Column(c =>
+                            {
+                                c.Spacing(0);
+                                if (File.Exists(_ministryLogoPath)) // مسار شعار الوزارة
+                                {
+                                    c.Item().PaddingTop(-2)
+                                        .Width(80)
+                                        .Height(80)
+                                        .Image(_ministryLogoPath, ImageScaling.FitArea);
+                                }
+                                else
+                                {
+                                    c.Item().PaddingTop(-2)
+                                        .Width(60)
+                                        .Height(60)
+                                        .Border(1)
+                                        .BorderColor(Colors.Grey.Lighten2)
+                                        .AlignCenter()
+                                        .AlignMiddle()
+                                        .Text("شعار الوزارة")
+                                        .FontSize(8)
+                                        .FontColor(Colors.Grey.Medium);
+                                }
+                            });
+                        });
+                    });
+
+                });
+
+                // خط فاصل - اللون الأخضر الرسمي
+                column.Item().PaddingTop(10).PaddingBottom(8)
+                    .LineHorizontal(2f)
+                    .LineColor(Colors.Green.Darken2);
+
+                // عنوان التقرير
+                column.Item().PaddingTop(5).AlignCenter().Text(reportTitle)
+                    .FontSize(18)
+                    .Bold()
+                    .FontColor(Colors.Blue.Darken3);
+
+                // تاريخ التقرير
+                var arabicCulture = new System.Globalization.CultureInfo("ar-SA");
+                column.Item().PaddingTop(3).AlignCenter()
+                    .Text($"تاريخ التقرير: {reportDate.ToString("dddd، dd MMMM yyyy", arabicCulture)}")
+                    .FontSize(12)
+                    .Bold()
+                    .FontColor(Colors.Grey.Darken2);
+
+                // خط فاصل خفيف
+                column.Item().PaddingTop(8).PaddingBottom(5)
+                    .LineHorizontal(1f)
+                    .LineColor(Colors.Grey.Lighten1);
+            });
+        }
+
         // تكوين محتوى التقرير
         private void ComposeContent(IContainer container, DailyAbsenceReportViewModel data, string type)
         {
@@ -461,7 +604,7 @@ namespace SalesRepository.Repository
         }
 
         // Footer التقرير
-        private void ComposeFooter(IContainer container)
+        private void OldComposeFooter(IContainer container)
         {
             container.AlignCenter().Column(column =>
             {
@@ -496,6 +639,39 @@ namespace SalesRepository.Repository
         }
 
 
+        private void ComposeFooter(IContainer container)
+        {
+            container.AlignCenter().Column(column =>
+            {
+                column.Item().LineHorizontal(1).LineColor(Colors.Green.Darken2);
+
+                column.Item().PaddingTop(5).Row(row =>
+                {
+                    row.RelativeItem().AlignLeft()
+                        .Text(text =>
+                        {
+                            text.Span("صفحة ")
+                            .FontSize(9).FontColor(Colors.Grey.Darken1);
+                            text.CurrentPageNumber()
+                            .FontSize(9).FontColor(Colors.Grey.Darken1);
+                            text.Span(" من ")
+                            .FontSize(9).FontColor(Colors.Grey.Darken1);
+                            text.TotalPages()
+                            .FontSize(9).FontColor(Colors.Grey.Darken1);
+                        });
+
+                    row.RelativeItem().AlignCenter()
+                        .Text("إدارة التعليم بالطائف - المتوسطة الخامسة عشر")
+                        .FontSize(9)
+                        .FontColor(Colors.Grey.Darken1);
+
+                    row.RelativeItem().AlignRight()
+                        .Text($"تاريخ النظام: {DateTime.Now.ToString("yyyy/MM/dd")}")
+                        .FontSize(9)
+                        .FontColor(Colors.Grey.Darken1);
+                });
+            });
+        }
 
 
         //
@@ -513,7 +689,7 @@ namespace SalesRepository.Repository
                     page.DefaultTextStyle(x => x.DirectionFromRightToLeft());
 
                     // Header
-                    page.Header().Element(container => ComposeMostAbsentHeader(container, data));
+                    page.Header().Element(container => ComposeHeader(container, DateTime.Now, "تقرير أكثر الطلاب غيابا"));
 
                     // Content
                     page.Content().Element(container => ComposeMostAbsentContent(container, data));
@@ -524,120 +700,6 @@ namespace SalesRepository.Repository
             });
 
             return document.GeneratePdf();
-        }
-
-        // Header لتقرير أكثر الطلاب غياب
-        private void ComposeMostAbsentHeader(IContainer container, MostAbsentStudentsReportViewModel data)
-        {
-            container.Column(column =>
-            {
-                column.Spacing(0);
-
-                // الصف الأول - اللوجو والمعلومات
-                column.Item().Row(row =>
-                {
-                    row.Spacing(0);
-
-                    // اللوجو على اليمين
-                    row.RelativeItem().AlignRight().Column(logoColumn =>
-                    {
-                        logoColumn.Spacing(0);
-                        logoColumn.Item().PaddingTop(-5).AlignTop().Row(r =>
-                        {
-                            r.Spacing(0);
-                            r.ConstantItem(100).Height(100).AlignTop().Column(c =>
-                            {
-                                c.Spacing(0);
-                                if (File.Exists(_logoPath))
-                                {
-                                    c.Item().PaddingTop(-2)
-                                        .Width(100)
-                                        .Height(100)
-                                        .Image(_logoPath, ImageScaling.FitArea);
-                                }
-                                else
-                                {
-                                    c.Item().PaddingTop(-2)
-                                        .Width(60)
-                                        .Height(60)
-                                        .Border(1)
-                                        .BorderColor(Colors.Grey.Lighten2)
-                                        .AlignCenter()
-                                        .AlignMiddle()
-                                        .Text("LOGO")
-                                        .FontSize(8)
-                                        .FontColor(Colors.Grey.Medium);
-                                }
-                            });
-                        });
-                    });
-
-                    // معلومات المدرسة في الوسط
-                    row.RelativeItem(2).AlignCenter().Column(infoColumn =>
-                    {
-                        infoColumn.Spacing(0);
-                        infoColumn.Item().PaddingTop(-5).Text(_schoolName)
-                            .FontSize(18)
-                            .Bold()
-                            .FontColor(Colors.Blue.Darken2);
-                    });
-
-                    // تاريخ الطباعة على اليسار
-                    row.RelativeItem().AlignLeft().Column(dateColumn =>
-                    {
-                        dateColumn.Spacing(0);
-                        dateColumn.Item().PaddingTop(-5).Text("تاريخ الطباعة")
-                            .FontSize(8)
-                            .FontColor(Colors.Grey.Darken1).AlignRight();
-                        dateColumn.Item().Text(DateTime.Now.ToString("dd/MM/yyyy"))
-                            .FontSize(8)
-                            .FontColor(Colors.Grey.Darken1).AlignRight();
-                        dateColumn.Item().PaddingTop(1).Text("الوقت")
-                            .FontSize(8)
-                            .FontColor(Colors.Grey.Darken1).AlignRight();
-                        dateColumn.Item().Text(DateTime.Now.ToString("hh:mm tt"))
-                            .FontSize(8)
-                            .FontColor(Colors.Grey.Darken1).AlignRight();
-                    });
-                });
-
-                // خط فاصل
-                column.Item().PaddingTop(5).PaddingBottom(5)
-                    .LineHorizontal(1.5f)
-                    .LineColor(Colors.Blue.Darken2);
-
-                // عنوان التقرير
-                column.Item().PaddingTop(2).AlignCenter().Text("تقرير أكثر الطلاب غياب")
-                    .FontSize(16)
-                    .Bold()
-                    .FontColor(Colors.Red.Darken2);
-
-                // فترة التقرير
-                column.Item().PaddingTop(2).AlignCenter()
-                    .Text($"الفترة: {data.PeriodText}")
-                    .FontSize(11)
-                    .Bold()
-                    .FontColor(Colors.Grey.Darken2);
-
-                // معلومات التصفية
-                var filterText = "جميع الصفوف والفصول";
-                if (data.ClassId.HasValue || data.ClassRoomId.HasValue)
-                {
-                    filterText = "تصفية حسب: ";
-                    if (data.ClassId.HasValue) filterText += $"الصف {data.ClassName} ";
-                    if (data.ClassRoomId.HasValue) filterText += $"الفصل {data.ClassRoomName}";
-                }
-
-                column.Item().PaddingTop(1).AlignCenter()
-                    .Text(filterText)
-                    .FontSize(10)
-                    .FontColor(Colors.Grey.Darken1);
-
-                // خط فاصل
-                column.Item().PaddingTop(5).PaddingBottom(2)
-                    .LineHorizontal(0.8f)
-                    .LineColor(Colors.Grey.Lighten1);
-            });
         }
 
         // محتوى تقرير أكثر الطلاب غياب
@@ -680,19 +742,9 @@ namespace SalesRepository.Repository
                         col.Item().Text(data.TotalStudents.ToString())
                             .FontSize(20)
                             .Bold()
-                            .FontColor(Colors.Blue.Darken2);
+                            .FontColor(Colors.Blue.Darken2).AlignCenter();
                     });
 
-                    row.RelativeItem().AlignCenter().Column(col =>
-                    {
-                        col.Item().Text("إجمالي أيام الغياب")
-                            .FontSize(10)
-                            .FontColor(Colors.Grey.Darken2);
-                        col.Item().Text(data.TotalAbsentDays.ToString())
-                            .FontSize(20)
-                            .Bold()
-                            .FontColor(Colors.Red.Darken2);
-                    });
 
                     row.RelativeItem().AlignCenter().Column(col =>
                     {
@@ -702,7 +754,7 @@ namespace SalesRepository.Repository
                         col.Item().Text(data.Students.FirstOrDefault()?.AbsentDays.ToString() ?? "0")
                             .FontSize(20)
                             .Bold()
-                            .FontColor(Colors.Orange.Darken1);
+                            .FontColor(Colors.Orange.Darken1).AlignCenter();
                     });
                 });
         }
@@ -809,7 +861,7 @@ namespace SalesRepository.Repository
                     page.DefaultTextStyle(x => x.DirectionFromRightToLeft());
 
                     // Header
-                    page.Header().Element(container => ComposeMostLateHeader(container, data));
+                    page.Header().Element(container => ComposeHeader(container,DateTime.Now, "تقرير أكثر الطلاب تأخرا"));
 
                     // Content
                     page.Content().Element(container => ComposeMostLateContent(container, data));
@@ -820,120 +872,6 @@ namespace SalesRepository.Repository
             });
 
             return document.GeneratePdf();
-        }
-
-        // Header لتقرير أكثر الطلاب تأخر
-        private void ComposeMostLateHeader(IContainer container, MostAbsentStudentsReportViewModel data)
-        {
-            container.Column(column =>
-            {
-                column.Spacing(0);
-
-                // الصف الأول - اللوجو والمعلومات
-                column.Item().Row(row =>
-                {
-                    row.Spacing(0);
-
-                    // اللوجو على اليمين
-                    row.RelativeItem().AlignRight().Column(logoColumn =>
-                    {
-                        logoColumn.Spacing(0);
-                        logoColumn.Item().PaddingTop(-5).AlignTop().Row(r =>
-                        {
-                            r.Spacing(0);
-                            r.ConstantItem(100).Height(100).AlignTop().Column(c =>
-                            {
-                                c.Spacing(0);
-                                if (File.Exists(_logoPath))
-                                {
-                                    c.Item().PaddingTop(-2)
-                                        .Width(100)
-                                        .Height(100)
-                                        .Image(_logoPath, ImageScaling.FitArea);
-                                }
-                                else
-                                {
-                                    c.Item().PaddingTop(-2)
-                                        .Width(60)
-                                        .Height(60)
-                                        .Border(1)
-                                        .BorderColor(Colors.Grey.Lighten2)
-                                        .AlignCenter()
-                                        .AlignMiddle()
-                                        .Text("LOGO")
-                                        .FontSize(8)
-                                        .FontColor(Colors.Grey.Medium);
-                                }
-                            });
-                        });
-                    });
-
-                    // معلومات المدرسة في الوسط
-                    row.RelativeItem(2).AlignCenter().Column(infoColumn =>
-                    {
-                        infoColumn.Spacing(0);
-                        infoColumn.Item().PaddingTop(-5).Text(_schoolName)
-                            .FontSize(18)
-                            .Bold()
-                            .FontColor(Colors.Blue.Darken2);
-                    });
-
-                    // تاريخ الطباعة على اليسار
-                    row.RelativeItem().AlignLeft().Column(dateColumn =>
-                    {
-                        dateColumn.Spacing(0);
-                        dateColumn.Item().PaddingTop(-5).Text("تاريخ الطباعة")
-                            .FontSize(8)
-                            .FontColor(Colors.Grey.Darken1).AlignRight();
-                        dateColumn.Item().Text(DateTime.Now.ToString("dd/MM/yyyy"))
-                            .FontSize(8)
-                            .FontColor(Colors.Grey.Darken1).AlignRight();
-                        dateColumn.Item().PaddingTop(1).Text("الوقت")
-                            .FontSize(8)
-                            .FontColor(Colors.Grey.Darken1).AlignRight();
-                        dateColumn.Item().Text(DateTime.Now.ToString("hh:mm tt"))
-                            .FontSize(8)
-                            .FontColor(Colors.Grey.Darken1).AlignRight();
-                    });
-                });
-
-                // خط فاصل
-                column.Item().PaddingTop(5).PaddingBottom(5)
-                    .LineHorizontal(1.5f)
-                    .LineColor(Colors.Blue.Darken2);
-
-                // عنوان التقرير
-                column.Item().PaddingTop(2).AlignCenter().Text("تقرير أكثر الطلاب تأخر")
-                    .FontSize(16)
-                    .Bold()
-                    .FontColor(Colors.Orange.Darken2); // لون مختلف للتأخر
-
-                // فترة التقرير
-                column.Item().PaddingTop(2).AlignCenter()
-                    .Text($"الفترة: {data.PeriodText}")
-                    .FontSize(11)
-                    .Bold()
-                    .FontColor(Colors.Grey.Darken2);
-
-                // معلومات التصفية
-                var filterText = "جميع الصفوف والفصول";
-                if (data.ClassId.HasValue || data.ClassRoomId.HasValue)
-                {
-                    filterText = "تصفية حسب: ";
-                    if (data.ClassId.HasValue) filterText += $"الصف {data.ClassName} ";
-                    if (data.ClassRoomId.HasValue) filterText += $"الفصل {data.ClassRoomName}";
-                }
-
-                column.Item().PaddingTop(1).AlignCenter()
-                    .Text(filterText)
-                    .FontSize(10)
-                    .FontColor(Colors.Grey.Darken1);
-
-                // خط فاصل
-                column.Item().PaddingTop(5).PaddingBottom(2)
-                    .LineHorizontal(0.8f)
-                    .LineColor(Colors.Grey.Lighten1);
-            });
         }
 
         // محتوى تقرير أكثر الطلاب تأخر
@@ -976,19 +914,9 @@ namespace SalesRepository.Repository
                         col.Item().Text(data.TotalStudents.ToString())
                             .FontSize(20)
                             .Bold()
-                            .FontColor(Colors.Blue.Darken2);
+                            .FontColor(Colors.Blue.Darken2).AlignCenter();
                     });
 
-                    row.RelativeItem().AlignCenter().Column(col =>
-                    {
-                        col.Item().Text("إجمالي أيام التأخر")
-                            .FontSize(10)
-                            .FontColor(Colors.Grey.Darken2);
-                        col.Item().Text(data.TotalAbsentDays.ToString())
-                            .FontSize(20)
-                            .Bold()
-                            .FontColor(Colors.Orange.Darken2); // لون مختلف للتأخر
-                    });
 
                     row.RelativeItem().AlignCenter().Column(col =>
                     {
@@ -998,7 +926,7 @@ namespace SalesRepository.Repository
                         col.Item().Text(data.Students.FirstOrDefault()?.AbsentDays.ToString() ?? "0")
                             .FontSize(20)
                             .Bold()
-                            .FontColor(Colors.DeepOrange.Darken1);
+                            .FontColor(Colors.DeepOrange.Darken1).AlignCenter();
                     });
                 });
         }
@@ -1104,7 +1032,7 @@ namespace SalesRepository.Repository
                     page.DefaultTextStyle(x => x.DirectionFromRightToLeft());
 
                     // Header
-                    page.Header().Element(container => ComposeStudentReportHeader(container, data));
+                    page.Header().Element(container => ComposeHeader(container, DateTime.Now, "تقرير حضور الطالبة"));
 
                     // Content
                     page.Content().Element(container => ComposeStudentReportContent(container, data));
@@ -1115,121 +1043,6 @@ namespace SalesRepository.Repository
             });
 
             return document.GeneratePdf();
-        }
-
-        // Header لتقرير الطالب
-        private void ComposeStudentReportHeader(IContainer container, StudentAttendanceReportViewModel data)
-        {
-            container.Column(column =>
-            {
-                column.Spacing(0);
-
-                // الصف الأول - اللوجو والمعلومات
-                column.Item().Row(row =>
-                {
-                    row.Spacing(0);
-
-                    // اللوجو على اليمين
-                    row.RelativeItem().AlignRight().Column(logoColumn =>
-                    {
-                        logoColumn.Spacing(0);
-                        logoColumn.Item().PaddingTop(-5).AlignTop().Row(r =>
-                        {
-                            r.Spacing(0);
-                            r.ConstantItem(100).Height(100).AlignTop().Column(c =>
-                            {
-                                c.Spacing(0);
-                                if (File.Exists(_logoPath))
-                                {
-                                    c.Item().PaddingTop(-2)
-                                        .Width(100)
-                                        .Height(100)
-                                        .Image(_logoPath, ImageScaling.FitArea);
-                                }
-                                else
-                                {
-                                    c.Item().PaddingTop(-2)
-                                        .Width(60)
-                                        .Height(60)
-                                        .Border(1)
-                                        .BorderColor(Colors.Grey.Lighten2)
-                                        .AlignCenter()
-                                        .AlignMiddle()
-                                        .Text("LOGO")
-                                        .FontSize(8)
-                                        .FontColor(Colors.Grey.Medium);
-                                }
-                            });
-                        });
-                    });
-
-                    // معلومات المدرسة في الوسط
-                    row.RelativeItem(2).AlignCenter().Column(infoColumn =>
-                    {
-                        infoColumn.Spacing(0);
-                        infoColumn.Item().PaddingTop(-5).Text(_schoolName)
-                            .FontSize(18)
-                            .Bold()
-                            .FontColor(Colors.Blue.Darken2);
-                    });
-
-                    // تاريخ الطباعة على اليسار
-                    row.RelativeItem().AlignLeft().Column(dateColumn =>
-                    {
-                        dateColumn.Spacing(0);
-                        dateColumn.Item().PaddingTop(-5).Text("تاريخ الطباعة")
-                            .FontSize(8)
-                            .FontColor(Colors.Grey.Darken1).AlignRight();
-                        dateColumn.Item().Text(DateTime.Now.ToString("dd/MM/yyyy"))
-                            .FontSize(8)
-                            .FontColor(Colors.Grey.Darken1).AlignRight();
-                        dateColumn.Item().PaddingTop(1).Text("الوقت")
-                            .FontSize(8)
-                            .FontColor(Colors.Grey.Darken1).AlignRight();
-                        dateColumn.Item().Text(DateTime.Now.ToString("hh:mm tt"))
-                            .FontSize(8)
-                            .FontColor(Colors.Grey.Darken1).AlignRight();
-                    });
-                });
-
-                // خط فاصل
-                column.Item().PaddingTop(5).PaddingBottom(5)
-                    .LineHorizontal(1.5f)
-                    .LineColor(Colors.Blue.Darken2);
-
-                // عنوان التقرير
-                column.Item().PaddingTop(2).AlignCenter().Text("تقرير حضور الطالبة")
-                    .FontSize(16)
-                    .Bold()
-                    .FontColor(Colors.Blue.Darken2);
-
-                // معلومات الطالب
-                column.Item().PaddingTop(2).AlignCenter()
-                    .Text($"{data.StudentName} - {data.StudentCode}")
-                    .FontSize(12)
-                    .Bold()
-                    .FontColor(Colors.Grey.Darken2);
-
-                // معلومات الفصل
-                column.Item().PaddingTop(1).AlignCenter()
-                    .Text($"{data.ClassName} - {data.ClassRoomName}")
-                    .FontSize(10)
-                    .FontColor(Colors.Grey.Darken1);
-
-                // فترة التقرير
-                var arabicCulture = new System.Globalization.CultureInfo("ar-EG");
-                column.Item().PaddingTop(1).AlignCenter()
-                .Text($"من تاريخ: {data.FromDate.ToString("dddd، dd MMMM yyyy", arabicCulture)}  حتى تاريخ: {data.ReportDate.ToString("dddd، dd MMMM yyyy", arabicCulture)}")
-
-                    //.Text($"آخر 30 يوم حتى: {data.ReportDate.ToString("dddd، dd MMMM yyyy", arabicCulture)}")
-                    .FontSize(10)
-                    .FontColor(Colors.Grey.Darken1);
-
-                // خط فاصل
-                column.Item().PaddingTop(5).PaddingBottom(2)
-                    .LineHorizontal(0.8f)
-                    .LineColor(Colors.Grey.Lighten1);
-            });
         }
 
         // محتوى تقرير الطالب
@@ -1306,7 +1119,7 @@ namespace SalesRepository.Repository
                             col.Item().Text("النسبة الإجمالية")
                                 .FontSize(10)
                                 .FontColor(Colors.Grey.Darken2);
-                            var totalDays = data.TotalPresent + data.TotalLate + data.TotalAbsent;
+                            var totalDays = data.TotalPresent + data.TotalAbsent;
                             var percentage = totalDays > 0 ? Math.Round((data.TotalPresent * 100.0) / totalDays, 1) : 0;
                             col.Item().Text($"{percentage}%").AlignCenter()
                                 .FontSize(20)
@@ -1345,7 +1158,7 @@ namespace SalesRepository.Repository
                         col.Item().Text("إجمالي الأيام")
                             .FontSize(9)
                             .FontColor(Colors.Grey.Darken2);
-                        var totalDays = data.TotalPresent + data.TotalLate + data.TotalAbsent;
+                        var totalDays = data.TotalPresent + data.TotalAbsent;
                         col.Item().Text($"يوم {totalDays}").AlignCenter()
                             .FontSize(12)
                             .Bold()
@@ -1357,7 +1170,7 @@ namespace SalesRepository.Repository
                         col.Item().Text("معدل الحضور")
                             .FontSize(9)
                             .FontColor(Colors.Grey.Darken2);
-                        var totalDays = data.TotalPresent + data.TotalLate + data.TotalAbsent;
+                        var totalDays = data.TotalPresent + data.TotalAbsent;
                         var percentage = totalDays > 0 ? Math.Round((data.TotalPresent * 100.0) / totalDays, 1) : 0;
                         col.Item().Text($"{percentage}%").AlignCenter()
                             .FontSize(12)
@@ -1439,132 +1252,408 @@ namespace SalesRepository.Repository
         }
 
 
+        // إنشاء تقرير الطلاب الأكثر انضباطاً PDF
+        public byte[] GenerateMostDisciplinedStudentsReport(MostDisciplinedStudentsReportViewModel data)
+        {
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4.Landscape());
+                    page.Margin(1, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(11));
+                    page.DefaultTextStyle(x => x.DirectionFromRightToLeft());
 
-        // cards
+                    // Header
+                    page.Header().Element(container => ComposeHeader(container, DateTime.Now, "تقرير الطلاب الأكثر انضباطاً"));
+
+                    // Content
+                    page.Content().Element(container => ComposeMostDisciplinedStudentsContent(container, data));
+
+                    // Footer
+                    page.Footer().Element(ComposeFooter);
+                });
+            });
+
+            return document.GeneratePdf();
+        }
+
+        // محتوى تقرير الطلاب الأكثر انضباطاً
+        private void ComposeMostDisciplinedStudentsContent(IContainer container, MostDisciplinedStudentsReportViewModel data)
+        {
+            container.PaddingVertical(10).Column(column =>
+            {
+                // الإحصائيات العامة
+                column.Item().Element(c => ComposeMostDisciplinedStudentsSummary(c, data));
+
+                column.Item().PaddingTop(15);
+
+                // جدول الطلاب
+                if (data.Students != null && data.Students.Any())
+                {
+                    column.Item().Element(c => ComposeMostDisciplinedStudentsTable(c, data));
+                }
+                else
+                {
+                    column.Item().AlignCenter().Text("لا توجد بيانات للعرض")
+                        .FontSize(14)
+                        .Bold()
+                        .FontColor(Colors.Grey.Medium);
+                }
+            });
+        }
+
+        // الإحصائيات العامة لتقرير الطلاب الأكثر انضباطاً
+        private void ComposeMostDisciplinedStudentsSummary(IContainer container, MostDisciplinedStudentsReportViewModel data)
+        {
+            container.Background(Colors.Grey.Lighten3)
+                .Padding(10)
+                .Row(row =>
+                {
+                    row.RelativeItem().AlignCenter().Column(col =>
+                    {
+                        col.Item().Text("عدد الطلاب")
+                            .FontSize(10)
+                            .FontColor(Colors.Grey.Darken2);
+                        col.Item().Text(data.TotalStudents.ToString())
+                            .FontSize(20)
+                            .Bold()
+                            .FontColor(Colors.Blue.Darken2)
+                            .AlignCenter();
+                    });
+
+                    row.RelativeItem().AlignCenter().Column(col =>
+                    {
+                        col.Item().Text("إجمالي أيام الحضور")
+                            .FontSize(10)
+                            .FontColor(Colors.Grey.Darken2);
+                        col.Item().Text(data.TotalPresentDays.ToString())
+                            .FontSize(20)
+                            .Bold()
+                            .FontColor(Colors.Green.Darken2)
+                            .AlignCenter();
+                    });
+
+                    row.RelativeItem().AlignCenter().Column(col =>
+                    {
+                        col.Item().Text("أعلى نسبة انضباط")
+                            .FontSize(10)
+                            .FontColor(Colors.Grey.Darken2);
+                        col.Item().Text($"{data.Students.FirstOrDefault()?.DisciplinePercentage ?? 0}%")
+                            .FontSize(20)
+                            .Bold()
+                            .FontColor(Colors.Green.Darken2)
+                            .AlignCenter();
+                    });
+                });
+        }
+
+        // جدول الطلاب الأكثر انضباطاً
+        private void ComposeMostDisciplinedStudentsTable(IContainer container, MostDisciplinedStudentsReportViewModel data)
+        {
+            container.Table(table =>
+            {
+                // تعريف الأعمدة (RTL)
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(2);   // نسبة الانضباط
+                    columns.RelativeColumn(1.5f); // أيام الحضور
+                    columns.RelativeColumn(1.2f); // أيام التأخر
+                    columns.RelativeColumn(1.2f); // أيام الغياب
+                    columns.RelativeColumn(2);   // الفصل
+                    columns.RelativeColumn(2);   // الصف
+                    columns.RelativeColumn(2);   // الكود
+                    columns.RelativeColumn(3);   // الاسم
+                    columns.ConstantColumn(40);  // الترتيب
+                });
+
+                // Header RTL
+                table.Header(header =>
+                {
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("نسبة الانضباط").FontColor(Colors.White).Bold().FontSize(10);
+
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("أيام الحضور").FontColor(Colors.White).Bold().FontSize(10);
+
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("أيام التأخر").FontColor(Colors.White).Bold().FontSize(10);
+
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("أيام الغياب").FontColor(Colors.White).Bold().FontSize(10);
+
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("الفصل").FontColor(Colors.White).Bold().FontSize(10);
+
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("الصف").FontColor(Colors.White).Bold().FontSize(10);
+
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("كود الطالب").FontColor(Colors.White).Bold().FontSize(10);
+
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("اسم الطالب").FontColor(Colors.White).Bold().FontSize(10);
+
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("#").FontColor(Colors.White).Bold().FontSize(10);
+                });
+
+                // Rows RTL
+                int index = 1;
+                foreach (var student in data.Students)
+                {
+                    var bgColor = index % 2 == 0 ? Colors.Grey.Lighten4 : Colors.White;
+                    var percentageColor = student.DisciplinePercentage >= 90 ? Colors.Green.Darken2 :
+                                        student.DisciplinePercentage >= 80 ? Colors.LightGreen.Darken2 :
+                                        student.DisciplinePercentage >= 70 ? Colors.Yellow.Darken2 :
+                                        student.DisciplinePercentage >= 60 ? Colors.Orange.Darken2 : Colors.Red.Darken2;
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignCenter().Text($"{student.DisciplinePercentage}%")
+                        .FontSize(9)
+                        .FontColor(percentageColor)
+                        .Bold();
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignCenter().Text(student.PresentDays.ToString())
+                        .FontSize(9)
+                        .Bold()
+                        .FontColor(Colors.Green.Darken2);
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignCenter().Text(student.LateDays.ToString())
+                        .FontSize(9)
+                        .FontColor(Colors.Orange.Darken2);
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignCenter().Text(student.AbsentDays.ToString())
+                        .FontSize(9)
+                        .FontColor(Colors.Red.Darken2);
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignRight().Text(student.ClassRoomName)
+                        .FontSize(9);
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignRight().Text(student.ClassName)
+                        .FontSize(9);
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignRight().Text(student.StudentCode)
+                        .FontSize(9);
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignRight().Text(student.StudentName)
+                        .FontSize(9);
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignCenter().Text(index.ToString())
+                        .FontSize(9)
+                        .Bold();
+
+                    index++;
+                }
+            });
+        }
+
+        // إنشاء تقرير الفصول الأكثر انضباطاً PDF
+        public byte[] GenerateMostDisciplinedClassesReport(MostDisciplinedClassesReportViewModel data)
+        {
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4.Landscape());
+                    page.Margin(1, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(11));
+                    page.DefaultTextStyle(x => x.DirectionFromRightToLeft());
+
+                    // Header
+                    page.Header().Element(container => ComposeHeader(container, DateTime.Now, "تقرير الفصول الأكثر انضباطاً"));
+
+                    // Content
+                    page.Content().Element(container => ComposeMostDisciplinedClassesContent(container, data));
+
+                    // Footer
+                    page.Footer().Element(ComposeFooter);
+                });
+            });
+
+            return document.GeneratePdf();
+        }
+
+        // محتوى تقرير الفصول الأكثر انضباطاً
+        private void ComposeMostDisciplinedClassesContent(IContainer container, MostDisciplinedClassesReportViewModel data)
+        {
+            container.PaddingVertical(10).Column(column =>
+            {
+                // الإحصائيات العامة
+                column.Item().Element(c => ComposeMostDisciplinedClassesSummary(c, data));
+
+                column.Item().PaddingTop(15);
+
+                // جدول الفصول
+                if (data.Classes != null && data.Classes.Any())
+                {
+                    column.Item().Element(c => ComposeMostDisciplinedClassesTable(c, data));
+                }
+                else
+                {
+                    column.Item().AlignCenter().Text("لا توجد بيانات للعرض")
+                        .FontSize(14)
+                        .Bold()
+                        .FontColor(Colors.Grey.Medium);
+                }
+            });
+        }
+
+        // الإحصائيات العامة لتقرير الفصول الأكثر انضباطاً
+        private void ComposeMostDisciplinedClassesSummary(IContainer container, MostDisciplinedClassesReportViewModel data)
+        {
+            container.Background(Colors.Grey.Lighten3)
+                .Padding(10)
+                .Row(row =>
+                {
+                    row.RelativeItem().AlignCenter().Column(col =>
+                    {
+                        col.Item().Text("عدد الفصول")
+                            .FontSize(10)
+                            .FontColor(Colors.Grey.Darken2);
+                        col.Item().Text(data.TotalClasses.ToString())
+                            .FontSize(20)
+                            .Bold()
+                            .FontColor(Colors.Blue.Darken2)
+                            .AlignCenter();
+                    });
+
+                    row.RelativeItem().AlignCenter().Column(col =>
+                    {
+                        col.Item().Text("إجمالي الطلاب")
+                            .FontSize(10)
+                            .FontColor(Colors.Grey.Darken2);
+                        col.Item().Text(data.TotalStudents.ToString())
+                            .FontSize(20)
+                            .Bold()
+                            .FontColor(Colors.Green.Darken2)
+                            .AlignCenter();
+                    });
+
+                    row.RelativeItem().AlignCenter().Column(col =>
+                    {
+                        col.Item().Text("أعلى نسبة انضباط")
+                            .FontSize(10)
+                            .FontColor(Colors.Grey.Darken2);
+                        col.Item().Text($"{data.Classes.FirstOrDefault()?.DisciplinePercentage ?? 0}%")
+                            .FontSize(20)
+                            .Bold()
+                            .FontColor(Colors.Green.Darken2)
+                            .AlignCenter();
+                    });
+                });
+        }
+
+        // جدول الفصول الأكثر انضباطاً
+        private void ComposeMostDisciplinedClassesTable(IContainer container, MostDisciplinedClassesReportViewModel data)
+        {
+            container.Table(table =>
+            {
+                // تعريف الأعمدة (RTL)
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(2);   // نسبة الانضباط
+                    //columns.RelativeColumn(1.5f); // أيام الحضور
+                    //columns.RelativeColumn(1.2f); // أيام التأخر
+                    //columns.RelativeColumn(1.2f); // أيام الغياب
+                    columns.RelativeColumn(2);   // عدد الطلاب
+                    columns.RelativeColumn(3);   // اسم الفصل
+                    columns.RelativeColumn(2);   // اسم الصف
+                    columns.ConstantColumn(40);  // الترتيب
+                });
+
+                // Header RTL
+                table.Header(header =>
+                {
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("نسبة الانضباط").FontColor(Colors.White).Bold().FontSize(10);
+
+                    //header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                    //    .AlignCenter().Text("أيام الحضور").FontColor(Colors.White).Bold().FontSize(10);
+
+                    //header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                    //    .AlignCenter().Text("أيام التأخر").FontColor(Colors.White).Bold().FontSize(10);
+
+                    //header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                    //    .AlignCenter().Text("أيام الغياب").FontColor(Colors.White).Bold().FontSize(10);
+
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("عدد الطلاب").FontColor(Colors.White).Bold().FontSize(10);
+
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("اسم الفصل").FontColor(Colors.White).Bold().FontSize(10);
+
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("اسم الصف").FontColor(Colors.White).Bold().FontSize(10);
+
+                    header.Cell().Background(Colors.Green.Darken2).Padding(8)
+                        .AlignCenter().Text("#").FontColor(Colors.White).Bold().FontSize(10);
+                });
+
+                // Rows RTL
+                foreach (var classData in data.Classes)
+                {
+                    var bgColor = classData.Rank % 2 == 0 ? Colors.Grey.Lighten4 : Colors.White;
+                    var percentageColor = classData.DisciplinePercentage >= 90 ? Colors.Green.Darken2 :
+                                        classData.DisciplinePercentage >= 80 ? Colors.LightGreen.Darken2 :
+                                        classData.DisciplinePercentage >= 70 ? Colors.Yellow.Darken2 :
+                                        classData.DisciplinePercentage >= 60 ? Colors.Orange.Darken2 : Colors.Red.Darken2;
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignCenter().Text($"{classData.DisciplinePercentage}%")
+                        .FontSize(9)
+                        .FontColor(percentageColor)
+                        .Bold();
+
+                    //table.Cell().Background(bgColor).Padding(6)
+                    //    .AlignCenter().Text(classData.TotalPresentDays.ToString())
+                    //    .FontSize(9)
+                    //    .Bold()
+                    //    .FontColor(Colors.Green.Darken2);
+
+                    //table.Cell().Background(bgColor).Padding(6)
+                    //    .AlignCenter().Text(classData.TotalLateDays.ToString())
+                    //    .FontSize(9)
+                    //    .FontColor(Colors.Orange.Darken2);
+
+                    //table.Cell().Background(bgColor).Padding(6)
+                    //    .AlignCenter().Text(classData.TotalAbsentDays.ToString())
+                    //    .FontSize(9)
+                    //    .FontColor(Colors.Red.Darken2);
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignCenter().Text(classData.TotalStudents.ToString())
+                        .FontSize(9)
+                        .Bold();
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignCenter().Text(classData.ClassRoomName)
+                        .FontSize(9);
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignCenter().Text(classData.ClassName)
+                        .FontSize(9);
+
+                    table.Cell().Background(bgColor).Padding(6)
+                        .AlignCenter().Text(classData.Rank.ToString())
+                        .FontSize(9)
+                        .Bold();
+                }
+            });
+        }
 
 
-        //public byte[] GenerateStudentCards(List<StudentCardViewModel> students)
-        //{
-        //    // Cache للـ QR Codes لتجنب إعادة التوليد
-        //    var qrCache = new Dictionary<string, byte[]>();
-
-        //    var document = Document.Create(container =>
-        //    {
-        //        container.Page(page =>
-        //        {
-        //            page.Size(PageSizes.A4);
-        //            page.Margin(1, Unit.Centimetre);
-        //            page.PageColor(Colors.White);
-        //            page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(11));
-        //            page.DefaultTextStyle(x => x.DirectionFromRightToLeft());
-
-        //            page.Content().Column(column =>
-        //            {
-        //                // معالجة متوازية للبطاقات
-        //                var cardsPerRow = 2;
-        //                var rows = (int)Math.Ceiling(students.Count / (double)cardsPerRow);
-
-        //                for (int i = 0; i < rows; i++)
-        //                {
-        //                    var rowIndex = i;
-        //                    column.Item().Row(row =>
-        //                    {
-        //                        for (int j = 0; j < cardsPerRow; j++)
-        //                        {
-        //                            var studentIndex = rowIndex * cardsPerRow + j;
-        //                            if (studentIndex < students.Count)
-        //                            {
-        //                                var student = students[studentIndex];
-        //                                row.RelativeItem().Padding(5)
-        //                                    .Element(c => ComposeStudentCard(c, student, qrCache));
-        //                            }
-        //                            else
-        //                            {
-        //                                row.RelativeItem();
-        //                            }
-        //                        }
-        //                    });
-
-        //                    if (i < rows - 1)
-        //                    {
-        //                        column.Item().PaddingVertical(10);
-        //                    }
-        //                }
-        //            });
-
-        //            page.Footer().AlignCenter().Text($"تم الطباعة في: {DateTime.Now:yyyy/MM/dd hh:mm tt}")
-        //                .FontSize(8)
-        //                .FontColor(Colors.Grey.Medium);
-        //        });
-        //    });
-
-        //    return document.GeneratePdf();
-        //}
-
-        //private void ComposeStudentCard(IContainer container, StudentCardViewModel student, Dictionary<string, byte[]> qrCache)
-        //{
-        //    container.Border(2)
-        //        .BorderColor(Colors.Blue.Darken2)
-        //        .Background(Colors.Grey.Lighten4)
-        //        .Padding(15)
-        //        .Column(column =>
-        //        {
-        //            // اسم الطالبة
-        //            column.Item().AlignCenter().Text(student.StudentName)
-        //                .FontSize(16)
-        //                .Bold()
-        //                .FontColor(Colors.Blue.Darken3);
-
-        //            column.Item().PaddingTop(10);
-
-        //            // QR Code مع Cache
-        //            column.Item().AlignCenter().Height(120).Width(120)
-        //                .Element(c =>
-        //                {
-        //                    var qrKey = $"{student.StudentCode}_{student.StudentName}";
-
-        //                    if (!qrCache.ContainsKey(qrKey))
-        //                    {
-        //                        var qrGenerator = new QRCodeGenerator();
-        //                        var qrData = $"الأسم: {student.StudentName}\nرقم الطالبة: {student.StudentCode}\nجوال: {student.StudentPhone}";
-        //                        var qrCodeData = qrGenerator.CreateQrCode(qrData, QRCodeGenerator.ECCLevel.H);
-        //                        var qrCode = new QRCode(qrCodeData);
-        //                        var qrBitmap = qrCode.GetGraphic(20);
-
-        //                        using (var ms = new MemoryStream())
-        //                        {
-        //                            qrBitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-        //                            qrCache[qrKey] = ms.ToArray();
-        //                        }
-        //                    }
-
-        //                    c.Image(qrCache[qrKey]);
-        //                });
-
-        //            column.Item().PaddingTop(10);
-
-        //            // رقم الطالب
-        //            column.Item().AlignCenter().Text($"رقم الطالبة: {student.StudentCode}")
-        //                .FontSize(12)
-        //                .Bold()
-        //                .FontColor(Colors.Grey.Darken2);
-
-        //            // الصف والفصل
-        //            column.Item().AlignCenter().Text($"{student.ClassName} - {student.ClassRoomName}")
-        //                .FontSize(11)
-        //                .FontColor(Colors.Grey.Darken1);
-
-        //            // رقم الجوال
-        //            if (!string.IsNullOrEmpty(student.StudentPhone))
-        //            {
-        //                column.Item().AlignCenter().Text($"رقم الجوال: {student.StudentPhone}")
-        //                    .FontSize(10)
-        //                    .FontColor(Colors.Grey.Darken1);
-        //            }
-        //        });
-        //}
-
-
+        // إنشاء بطاقات الطلاب PDF
         public byte[] GenerateStudentCards(List<StudentCardViewModel> students)
         {
             var qrCache = new Dictionary<string, byte[]>();
@@ -1630,6 +1719,8 @@ namespace SalesRepository.Repository
             return document.GeneratePdf();
         }
 
+
+        // تكوين بطاقة الطالب
         private void ComposeStudentCard(IContainer container, StudentCardViewModel student, Dictionary<string, byte[]> qrCache)
         {
             container.Border(2)

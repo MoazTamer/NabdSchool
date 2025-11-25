@@ -50,12 +50,12 @@
 
     // تحميل البيانات بالـ AJAX
     var loadData = function () {
-        const studentCode = $("#studentCodeFilter").val().trim();
+        const studentIdentifier = $("#studentIdentifierFilter").val().trim();
         const startDate = $("#startDateFilter").val();
         const endDate = $("#endDateFilter").val();
 
-        if (!studentCode) {
-            Swal.fire({ text: "⚠️ يرجى إدخال كود الطالب", icon: "warning", confirmButtonText: "موافق" });
+        if (!studentIdentifier) {
+            Swal.fire({ text: "⚠️ يرجى إدخال الاسم أو كود الطالب", icon: "warning", confirmButtonText: "موافق" });
             return;
         }
 
@@ -73,24 +73,16 @@
             url: "/Reports/GetStudentAttendanceReport",
             type: "GET",
             data: {
-                studentCode: studentCode,
+                studentIdentifier: studentIdentifier,
                 fromDate: startDate,
                 date: endDate
             },
             success: function (json) {
                 if (json.success) {
-                    // ترتيب الأيام من الأحدث للأقدم
-                    json.data.days.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                    // تحديث الجدول
                     datatable.clear().rows.add(json.data.days).draw();
-
-                    // تحديث الإحصائيات
                     updateStatistics(json.data);
-
                     $("#studentNameHeader").show();
                     $("#studentNameDisplay").text(json.data.studentName);
-
                 } else {
                     Swal.fire({ text: json.message, icon: "error", confirmButtonText: "موافق" });
                     datatable.clear().draw();
@@ -104,6 +96,7 @@
             }
         });
     };
+
 
     var updateStatistics = function (data) {
         $("#totalPresent").text(data.totalPresent || 0);
@@ -128,12 +121,12 @@
 
         // في قسم handleEvents أضف:
         $("#printBtn").on("click", function () {
-            const studentCode = $("#studentCodeFilter").val().trim();
+            const studentIdentifier = $("#studentIdentifierFilter").val().trim();
             const startDate = $("#startDateFilter").val();
             const endDate = $("#endDateFilter").val();
 
-            if (!studentCode) {
-                Swal.fire({ text: "⚠️ يرجى إدخال كود الطالب", icon: "warning", confirmButtonText: "موافق" });
+            if (!studentIdentifier) {
+                Swal.fire({ text: "⚠️ يرجى إدخال كود الطالبة او الاسم", icon: "warning", confirmButtonText: "موافق" });
                 return;
             }
 
@@ -153,7 +146,7 @@
                 target: '_blank'
             });
 
-            form.append($('<input>', { type: 'hidden', name: 'studentCode', value: studentCode }));
+            form.append($('<input>', { type: 'hidden', name: 'studentIdentifier', value: studentIdentifier }));
             form.append($('<input>', { type: 'hidden', name: 'fromDate', value: startDate }));
             form.append($('<input>', { type: 'hidden', name: 'date', value: endDate }));
 
@@ -163,14 +156,14 @@
         });
 
         $("#resetBtn").on("click", function () {
-            $("#studentCodeFilter").val("");
-            $("#startDateFilter").val('@DateTime.Today.AddDays(-30).ToString("yyyy-MM-dd")');
+            $("#studentIdentifierFilter").val("");
+            $("#startDateFilter").val('@DateTime.Today.ToString("yyyy-MM-dd")');
             $("#endDateFilter").val('@DateTime.Today.ToString("yyyy-MM-dd")');
             datatable.clear().draw();
             $("#statisticsSection").hide();
         });
 
-        $("#studentCodeFilter").on("keypress", function (e) {
+        $("#studentIdentifierFilter").on("keypress", function (e) {
             if (e.which === 13) loadData();
         });
     };
@@ -183,15 +176,15 @@
 }();
 
 $(document).ready(function () {
-    const studentCode = $("#studentCodeFilter").val();
+    const studentIdentifier = $("#studentIdentifierFilter").val();
     const startDate = $("#startDateFilter").val();
     const endDate = $("#endDateFilter").val();
 
     console.log("Document ready. Checking for pre-fill values...");
-    console.log("Pre-filling filters:", { studentCode });
+    console.log("Pre-filling filters:", { studentIdentifier });
 
-    if (studentCode) {
-        $("#studentCodeFilter").val(studentCode);
+    if (studentIdentifier) {
+        $("#studentIdentifierFilter").val(studentIdentifier);
         $("#startDateFilter").val(startDate);
         $("#endDateFilter").val(endDate);
         StudentAttendanceReport.init(); 

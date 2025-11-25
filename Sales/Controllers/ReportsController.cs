@@ -797,9 +797,9 @@ namespace Sales.Controllers
             }
         }
 
-        public IActionResult StudentReport(string studentCode, DateTime? fromDate, DateTime? date)
+        public IActionResult StudentReport(string studentIdentifier, DateTime? fromDate, DateTime? date)
         {
-            ViewBag.StudentCode = studentCode;
+            ViewBag.StudentIdentifier = studentIdentifier;
             ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd");
             ViewBag.Date = date?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd");
             return View();
@@ -807,23 +807,29 @@ namespace Sales.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> GetStudentAttendanceReport(string studentCode, DateTime? date, DateTime? fromDate)
+        public async Task<IActionResult> GetStudentAttendanceReport(string studentIdentifier, DateTime? date, DateTime? fromDate)
         {
             try
             {
                 var reportDate = date?.Date ?? DateTime.Today;
-                var minDate = reportDate;
+                //var minDate = reportDate;
+                var minDate = fromDate?.Date ?? reportDate.AddDays(-30);
                 //var minDate = fromDate?.Date ?? reportDate.AddDays(-30);
                 //var minDate = reportDate.AddDays(-30);
 
-                var code = studentCode.Trim();
+                //var code = studentIdentifier.Trim();
+
+                studentIdentifier = studentIdentifier.Trim();
 
                 var student = await _context.TblStudent
-                .Include(s => s.ClassRoom)
-                .ThenInclude(cr => cr.Class)
-                .FirstOrDefaultAsync(s => s.Student_Code == studentCode.Trim() && s.Student_Visible == "yes");
+                    .Include(s => s.ClassRoom)
+                    .ThenInclude(cr => cr.Class)
+                    .Where(s => (s.Student_Code == studentIdentifier || EF.Functions.Like(s.Student_Name, $"%{studentIdentifier}%"))
+                                && s.Student_Visible == "yes")
+                    .FirstOrDefaultAsync();
 
-                
+
+
 
                 if (student == null)
                     return Json(new { success = false, message = "الطالبة غير موجود" });
@@ -843,12 +849,11 @@ namespace Sales.Controllers
                     })
                     .ToListAsync();
 
-                // تجهيز جدول الأيام 30 يوم
                 var result = new List<StudentDayStatusViewModel>();
 
-                for (int i = 0; i <= 30; i++)
-                {
-                    var day = reportDate.AddDays(-i).Date;
+                    for (var day = reportDate; day >= minDate; day = day.AddDays(-1))
+
+                    {
 
                     var record = records
                         .Where(r => r.Date == day)
@@ -869,7 +874,7 @@ namespace Sales.Controllers
 
 
                 // حساب الإحصائيات
-                int present = result.Count(r => r.Status == "حضور");
+                int present = result.Count(r => r.Status == "حضور" || r.Status == "متأخر");
                 int late = result.Count(r => r.Status == "متأخر");
                 int absent = result.Count(r => r.Status == "غياب");
 
@@ -934,7 +939,7 @@ namespace Sales.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PrintStudentAttendancePdf(string studentCode, DateTime date, DateTime? fromDate)
+        public async Task<IActionResult> PrintStudentAttendancePdf(string studentIdentifier, DateTime date, DateTime? fromDate)
         {
             try
             {
@@ -942,17 +947,21 @@ namespace Sales.Controllers
                 var minDate = fromDate?.Date ?? reportDate.AddDays(-30);
                 //var minDate = reportDate.AddDays(-30);
 
+                studentIdentifier = studentIdentifier.Trim();
+
                 var student = await _context.TblStudent
-                    .Include(s => s.ClassRoom)
-                    .ThenInclude(cr => cr.Class)
-                    .FirstOrDefaultAsync(s => s.Student_Code == studentCode.Trim() && s.Student_Visible == "yes");
+                   .Include(s => s.ClassRoom)
+                   .ThenInclude(cr => cr.Class)
+                   .Where(s => (s.Student_Code == studentIdentifier || EF.Functions.Like(s.Student_Name, $"%{studentIdentifier}%"))
+                               && s.Student_Visible == "yes")
+                   .FirstOrDefaultAsync();
+
 
                 if (student == null)
                 {
                     return Json(new { success = false, message = "الطالبة غير موجودة" });
                 }
 
-                // جلب سجلات آخر 30 يوم
                 var records = await _context.TblAttendance
                     .Where(a =>
                         a.Student_ID == student.Student_ID &&
@@ -967,13 +976,11 @@ namespace Sales.Controllers
                     })
                     .ToListAsync();
 
-                // تجهيز جدول الأيام 30 يوم
                 var result = new List<StudentDayStatusViewModel>();
 
-                for (int i = 0; i <= 30; i++)
-                {
-                    var day = reportDate.AddDays(-i).Date;
+                for (var day = reportDate; day >= minDate; day = day.AddDays(-1))
 
+                { 
                     var record = records
                         .Where(r => r.Date == day)
                         .OrderByDescending(r => r.Attendance_Time)
@@ -992,24 +999,45 @@ namespace Sales.Controllers
                 }
 
                 // حساب الإحصائيات
-                int present = result.Count(r => r.Status == "حضور");
+                int present = result.Count(r => r.Status == "حضور" || r.Status == "متأخر");
                 int late = result.Count(r => r.Status == "متأخر");
                 int absent = result.Count(r => r.Status == "غياب");
 
                 // حساب التأخر المتتالي
-                int consecutiveLate = 0;
+                int maxConsecutiveLate = 0;
+                int currentLateCount = 0;
+
                 foreach (var row in result.OrderByDescending(r => r.Date))
                 {
-                    if (row.Status == "متأخر") consecutiveLate++;
-                    else break;
+                    if (row.Status == "متأخر")
+                    {
+                        currentLateCount++;
+                        if (currentLateCount > maxConsecutiveLate)
+                            maxConsecutiveLate = currentLateCount;
+                    }
+                    else
+                    {
+                        currentLateCount = 0;
+                    }
                 }
 
+
                 // حساب الغياب المتتالي
-                int consecutiveAbsent = 0;
+                int maxConsecutiveAbsent = 0;
+                int currentAbsentCount = 0;
+
                 foreach (var row in result.OrderByDescending(r => r.Date))
                 {
-                    if (row.Status == "غياب") consecutiveAbsent++;
-                    else break;
+                    if (row.Status == "غياب")
+                    {
+                        currentAbsentCount++;
+                        if (currentAbsentCount > maxConsecutiveAbsent)
+                            maxConsecutiveAbsent = currentAbsentCount;
+                    }
+                    else
+                    {
+                        currentAbsentCount = 0;
+                    }
                 }
 
                 var viewModel = new StudentAttendanceReportViewModel
@@ -1025,8 +1053,8 @@ namespace Sales.Controllers
                     TotalPresent = present,
                     TotalLate = late,
                     TotalAbsent = absent,
-                    ConsecutiveLate = consecutiveLate,
-                    ConsecutiveAbsent = consecutiveAbsent
+                    ConsecutiveLate = maxConsecutiveLate,
+                    ConsecutiveAbsent = maxConsecutiveAbsent
                 };
 
                 var pdfBytes = _pdfService.GenerateStudentAttendanceReport(viewModel);
@@ -1286,6 +1314,401 @@ namespace Sales.Controllers
                 return Json(new { success = false, message = ex.Message, stackTrace = ex.StackTrace });
             }
         }
+
+        //================= تقارير الطلاب الأكثر انضباطا =================//
+        [HttpGet]
+        public IActionResult MostDisciplinedStudents()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetMostDisciplinedStudentsReport(DateTime? fromDate, DateTime? toDate, int? classId, int? classRoomId, int? topCount = 10)
+        {
+            try
+            {
+                var startDate = fromDate?.Date ?? DateTime.Today.AddDays(-30);
+                var endDate = toDate?.Date ?? DateTime.Today;
+                var top = topCount ?? 10;
+
+                // استعلام للطلاب
+                var query = _context.TblStudent
+                    .Include(s => s.ClassRoom)
+                    .ThenInclude(cr => cr.Class)
+                    .Where(s => s.Student_Visible == "yes");
+
+                if (classId.HasValue && classId.Value > 0)
+                    query = query.Where(s => s.ClassRoom.Class_ID == classId.Value);
+
+                if (classRoomId.HasValue && classRoomId.Value > 0)
+                    query = query.Where(s => s.ClassRoom_ID == classRoomId.Value);
+
+                var students = await query.ToListAsync();
+                var studentIds = students.Select(s => s.Student_ID).ToList();
+
+                // جلب سجلات الحضور للفترة المحددة
+                var attendanceRecords = await _context.TblAttendance
+                    .Where(a => a.Attendance_Date.Date >= startDate &&
+                                a.Attendance_Date.Date <= endDate &&
+                                a.Attendance_Visible == "yes" &&
+                                studentIds.Contains(a.Student_ID))
+                    .GroupBy(a => a.Student_ID)
+                    .Select(g => new
+                    {
+                        StudentId = g.Key,
+                        PresentDays = g.Count(x => x.Attendance_Status == "حضور" || x.Attendance_Status ==  "متأخر"),
+                        LateDays = g.Count(x => x.Attendance_Status == "متأخر"),
+                        AbsentDays = g.Count(x => x.Attendance_Status == "غياب")
+                    })
+                    .ToListAsync();
+
+                var totalDays = (endDate - startDate).Days + 1;
+
+                var result = students.Select(s =>
+                {
+                    var records = attendanceRecords.FirstOrDefault(r => r.StudentId == s.Student_ID);
+                    var presentDays = records?.PresentDays ?? 0;
+                    var lateDays = records?.LateDays ?? 0;
+                    var absentDays = records?.AbsentDays ?? 0;
+
+                    // نسبة الانضباط = (أيام الحضور ÷ إجمالي الأيام) × 100
+                    var disciplinePercentage = totalDays > 0 ? Math.Round((presentDays * 100.0) / totalDays, 2) : 0;
+
+                    return new MostDisciplinedStudentViewModel
+                    {
+                        StudentId = s.Student_ID,
+                        StudentName = s.Student_Name,
+                        StudentCode = s.Student_Code,
+                        ClassName = s.ClassRoom?.Class?.Class_Name ?? "غير محدد",
+                        ClassRoomName = s.ClassRoom?.ClassRoom_Name ?? "غير محدد",
+                        PresentDays = presentDays,
+                        LateDays = lateDays,
+                        AbsentDays = absentDays,
+                        TotalDays = totalDays,
+                        DisciplinePercentage = disciplinePercentage,
+                        AbsencePercentage = totalDays > 0 ? Math.Round((absentDays * 100.0) / totalDays, 2) : 0,
+                        LatePercentage = totalDays > 0 ? Math.Round((lateDays * 100.0) / totalDays, 2) : 0
+                    };
+                })
+                .Where(s => s.PresentDays > 0) // فقط الطلاب الذين لديهم أيام حضور
+                .OrderByDescending(s => s.DisciplinePercentage)
+                .ThenByDescending(s => s.PresentDays)
+                .Take(top)
+                .ToList();
+
+                var viewModel = new MostDisciplinedStudentsReportViewModel
+                {
+                    FromDate = startDate,
+                    ToDate = endDate,
+                    ClassId = classId,
+                    ClassRoomId = classRoomId,
+                    TopCount = top,
+                    Students = result,
+                    TotalStudents = result.Count,
+                    TotalPresentDays = result.Sum(s => s.PresentDays),
+                    PeriodText = $"من {startDate:yyyy/MM/dd} إلى {endDate:yyyy/MM/dd}"
+                };
+
+                return Json(new { success = true, data = viewModel });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PrintMostDisciplinedStudentsPdf(DateTime fromDate, DateTime toDate, int? classId, int? classRoomId, int? topCount = 10)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date;
+                var top = topCount ?? 10;
+
+                // نفس منطق جلب البيانات
+                var query = _context.TblStudent
+                    .Include(s => s.ClassRoom)
+                    .ThenInclude(cr => cr.Class)
+                    .Where(s => s.Student_Visible == "yes");
+
+                if (classId.HasValue && classId.Value > 0)
+                    query = query.Where(s => s.ClassRoom.Class_ID == classId.Value);
+
+                if (classRoomId.HasValue && classRoomId.Value > 0)
+                    query = query.Where(s => s.ClassRoom_ID == classRoomId.Value);
+
+                var students = await query.ToListAsync();
+                var studentIds = students.Select(s => s.Student_ID).ToList();
+
+                var attendanceRecords = await _context.TblAttendance
+                    .Where(a => a.Attendance_Date.Date >= startDate &&
+                                a.Attendance_Date.Date <= endDate &&
+                                a.Attendance_Visible == "yes" &&
+                                studentIds.Contains(a.Student_ID))
+                    .GroupBy(a => a.Student_ID)
+                    .Select(g => new
+                    {
+                        StudentId = g.Key,
+                        PresentDays = g.Count(x => x.Attendance_Status == "حضور" || x.Attendance_Status == "متأخر"),
+                        LateDays = g.Count(x => x.Attendance_Status == "متأخر"),
+                        AbsentDays = g.Count(x => x.Attendance_Status == "غياب")
+                    })
+                    .ToListAsync();
+
+                var totalDays = (endDate - startDate).Days + 1;
+
+                var result = students.Select(s =>
+                {
+                    var records = attendanceRecords.FirstOrDefault(r => r.StudentId == s.Student_ID);
+                    var presentDays = records?.PresentDays ?? 0;
+                    var lateDays = records?.LateDays ?? 0;
+                    var absentDays = records?.AbsentDays ?? 0;
+
+                    var disciplinePercentage = totalDays > 0 ? Math.Round((presentDays * 100.0) / totalDays, 2) : 0;
+
+                    return new MostDisciplinedStudentViewModel
+                    {
+                        StudentId = s.Student_ID,
+                        StudentName = s.Student_Name,
+                        StudentCode = s.Student_Code,
+                        ClassName = s.ClassRoom?.Class?.Class_Name ?? "غير محدد",
+                        ClassRoomName = s.ClassRoom?.ClassRoom_Name ?? "غير محدد",
+                        PresentDays = presentDays,
+                        LateDays = lateDays,
+                        AbsentDays = absentDays,
+                        TotalDays = totalDays,
+                        DisciplinePercentage = disciplinePercentage,
+                        AbsencePercentage = totalDays > 0 ? Math.Round((absentDays * 100.0) / totalDays, 2) : 0,
+                        LatePercentage = totalDays > 0 ? Math.Round((lateDays * 100.0) / totalDays, 2) : 0
+                    };
+                })
+                .Where(s => s.PresentDays > 0)
+                .OrderByDescending(s => s.DisciplinePercentage)
+                .ThenByDescending(s => s.PresentDays)
+                .Take(top)
+                .ToList();
+
+                var viewModel = new MostDisciplinedStudentsReportViewModel
+                {
+                    FromDate = startDate,
+                    ToDate = endDate,
+                    ClassId = classId,
+                    ClassRoomId = classRoomId,
+                    TopCount = top,
+                    Students = result,
+                    TotalStudents = result.Count,
+                    TotalPresentDays = result.Sum(s => s.PresentDays),
+                    PeriodText = $"من {startDate:yyyy/MM/dd} إلى {endDate:yyyy/MM/dd}"
+                };
+
+                var pdfBytes = _pdfService.GenerateMostDisciplinedStudentsReport(viewModel);
+                return File(pdfBytes, "application/pdf", $"الطلاب_الأكثر_انضباطا_{fromDate:yyyy-MM-dd}_إلى_{toDate:yyyy-MM-dd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                Response.ContentType = "application/json";
+                return Json(new { success = false, message = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult MostDisciplinedClasses()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetMostDisciplinedClassesReport(DateTime? fromDate, DateTime? toDate, int? classId)
+        {
+            try
+            {
+                var startDate = fromDate?.Date ?? DateTime.Today.AddDays(-30);
+                var endDate = toDate?.Date ?? DateTime.Today;
+
+                // استعلام للفصول
+                var query = _context.TblClassRoom
+                    .Include(cr => cr.Class)
+                    .Include(cr => cr.Students)
+                    .Where(cr => cr.ClassRoom_Visible == "yes");
+
+                if (classId.HasValue && classId.Value > 0)
+                    query = query.Where(cr => cr.Class_ID == classId.Value);
+
+                var classRooms = await query.ToListAsync();
+
+                var classRoomIds = classRooms.Select(cr => cr.ClassRoom_ID).ToList();
+                var studentIds = classRooms.SelectMany(cr => cr.Students.Where(s => s.Student_Visible == "yes"))
+                                          .Select(s => s.Student_ID)
+                                          .ToList();
+
+                // جلب سجلات الحضور
+                var attendanceRecords = await _context.TblAttendance
+                    .Include(a => a.Student)
+                    .ThenInclude(s => s.ClassRoom)
+                    .Where(a => a.Attendance_Date.Date >= startDate &&
+                                a.Attendance_Date.Date <= endDate &&
+                                a.Attendance_Visible == "yes" &&
+                                studentIds.Contains(a.Student_ID))
+                    .ToListAsync();
+
+                var totalDays = (endDate - startDate).Days + 1;
+
+                var result = classRooms.Select(cr =>
+                {
+                    var classStudents = cr.Students.Where(s => s.Student_Visible == "yes").ToList();
+                    var classStudentIds = classStudents.Select(s => s.Student_ID).ToList();
+
+                    var classRecords = attendanceRecords.Where(a => classStudentIds.Contains(a.Student_ID)).ToList();
+
+                    var totalPresentDays = classRecords.Count(r => r.Attendance_Status == "حضور" || r.Attendance_Status == "متأخر");
+                    var totalLateDays = classRecords.Count(r => r.Attendance_Status == "متأخر");
+                    var totalAbsentDays = classRecords.Count(r => r.Attendance_Status == "غياب");
+
+                    // نسبة انضباط الفصل = (إجمالي أيام الحضور ÷ (عدد الطلاب × إجمالي الأيام)) × 100
+                    var totalPossibleDays = classStudents.Count * totalDays;
+                    var disciplinePercentage = totalPossibleDays > 0 ? Math.Round((totalPresentDays * 100.0) / totalPossibleDays, 2) : 0;
+
+                    return new MostDisciplinedClassViewModel
+                    {
+                        ClassId = cr.Class_ID,
+                        ClassName = cr.Class?.Class_Name ?? "غير محدد",
+                        ClassRoomId = cr.ClassRoom_ID,
+                        ClassRoomName = cr.ClassRoom_Name,
+                        TotalStudents = classStudents.Count,
+                        TotalPresentDays = totalPresentDays,
+                        TotalLateDays = totalLateDays,
+                        TotalAbsentDays = totalAbsentDays,
+                        DisciplinePercentage = disciplinePercentage,
+                        AbsencePercentage = totalPossibleDays > 0 ? Math.Round((totalAbsentDays * 100.0) / totalPossibleDays, 2) : 0,
+                        LatePercentage = totalPossibleDays > 0 ? Math.Round((totalLateDays * 100.0) / totalPossibleDays, 2) : 0
+                    };
+                })
+                .Where(c => c.TotalStudents > 0)
+                .OrderByDescending(c => c.DisciplinePercentage)
+                .ThenByDescending(c => c.TotalPresentDays)
+                .ToList();
+
+                // إضافة الترتيب
+                for (int i = 0; i < result.Count; i++)
+                {
+                    result[i].Rank = i + 1;
+                }
+
+                var viewModel = new MostDisciplinedClassesReportViewModel
+                {
+                    FromDate = startDate,
+                    ToDate = endDate,
+                    ClassId = classId,
+                    Classes = result,
+                    TotalClasses = result.Count,
+                    TotalStudents = result.Sum(c => c.TotalStudents),
+                    PeriodText = $"من {startDate:yyyy/MM/dd} إلى {endDate:yyyy/MM/dd}"
+                };
+
+                return Json(new { success = true, data = viewModel });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PrintMostDisciplinedClassesPdf(DateTime fromDate, DateTime toDate, int? classId)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date;
+
+                // نفس منطق جلب البيانات
+                var query = _context.TblClassRoom
+                    .Include(cr => cr.Class)
+                    .Include(cr => cr.Students)
+                    .Where(cr => cr.ClassRoom_Visible == "yes");
+
+                if (classId.HasValue && classId.Value > 0)
+                    query = query.Where(cr => cr.Class_ID == classId.Value);
+
+                var classRooms = await query.ToListAsync();
+
+                var classRoomIds = classRooms.Select(cr => cr.ClassRoom_ID).ToList();
+                var studentIds = classRooms.SelectMany(cr => cr.Students.Where(s => s.Student_Visible == "yes"))
+                                          .Select(s => s.Student_ID)
+                                          .ToList();
+
+                var attendanceRecords = await _context.TblAttendance
+                    .Include(a => a.Student)
+                    .ThenInclude(s => s.ClassRoom)
+                    .Where(a => a.Attendance_Date.Date >= startDate &&
+                                a.Attendance_Date.Date <= endDate &&
+                                a.Attendance_Visible == "yes" &&
+                                studentIds.Contains(a.Student_ID))
+                    .ToListAsync();
+
+                var totalDays = (endDate - startDate).Days + 1;
+
+                var result = classRooms.Select(cr =>
+                {
+                    var classStudents = cr.Students.Where(s => s.Student_Visible == "yes").ToList();
+                    var classStudentIds = classStudents.Select(s => s.Student_ID).ToList();
+
+                    var classRecords = attendanceRecords.Where(a => classStudentIds.Contains(a.Student_ID)).ToList();
+
+                    var totalPresentDays = classRecords.Count(r => r.Attendance_Status == "حضور" || r.Attendance_Status == "متأخر");
+                    var totalLateDays = classRecords.Count(r => r.Attendance_Status == "متأخر");
+                    var totalAbsentDays = classRecords.Count(r => r.Attendance_Status == "غياب");
+
+                    var totalPossibleDays = classStudents.Count * totalDays;
+                    var disciplinePercentage = totalPossibleDays > 0 ? Math.Round((totalPresentDays * 100.0) / totalPossibleDays, 2) : 0;
+
+                    return new MostDisciplinedClassViewModel
+                    {
+                        ClassId = cr.Class_ID,
+                        ClassName = cr.Class?.Class_Name ?? "غير محدد",
+                        ClassRoomId = cr.ClassRoom_ID,
+                        ClassRoomName = cr.ClassRoom_Name,
+                        TotalStudents = classStudents.Count,
+                        TotalPresentDays = totalPresentDays,
+                        TotalLateDays = totalLateDays,
+                        TotalAbsentDays = totalAbsentDays,
+                        DisciplinePercentage = disciplinePercentage,
+                        AbsencePercentage = totalPossibleDays > 0 ? Math.Round((totalAbsentDays * 100.0) / totalPossibleDays, 2) : 0,
+                        LatePercentage = totalPossibleDays > 0 ? Math.Round((totalLateDays * 100.0) / totalPossibleDays, 2) : 0
+                    };
+                })
+                .Where(c => c.TotalStudents > 0)
+                .OrderByDescending(c => c.DisciplinePercentage)
+                .ThenByDescending(c => c.TotalPresentDays)
+                .ToList();
+
+                for (int i = 0; i < result.Count; i++)
+                {
+                    result[i].Rank = i + 1;
+                }
+
+                var viewModel = new MostDisciplinedClassesReportViewModel
+                {
+                    FromDate = startDate,
+                    ToDate = endDate,
+                    ClassId = classId,
+                    Classes = result,
+                    TotalClasses = result.Count,
+                    TotalStudents = result.Sum(c => c.TotalStudents),
+                    PeriodText = $"من {startDate:yyyy/MM/dd} إلى {endDate:yyyy/MM/dd}"
+                };
+
+                var pdfBytes = _pdfService.GenerateMostDisciplinedClassesReport(viewModel);
+                return File(pdfBytes, "application/pdf", $"الفصول_الأكثر_انضباطا_{fromDate:yyyy-MM-dd}_إلى_{toDate:yyyy-MM-dd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                Response.ContentType = "application/json";
+                return Json(new { success = false, message = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
 
 
 

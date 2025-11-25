@@ -1,0 +1,119 @@
+﻿@{
+    ViewData["Title"] = "الفصول الأكثر انضباطاً";
+    ViewData["Page"] = "الفصول الأكثر انضباطاً";
+}
+
+
+<style>
+    label {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    tbody {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .excel-btn {
+        background-color: #198754 !important; 
+        color: white !important;
+        border: none !important;
+        padding: 9px 18px !important;
+    }
+
+    .dt-buttons .btn {
+        border-radius: 5px !important;
+    }
+
+</style>
+
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-success text-white py-3">
+        <h4 class="mb-0"><i class="fas fa-medal"></i> تقرير الفصول الأكثر انضباطاً</h4>
+    </div>
+
+    <div class="card-body">
+        <!-- فلتر البحث -->
+        <div class="filter-section">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="classFilter">الصف</label>
+                        <select class="form-control" id="classFilter">
+                            <option value="">جميع الصفوف</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="fromDateFilter">من تاريخ</label>
+                        <input type="date" class="form-control" id="fromDateFilter" value="@DateTime.Today.ToString("yyyy-MM-dd")">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="toDateFilter">إلى تاريخ</label>
+                        <input type="date" class="form-control" id="toDateFilter" value="@DateTime.Today.ToString("yyyy-MM-dd")">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <div class="buttons">
+                            <button type="button" id="searchBtn" class="btn btn-success">
+                                <i class="fas fa-search"></i> بحث
+                            </button>
+                            <button type="button" id="printBtn" class="btn btn-primary">
+                                <i class="fas fa-print"></i> طباعة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الجدول -->
+        <div class="table-responsive mt-4">
+            <table id="disciplinedClassesTable" class="table table-striped table-bordered" style="width:100%">
+                <thead class="bg-light">
+                    <tr>
+                        <th>الترتيب</th>
+                        <th>اسم الصف</th>
+                        <th>اسم الفصل</th>
+                        <th>عدد الطلاب</th>
+                        @* <th>أيام الحضور</th>
+                        <th>أيام التأخر</th>
+                        <th>أيام الغياب</th> *@
+                        <th>نسبة الانضباط</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- DataTables Buttons CSS -->
+    <link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
+
+    <!-- DataTables Buttons -->
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+
+    <!-- Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+    <script src="~/js/MostDisciplinedClasses.js"></script>
+}
