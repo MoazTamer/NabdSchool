@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using QuestPDF.Fluent;
 using SalesModel.Models;
 using SalesModel.ViewModels.Reports;
@@ -402,6 +403,240 @@ namespace Sales.Controllers
                 return Json(new { success = false, message = ex.Message, stackTrace = ex.StackTrace });
             }
         }
+
+        // تقرير الخروج المبكر
+        [HttpGet]
+        public IActionResult DailyEarlyExit()
+        {
+            return View();
+        }
+
+        public async Task<IActionResult> GetDailyEarlyExitReport(DateTime? date, int? classId, int? classRoomId)
+        {
+            try
+            {
+                var reportDate = date?.Date ?? DateTime.Today;
+
+                // 1) Load classrooms + students
+                var query = _context.TblClassRoom
+                    .Include(cr => cr.Class)
+                    .Include(cr => cr.Students)
+                    .Where(cr => cr.ClassRoom_Visible == "yes");
+
+                if (classId.HasValue && classId.Value > 0)
+                    query = query.Where(cr => cr.Class_ID == classId.Value);
+
+                if (classRoomId.HasValue && classRoomId.Value > 0)
+                    query = query.Where(cr => cr.ClassRoom_ID == classRoomId.Value);
+
+                var classRooms = await query.ToListAsync();
+
+                // كل الطلاب المعنيين
+                var allStudentIds = classRooms
+                    .SelectMany(cr => cr.Students)
+                    .Where(s => s.Student_Visible == "yes")
+                    .Select(s => s.Student_ID)
+                    .Distinct()
+                    .ToList();
+
+                // 2) Attendance of the same day — نحتاج فقط "خروج مبكر"
+                var todayRecords = await _context.TblAttendance
+                    .Where(a =>
+                        a.Attendance_Date.Date == reportDate &&
+                        a.Attendance_Visible == "yes" &&
+                        allStudentIds.Contains(a.Student_ID))
+                    .Select(a => new
+                    {
+                        a.Student_ID,
+                        a.Attendance_Status,
+                        a.Attendance_Time
+                    })
+                    .ToListAsync();
+
+                // الطلاب اللي خرجوا بدري اليوم
+                var earlyExitSet = todayRecords
+                    .Where(x => x.Attendance_Status == "استئذان")
+                    .Select(x => x.Student_ID)
+                    .ToHashSet();
+
+                var classesReport = new List<ClassEarlyExitViewModel>();
+
+                foreach (var classRoom in classRooms)
+                {
+                    var students = classRoom.Students
+                        .Where(s => s.Student_Visible == "yes")
+                        .ToList();
+
+                    var studentIds = students.Select(s => s.Student_ID).ToList();
+
+                    // الطلاب اللي لهم خروج مبكر من هذا الفصل
+                    var earlyExitIds = studentIds
+                        .Where(id => earlyExitSet.Contains(id))
+                        .ToList();
+
+                    if (!earlyExitIds.Any())
+                        continue;
+
+                    var exitList = new List<EarlyExitStudentViewModel>();
+
+                    foreach (var sid in earlyExitIds)
+                    {
+                        var student = students.First(s => s.Student_ID == sid);
+
+                        var time = todayRecords
+                            .Where(r => r.Student_ID == sid && r.Attendance_Status == "استئذان")
+                            .OrderByDescending(r => r.Attendance_Time)
+                            .FirstOrDefault()?.Attendance_Time;
+
+                        exitList.Add(new EarlyExitStudentViewModel
+                        {
+                            StudentId = sid,
+                            StudentName = student.Student_Name,
+                            StudentCode = student.Student_Code,
+                            StudentPhone = student.Student_Phone,
+                            ExitTime = time?.ToString(@"hh\:mm") ?? ""
+                        });
+                    }
+
+                    classesReport.Add(new ClassEarlyExitViewModel
+                    {
+                        ClassId = classRoom.Class_ID,
+                        ClassName = classRoom.Class?.Class_Name,
+                        ClassRoomId = classRoom.ClassRoom_ID,
+                        ClassRoomName = classRoom.ClassRoom_Name,
+                        TotalStudents = students.Count,
+                        EarlyExitStudents = exitList.Count,
+                        EarlyExitStudentsList = exitList.OrderBy(s => s.StudentName).ToList()
+                    });
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    data = new DailyEarlyExitReportViewModel
+                    {
+                        ReportDate = reportDate,
+                        ClassesReport = classesReport
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> PrintDailyEarlyExitPdf(DateTime date, int? classId, int? classRoomId)
+        {
+            try
+            {
+                var reportDate = date.Date;
+
+                var query = _context.TblClassRoom
+                    .Include(cr => cr.Class)
+                    .Include(cr => cr.Students)
+                    .Where(cr => cr.ClassRoom_Visible == "yes");
+
+                if (classId.HasValue && classId.Value > 0)
+                    query = query.Where(cr => cr.Class_ID == classId.Value);
+
+                if (classRoomId.HasValue && classRoomId.Value > 0)
+                    query = query.Where(cr => cr.ClassRoom_ID == classRoomId.Value);
+
+                var classRooms = await query.ToListAsync();
+
+                var allStudentIds = classRooms
+                    .SelectMany(cr => cr.Students)
+                    .Where(s => s.Student_Visible == "yes")
+                    .Select(s => s.Student_ID)
+                    .Distinct()
+                    .ToList();
+
+                var todayRecords = await _context.TblAttendance
+                    .Where(a =>
+                        a.Attendance_Date.Date == reportDate &&
+                        a.Attendance_Visible == "yes" &&
+                        allStudentIds.Contains(a.Student_ID))
+                    .Select(a => new
+                    {
+                        a.Student_ID,
+                        a.Attendance_Status,
+                        a.Attendance_Time
+                    })
+                    .ToListAsync();
+
+                var earlyExitSet = todayRecords
+                    .Where(x => x.Attendance_Status == "استئذان")
+                    .Select(x => x.Student_ID)
+                    .ToHashSet();
+
+                var classesReport = new List<ClassEarlyExitViewModel>();
+
+                foreach (var classRoom in classRooms)
+                {
+                    var students = classRoom.Students
+                        .Where(s => s.Student_Visible == "yes")
+                        .ToList();
+
+                    var earlyExitIds = students
+                        .Where(s => earlyExitSet.Contains(s.Student_ID))
+                        .Select(s => s.Student_ID)
+                        .ToList();
+
+                    if (!earlyExitIds.Any())
+                        continue;
+
+                    var exitList = earlyExitIds
+                        .Select(id =>
+                        {
+                            var st = students.First(s => s.Student_ID == id);
+                            var time = todayRecords
+                                .Where(r => r.Student_ID == id && r.Attendance_Status == "استئذان")
+                                .OrderByDescending(r => r.Attendance_Time)
+                                .FirstOrDefault()?.Attendance_Time;
+
+                            return new EarlyExitStudentViewModel
+                            {
+                                StudentId = id,
+                                StudentName = st.Student_Name,
+                                StudentCode = st.Student_Code,
+                                StudentPhone = st.Student_Phone,
+                                ExitTime = time?.ToString(@"hh\:mm") ?? ""
+                            };
+                        })
+                        .OrderBy(x => x.StudentName)
+                        .ToList();
+
+                    classesReport.Add(new ClassEarlyExitViewModel
+                    {
+                        ClassId = classRoom.Class_ID,
+                        ClassName = classRoom.Class?.Class_Name,
+                        ClassRoomId = classRoom.ClassRoom_ID,
+                        ClassRoomName = classRoom.ClassRoom_Name,
+                        TotalStudents = students.Count,
+                        EarlyExitStudents = exitList.Count,
+                        EarlyExitStudentsList = exitList
+                    });
+                }
+
+                var viewModel = new DailyEarlyExitReportViewModel
+                {
+                    ReportDate = reportDate,
+                    ClassesReport = classesReport
+                };
+
+                var pdfBytes = _pdfService.GenerateDailyEarlyExitReport(viewModel);
+
+                return File(pdfBytes, "application/pdf", $"تقرير_الخروج_المبكر_{date:yyyy-MM-dd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
 
         // 
         public IActionResult DailyLate()
@@ -1710,7 +1945,7 @@ namespace Sales.Controllers
         }
 
 
-
+      
 
         [HttpGet]
         public async Task<IActionResult> WeeklyLatePatternReport()

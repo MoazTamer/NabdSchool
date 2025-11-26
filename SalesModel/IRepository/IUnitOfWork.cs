@@ -16,6 +16,10 @@ namespace SalesModel.IRepository
         IRepository<TblStudent> TblStudent { get; }
         IRepository<TblSchoolSettings> TblSchoolSettings { get; }
         IRepository<TblAttendance> TblAttendance { get; }
+        IRepository<StudentBadge> StudentBadge { get; }
+        IRepository<StudentPoints> StudentPoints { get; }
+        IRepository<BadgeDefinition> BadgeDefinition { get; }
+
         IRepository<AuditLog> AuditLog { get; }
 
 

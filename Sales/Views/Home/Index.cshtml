@@ -1,6 +1,7 @@
-﻿@model AttendanceViewModel
+﻿@using SalesModel.Models
+@model DashboardViewModel
 @{
-	ViewData["Page"] = "الرئيسية";
+    ViewData["Page"] = "الرئيسية";
 }
 <!--begin::Content wrapper-->
 <div class="d-flex flex-column flex-column-fluid">
@@ -52,7 +53,7 @@
 
             <!-- -->
             <div class="row g-5 g-xl-10">
-                <!-- تسجيل الحضور -->
+                <!--  اجراءات سريعة -->
                 <div class="col-xl-4 col-lg-4 col-md-12 ">
                     <div class="card card-flush h-md-45 shadow-sm mb-10">
                         <div class="card-header pt-7">
@@ -95,6 +96,27 @@
                                 </a>
 
                             </div>
+
+
+                            <div class="col-12">
+                                <a href="@Url.Action("Index", "AttendanceReports")"
+                                   class="card card-bordered hover-elevate-up">
+                                    <div class="card-body d-flex align-items-center p-4">
+                                        <div class="symbol symbol-50px me-4">
+                                            <div class="symbol-label bg-light-warning">
+                                                <i class="ki-outline ki-chart-line-star fs-2x text-warning"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <span class="text-gray-800 fw-bold fs-5 d-block">تقارير الحضور</span>
+                                            <span class="text-muted fs-7">التقارير الأسبوعية والشهرية</span>
+                                        </div>
+                                        <i class="ki-outline ki-arrow-left fs-2 text-gray-500 ms-2"></i>
+                                    </div>
+                                </a>
+                            </div>
+
+
                         </div>
                     </div>
 
@@ -128,7 +150,7 @@
 
                 </div>
 
-                
+
 
                 <!-- الرسم البياني -->
                 <div class="col-xl-8 col-lg-8 col-md-12">
@@ -204,7 +226,7 @@
 
                 </div>
 
-      
+
             </div>
 
 
@@ -262,7 +284,7 @@
                 <!--end::Absent Card-->
                 <!--begin::Total Card-->
                 @* <div class="col-md-12"> *@
-                    <div class="col-xl-4 col-lg-4 col-md-12">
+                <div class="col-xl-4 col-lg-4 col-md-12">
                     <div class="card card-flush h-md-100 shadow-sm">
                         <div class="card-header pt-7">
                             <div class="card-title">
@@ -294,8 +316,139 @@
                 <!--end::Total Card-->
             </div>
             <!--end::Attendance Stats-->
+            <!-- لوحة الشارات الرقمية -->
+            <div class="row g-5 g-xl-10 mt-5">
+                <!-- إحصائيات الشارات -->
+                <div class="col-xl-12">
+                    <div class="card card-flush shadow-sm">
+                        <div class="card-header pt-7 pb-5">
+                            <h3 class="card-title align-items-start flex-column">
+                                <span class="card-label fw-bold text-gray-800 fs-1">
+                                    <i class="ki-outline ki-medal-star fs-2 text-warning me-2"></i>
+                                    🏆 لوحة الشرف - الطالبات المنضبطات
+                                </span>
+                                <span class="text-muted mt-1 fw-semibold fs-6">
+                                    تكريم الطالبات المتميزات في الانضباط والمواظبة
+                                </span>
+                            </h3>
+                        </div>
+                        <div class="card-body pt-2">
+                            <!-- إحصائيات الشارات -->
+                            <div class="row g-3 mb-8">
+                                <div class="col-6 col-md-3">
+                                    <div class="badge-stat-box bg-light-primary p-4 rounded text-center">
+                                        <i class="ki-outline ki-award fs-3x text-primary mb-2"></i>
+                                        <div class="fw-bold fs-2 text-primary">@Model.BadgeStats.TotalBadgesEarned</div>
+                                        <div class="text-gray-700 fw-semibold fs-7">إجمالي الشارات</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="badge-stat-box p-4 rounded text-center" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);">
+                                        <div class="fs-2x mb-2">💎</div>
+                                        <div class="fw-bold fs-2" style="color: #1976d2;">@Model.BadgeStats.DiamondBadges</div>
+                                        <div class="text-gray-700 fw-semibold fs-7">شارات ماسية</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="badge-stat-box p-4 rounded text-center" style="background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);">
+                                        <div class="fs-2x mb-2">🥇</div>
+                                        <div class="fw-bold fs-2" style="color: #f57f17;">@Model.BadgeStats.GoldBadges</div>
+                                        <div class="text-gray-700 fw-semibold fs-7">شارات ذهبية</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="badge-stat-box p-4 rounded text-center" style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);">
+                                        <div class="fs-2x mb-2">🥈</div>
+                                        <div class="fw-bold fs-2" style="color: #7b1fa2;">@Model.BadgeStats.SilverBadges</div>
+                                        <div class="text-gray-700 fw-semibold fs-7">شارات فضية</div>
+                                    </div>
+                                </div>
+                            </div>
 
-    
+                            <!-- أفضل الطالبات -->
+                            <div class="table-responsive">
+                                <table class="table table-row-bordered table-hover align-middle gs-7">
+                                    <thead>
+                                        <tr class="fw-bold fs-6 text-light border-bottom-2 border-gray-200">
+                                            <th class="min-w-50px text-center">الترتيب</th>
+                                            <th class="min-w-200px">اسم الطالبة</th>
+                                            <th class="min-w-150px text-center">النقاط</th>
+                                            <th class="min-w-120px text-center">أيام متتالية</th>
+                                            <th class="min-w-300px text-center">الشارات المكتسبة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (int i = 0; i < Model.TopStudents.Count; i++)
+                                        {
+                                            var student = Model.TopStudents[i];
+                                            var rankClass = i == 0 ? "gold-rank" : i == 1 ? "silver-rank" : i == 2 ? "bronze-rank" : "";
+                                            var rankIcon = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : $"{i + 1}";
+
+                                            <tr class="@rankClass">
+                                                <td class="text-center">
+                                                    <span class="badge badge-circle badge-lg @(i < 3 ? "badge-light-warning" : "badge-light") fw-bold fs-4">
+                                                        @rankIcon
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="symbol symbol-45px me-3" style="border: 2px solid @student.BadgeColor;">
+                                                            <div class="symbol-label fs-3 fw-bold" style="background: @student.BadgeColor; color: white;">
+                                                                @student.Student_Name.Substring(0, 1)
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <a href="javascript:void(0)"
+                                                               onclick="showStudentBadges(@student.Student_ID)"
+                                                               class="fw-bold text-gray-800 fs-5 text-hover-primary">
+                                                                @student.Student_Name
+                                                            </a>
+                                                            <span class="badge badge-light-@(i < 3 ? "warning" : "primary") fs-8 d-block mt-1">
+                                                                @student.HighestBadgeLevel
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge badge-light-success fs-4 fw-bold px-4 py-3">
+                                                        @student.Total_Points نقطة
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="d-flex flex-column align-items-center">
+                                                        <i class="ki-outline ki-chart-simple text-primary fs-2x mb-1"></i>
+                                                        <span class="fw-bold text-primary fs-5">@student.Attendance_Streak</span>
+                                                        <span class="text-gray-600 fs-8">يوم</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                                                        @foreach (var badge in student.Badges.Take(4))
+                                                        {
+                                                            <div class="badge-item" style="background: @badge.Badge_Color;"
+                                                                 title="@badge.Badge_Name - @badge.Badge_Level">
+                                                                <i class="ki-outline ki-@badge.Badge_Icon text-white fs-3"></i>
+                                                            </div>
+                                                        }
+                                                        @if (student.Badges.Count > 4)
+                                                        {
+                                                            <div class="badge badge-light-primary fw-bold">
+                                                                +@(student.Badges.Count - 4)
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
 
         </div>
     </div>
@@ -326,6 +479,75 @@
     .bg-light {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
     }
+
+
+    .badge-stat-box {
+        transition: all 0.3s ease;
+        cursor: default;
+    }
+
+    .badge-stat-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .badge-item {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        transition: all 0.3s ease;
+    }
+
+        .badge-item:hover {
+            transform: scale(1.15);
+        }
+
+    .gold-rank {
+        background: linear-gradient(90deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%);
+    }
+
+    .silver-rank {
+        background: linear-gradient(90deg, rgba(192,192,192,0.1) 0%, rgba(192,192,192,0.05) 100%);
+    }
+
+    .bronze-rank {
+        background: linear-gradient(90deg, rgba(205,127,50,0.1) 0%, rgba(205,127,50,0.05) 100%);
+    }
+
+    /* DataTables Styling */
+    #badgesTable_wrapper .dataTables_filter,
+    #badgesTable_wrapper .dataTables_length {
+        margin-bottom: 1rem;
+    }
+
+        #badgesTable_wrapper .dataTables_filter input,
+        #badgesTable_wrapper .dataTables_length select {
+            border: 1px solid #e4e6ef;
+            border-radius: 0.475rem;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+        }
+
+    #badgesTable_wrapper .dataTables_info,
+    #badgesTable_wrapper .dataTables_paginate {
+        margin-top: 1rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.5rem 1rem;
+        margin: 0 0.25rem;
+        border-radius: 0.475rem;
+    }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: #009ef7;
+            color: white !important;
+        }
+
 </style>
 
 <!--end::Content wrapper-->
@@ -343,5 +565,4 @@
 
     <script src="~/js/Home.js"></script>
 }
-
 

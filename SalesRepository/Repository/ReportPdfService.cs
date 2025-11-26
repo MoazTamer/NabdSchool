@@ -445,10 +445,10 @@ namespace SalesRepository.Repository
                             .AlignCenter().Text("أيام "+type+" المتتالية").FontColor(Colors.White).Bold().FontSize(10);
 
                         header.Cell().Background(Colors.Blue.Darken2).Padding(5)
-                            .AlignCenter().Text("رقم الهاتف").FontColor(Colors.White).Bold().FontSize(10);
+                            .AlignCenter().Text("رقم الجوال").FontColor(Colors.White).Bold().FontSize(10);
 
                         header.Cell().Background(Colors.Blue.Darken2).Padding(5)
-                            .AlignCenter().Text("كود الطالب").FontColor(Colors.White).Bold().FontSize(10);
+                            .AlignCenter().Text("كود الطالبة").FontColor(Colors.White).Bold().FontSize(10);
 
                         header.Cell().Background(Colors.Blue.Darken2).Padding(5)
                             .AlignCenter().Text("اسم الطالب").FontColor(Colors.White).Bold().FontSize(10);
@@ -543,7 +543,7 @@ namespace SalesRepository.Repository
                             .AlignCenter().Text("معاد الحضور").FontColor(Colors.White).Bold().FontSize(10); // جديد
 
                         header.Cell().Background(Colors.Blue.Darken2).Padding(5)
-                            .AlignCenter().Text("رقم الهاتف").FontColor(Colors.White).Bold().FontSize(10);
+                            .AlignCenter().Text("رقم الجوال").FontColor(Colors.White).Bold().FontSize(10);
 
                         header.Cell().Background(Colors.Blue.Darken2).Padding(5)
                             .AlignCenter().Text("كود الطالب").FontColor(Colors.White).Bold().FontSize(10);
@@ -1653,6 +1653,180 @@ namespace SalesRepository.Repository
         }
 
 
+        // إنشاء تقرير الخروج المبكر PDF
+        public byte[] GenerateDailyEarlyExitReport(DailyEarlyExitReportViewModel data)
+        {
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(1, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(11));
+                    page.DefaultTextStyle(x => x.DirectionFromRightToLeft());
+
+                    // Header
+                    page.Header().Element(container => ComposeHeader(container, data.ReportDate, "تقرير الخروج المبكر (استئذان)"));
+
+                    // Content
+                    page.Content().Element(container => ComposeEarlyExitContent(container, data));
+
+                    // Footer
+                    page.Footer().Element(ComposeFooter);
+                });
+            });
+
+            return document.GeneratePdf();
+        }
+
+        // تكوين محتوى تقرير الخروج المبكر
+        private void ComposeEarlyExitContent(IContainer container, DailyEarlyExitReportViewModel data)
+        {
+            container.PaddingVertical(10).Column(column =>
+            {
+                column.Item().Element(c => ComposeEarlyExitSummary(c, data));
+
+                column.Item().PaddingTop(15);
+
+                if (data.ClassesReport != null && data.ClassesReport.Any())
+                {
+                    foreach (var classData in data.ClassesReport)
+                    {
+                        column.Item().Element(c => ComposeClassEarlyExitSection(c, classData));
+                        column.Item().PaddingTop(15);
+                    }
+                }
+                else
+                {
+                    column.Item().AlignCenter().Text("لا يوجد طلاب بخروج مبكر في هذا اليوم 🎉")
+                        .FontSize(14)
+                        .Bold()
+                        .FontColor(Colors.Green.Darken1);
+                }
+            });
+        }
+
+        // الإحصائيات العامة لتقرير الخروج المبكر
+        private void ComposeEarlyExitSummary(IContainer container, DailyEarlyExitReportViewModel data)
+        {
+            int totalClasses = data.ClassesReport?.Count ?? 0;
+            int totalEarlyExit = data.ClassesReport?.Sum(x => x.EarlyExitStudents) ?? 0;
+
+            container.Background(Colors.Grey.Lighten3)
+                .Padding(10)
+                .Row(row =>
+                {
+                    row.RelativeItem().AlignCenter().Column(col =>
+                    {
+                        col.Item().Text("إجمالي الطلاب مستأذنين")
+                            .FontSize(10)
+                            .FontColor(Colors.Grey.Darken2);
+
+                        col.Item().Text(totalEarlyExit.ToString())
+                            .AlignRight()
+                            .FontSize(20)
+                            .Bold()
+                            .FontColor(Colors.Orange.Darken2);
+                    });
+
+                    row.RelativeItem().AlignCenter().Column(col =>
+                    {
+                        col.Item().Text("عدد الفصول")
+                            .FontSize(10)
+                            .FontColor(Colors.Grey.Darken2);
+
+                        col.Item().Text(totalClasses.ToString())
+                            .AlignRight()
+                            .FontSize(20)
+                            .Bold()
+                            .FontColor(Colors.Blue.Darken2);
+                    });
+                });
+        }
+
+        // قسم كل صف في تقرير الخروج المبكر
+        private void ComposeClassEarlyExitSection(IContainer container, ClassEarlyExitViewModel classData)
+        {
+            double percentage = classData.TotalStudents == 0
+                ? 0
+                : Math.Round((double)classData.EarlyExitStudents / classData.TotalStudents * 100, 2);
+
+            container.Column(column =>
+            {
+                column.Item().Background(Colors.Orange.Lighten3)
+                    .Padding(8)
+                    .Row(row =>
+                    {
+                        row.ConstantItem(300).AlignLeft().Text(
+                            $"النسبة: {percentage}% | " +
+                            $"مستأذنين: {classData.EarlyExitStudents} | " +
+                            $"إجمالي الطلاب: {classData.TotalStudents}")
+                            .FontSize(10)
+                            .AlignRight()
+                            .FontColor(Colors.Red.Darken2);
+
+                        row.RelativeItem().AlignRight().Text($"{classData.ClassName} - {classData.ClassRoomName}")
+                           .FontSize(14)
+                           .Bold()
+                           .FontColor(Colors.Orange.Darken3);
+                    });
+
+                column.Item().Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn(3);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(3);
+                        columns.ConstantColumn(40);
+                    });
+
+                    table.Header(header =>
+                    {
+                        string[] headers = {
+                    "ملاحظات","أيام الاستئذان المتتالية","السبب","وقت الخروج",
+                    "رقم الجوال","كود الطالب","اسم الطالب","#"
+                };
+
+                        foreach (var h in headers)
+                        {
+                            header.Cell().Background(Colors.Orange.Darken2)
+                                .Padding(5).AlignCenter()
+                                .Text(h).FontColor(Colors.White).Bold().FontSize(10);
+                        }
+                    });
+
+                    int index = 1;
+
+                    foreach (var st in classData.EarlyExitStudentsList)
+                    {
+                        var bgColor = (index % 2 == 0 ? Colors.Grey.Lighten4 : Colors.White);
+
+                        string exitTimeDisplay = string.IsNullOrWhiteSpace(st.ExitTime)
+                            ? "-"
+                            : st.ExitTime;
+
+                        table.Cell().Background(bgColor).Padding(5).AlignRight().Text(st.Notes ?? "-").FontSize(9);
+                        table.Cell().Background(bgColor).Padding(5).AlignCenter().Text($"{st.ConsecutiveEarlyExitDays} يوم").FontSize(9);
+                        table.Cell().Background(bgColor).Padding(5).AlignCenter().Text(st.Reason ?? "استئذان").FontSize(9);
+                        table.Cell().Background(bgColor).Padding(5).AlignCenter().Text(exitTimeDisplay).FontColor(Colors.Orange.Darken2).Bold().FontSize(9);
+                        table.Cell().Background(bgColor).Padding(5).AlignRight().Text(st.StudentPhone ?? "-").FontSize(9);
+                        table.Cell().Background(bgColor).Padding(5).AlignRight().Text(st.StudentCode ?? "-").FontSize(9);
+                        table.Cell().Background(bgColor).Padding(5).AlignRight().Text(st.StudentName).FontSize(9);
+                        table.Cell().Background(bgColor).Padding(5).AlignCenter().Text(index.ToString()).FontSize(9);
+
+                        index++;
+                    }
+                });
+            });
+        }
+
+
         // إنشاء بطاقات الطلاب PDF
         public byte[] GenerateStudentCards(List<StudentCardViewModel> students)
         {
@@ -1770,7 +1944,7 @@ namespace SalesRepository.Repository
                                     if (!qrCache.ContainsKey(qrKey))
                                     {
                                         var qrGenerator = new QRCodeGenerator();
-                                        var qrData = $"الأسم: {student.StudentName}\nرقم الطالبة: {student.StudentCode}\nجوال: {student.StudentPhone}";
+                                        var qrData = $"الأسم: {student.StudentName}\nكود الطالبة: {student.StudentCode}\nجوال: {student.StudentPhone}";
                                         var qrCodeData = qrGenerator.CreateQrCode(qrData, QRCodeGenerator.ECCLevel.H);
                                         var qrCode = new QRCode(qrCodeData);
                                         var qrBitmap = qrCode.GetGraphic(20);
@@ -1793,7 +1967,7 @@ namespace SalesRepository.Repository
                         {
                             infoColumn.Item().PaddingBottom(6).AlignRight().Text(text =>
                             {
-                                text.Span("رقم الطالبة: ").FontSize(9).FontColor(Colors.Black).Bold();
+                                text.Span("كود الطالبة: ").FontSize(9).FontColor(Colors.Black).Bold();
                                 text.Span(" ");
                                 text.Span(student.StudentCode ?? "-").FontSize(9).FontColor(Colors.Black).Bold();
                             });

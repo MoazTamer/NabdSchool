@@ -47,7 +47,7 @@ function InitializeDataTable() {
 
     const studentData = `
     الأسم: ${studentName}
-    رقم الطالبة: ${studentCode}
+    كود الطالبة: ${studentCode}
     جوال: ${studentPhone}
     `;
 

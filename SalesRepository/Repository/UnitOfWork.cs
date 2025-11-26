@@ -22,6 +22,11 @@ namespace SalesRepository.Repository
         public IRepository<TblSchoolSettings> TblSchoolSettings { get; private set; }
         public IRepository<TblAttendance> TblAttendance { get; private set; }
 
+        public IRepository<StudentBadge> StudentBadge { get; private set; }
+
+        public IRepository<StudentPoints> StudentPoints { get; private set; }
+
+        public IRepository<BadgeDefinition> BadgeDefinition { get; private set; }
 
         public IRepository<AuditLog> AuditLog { get; private set; }
 
@@ -30,6 +35,8 @@ namespace SalesRepository.Repository
 
 
         public ISP_Call SP_Call { get; private set; }
+
+        
 
         public UnitOfWork(SalesDBContext db)
         {
@@ -46,6 +53,10 @@ namespace SalesRepository.Repository
             TblClass = new Repository<TblClass>(_db);
             TblSchoolSettings = new Repository<TblSchoolSettings>(_db);
             TblAttendance = new Repository<TblAttendance>(_db);
+            StudentBadge = new Repository<StudentBadge>(_db);
+            StudentPoints = new Repository<StudentPoints>(_db);
+            BadgeDefinition = new Repository<BadgeDefinition>(_db);
+
 
             AuditLog = new Repository<AuditLog>(_db);
 

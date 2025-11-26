@@ -152,7 +152,7 @@ namespace Sales.Controllers
                     );
                     if (checkStudent != null)
                     {
-                        return Json(new { isValid = false, title = Title, message = "رقم الطالبة موجودة بالفعل" });
+                        return Json(new { isValid = false, title = Title, message = "كود الطالبة موجودة بالفعل" });
                     }
                 }
 

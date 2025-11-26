@@ -1,0 +1,157 @@
+﻿@{
+    ViewData["Title"] = "ملخص الحضور";
+    ViewData["Page"] = "ملخص الحضور";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-primary">
+            <h3 class="card-title text-white fw-bold">
+                <i class="ki-outline ki-chart-line-star fs-2 me-2"></i>
+                ملخص الحضور والغياب
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <!-- اختيار نوع التقرير -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">نوع التقرير:</label>
+                    <select id="reportType" class="form-select form-select-lg">
+                        <option value="weekly">تقرير أسبوعي</option>
+                        <option value="monthly">تقرير شهري</option>
+                    </select>
+                </div>
+
+                <!-- اختيار التاريخ (للتقرير الأسبوعي) -->
+                <div class="col-md-3" id="weeklyDatePicker">
+                    <label class="form-label fw-bold">تاريخ بداية الأسبوع:</label>
+                    <input type="date" id="weekStartDate" class="form-control form-control-lg" />
+                </div>
+
+                <!-- اختيار الشهر (للتقرير الشهري) -->
+                <div class="col-md-3" id="monthlyPicker" style="display: none;">
+                    <label class="form-label fw-bold">الشهر:</label>
+                    <select id="monthSelect" class="form-select form-select-lg">
+                        <option value="1">يناير</option>
+                        <option value="2">فبراير</option>
+                        <option value="3">مارس</option>
+                        <option value="4">أبريل</option>
+                        <option value="5">مايو</option>
+                        <option value="6">يونيو</option>
+                        <option value="7">يوليو</option>
+                        <option value="8">أغسطس</option>
+                        <option value="9">سبتمبر</option>
+                        <option value="10">أكتوبر</option>
+                        <option value="11">نوفمبر</option>
+                        <option value="12">ديسمبر</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2" id="yearPicker" style="display: none;">
+                    <label class="form-label fw-bold">السنة:</label>
+                    <select id="yearSelect" class="form-select form-select-lg"></select>
+                </div>
+
+                <!-- زر التحميل -->
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-primary btn-lg w-100" onclick="loadReport()">
+                        <i class="ki-outline ki-search-list fs-2"></i>
+                        عرض التقرير
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الملخص -->
+    <div class="row g-5 mb-5" id="summarySection" style="display: none;">
+        <div class="col-md-3">
+            <div class="card card-flush shadow-sm h-100">
+                <div class="card-body text-center p-5">
+                    <i class="ki-outline ki-profile-user fs-3x text-primary mb-3"></i>
+                    <div class="fs-2tx fw-bold text-primary" id="summaryTotalStudents">0</div>
+                    <div class="text-gray-600 fw-semibold mt-2">إجمالي الطلاب</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-flush shadow-sm h-100">
+                <div class="card-body text-center p-5">
+                    <i class="ki-outline ki-check-circle fs-3x text-success mb-3"></i>
+                    <div class="fs-2tx fw-bold text-success" id="summaryPresent">0</div>
+                    <div class="text-gray-600 fw-semibold mt-2">إجمالي الحضور</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-flush shadow-sm h-100">
+                <div class="card-body text-center p-5">
+                    <i class="ki-outline ki-cross-circle fs-3x text-danger mb-3"></i>
+                    <div class="fs-2tx fw-bold text-danger" id="summaryAbsent">0</div>
+                    <div class="text-gray-600 fw-semibold mt-2">إجمالي الغياب</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-flush shadow-sm h-100">
+                <div class="card-body text-center p-5">
+                    <i class="ki-outline ki-chart-simple fs-3x text-warning mb-3"></i>
+                    <div class="fs-2tx fw-bold text-warning" id="summaryAverage">0%</div>
+                    <div class="text-gray-600 fw-semibold mt-2">متوسط الحضور</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الرسم البياني -->
+    <div class="card shadow-sm mb-5" id="chartSection" style="display: none;">
+        <div class="card-header">
+            <h3 class="card-title fw-bold">
+                <i class="ki-outline ki-chart-pie-3 fs-2 text-primary me-2"></i>
+                الرسم البياني
+            </h3>
+        </div>
+        <div class="card-body">
+            <canvas id="attendanceChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <!-- جدول التفاصيل -->
+    <div class="card shadow-sm" id="tableSection" style="display: none;">
+        <div class="card-header">
+            <h3 class="card-title fw-bold">
+                <i class="ki-outline ki-category fs-2 text-success me-2"></i>
+                تفاصيل التقرير
+            </h3>
+        </div>
+        <div class="card-body">
+            <table id="reportTable" class="table table-row-bordered table-hover align-middle gs-5">
+                <thead class="fw-bold fs-6 text-light border-bottom-2 border-gray-200">
+                    <tr>
+                        <th class="text-center">التاريخ</th>
+                        <th class="text-center">اليوم</th>
+                        <th class="text-center bg-light-success">الحضور الكلي</th>
+                        <th class="text-center bg-light-primary">في الوقت</th>
+                        <th class="text-center bg-light-warning">متأخرين</th>
+                        <th class="text-center bg-light-danger">غياب</th>
+                        <th class="text-center bg-light-info">مستئذنين</th>
+                        <th class="text-center">النسبة</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+}
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="~/js/AttendanceReports.js"></script>
+}
