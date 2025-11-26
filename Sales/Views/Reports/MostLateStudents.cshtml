@@ -43,6 +43,12 @@
     .progress {
         height: 10px;
     }
+
+    table.dataTable.table-striped > tbody > tr:nth-of-type(2n+1) > * {
+        box-shadow: none !important;
+        background: white !important;
+    }
+
 </style>
 
 <div class="card shadow-sm mt-4">
@@ -129,11 +135,20 @@
     </div>
 </div>
 
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" />
+}
+
 @section Scripts {
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 
     <script src="~/js/MostLateStudents.js"></script>
 }

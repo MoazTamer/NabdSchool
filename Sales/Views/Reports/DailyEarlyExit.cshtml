@@ -30,6 +30,12 @@
         font-weight : bold;
         color: black;
     }
+
+    table.dataTable.table-striped > tbody > tr:nth-of-type(2n+1) > * {
+        box-shadow: none !important;
+        background: white !important;
+    }
+
 </style>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -199,7 +205,7 @@
                     <div class="table-responsive">
                         <table id="earlyExitTable" class="table table-hover table-row-bordered table-row-gray-300 gy-4">
                             <thead class="bg-light-primary">
-                                <tr class="fw-bold fs-6 text-gray-800 border-bottom border-gray-200">
+                                <tr class="fw-bold fs-6 text-light border-bottom border-gray-200">
                                     <th class="text-center">#</th>
                                     <th>اسم الطالبة</th>
                                     <th class="text-center">كود الطالبة</th>
@@ -209,8 +215,7 @@
                                     <th class="text-center">الفصل</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <!-- سيتم ملؤها بواسطة DataTable -->
+                            <tbody class="fw-bold fs-6">
                             </tbody>
                         </table>
                     </div>

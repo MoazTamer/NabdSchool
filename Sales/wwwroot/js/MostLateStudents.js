@@ -15,10 +15,22 @@
 
             var initTable = function () {
                 datatable = table.DataTable({
+                    dom: 'Bfrtip',
                     responsive: true,
                     processing: true,
                     serverSide: false,
                     data: [],
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<i class="fas fa-file-excel"></i> تصدير Excel',
+                            className: 'btn btn-success excel-btn',
+                            title: 'أكثر الطلاب تأخر',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        }
+                    ],
                     language: {
                         search: "البحث ",
                         emptyTable: "لا توجد بيانات",

@@ -1,353 +1,327 @@
-﻿var KTDailyAbsenceReport = function () {
-    // Shared variables
-    var table;
-    var datatable;
+﻿var datatable;
+var tableData = [];
 
-    // Private functions
-    var initFilters = function () {
-        // Set today's date as default
-        $('#reportDate').val(new Date().toISOString().split('T')[0]);
+$(document).ready(function() {
+    // Set today's date as default
+    $('#reportDate').val(new Date().toISOString().split('T')[0]);
 
-        // Load classes
-        loadClasses();
+// Initialize DataTable
+initTable();
 
-        // Class change event
-        $('#classFilter').change(function () {
+// Load classes
+loadClasses();
+
+// Class change event
+$('#classFilter').change(function() {
             const classId = $(this).val();
-            if (classId) {
-                loadClassRooms(classId);
-                $('#classRoomFilter').prop('disabled', false);
+if (classId) {
+    loadClassRooms(classId);
+$('#classRoomFilter').prop('disabled', false);
             } else {
-                $('#classRoomFilter').html('<option value="">جميع الفصول</option>').prop('disabled', true);
+    $('#classRoomFilter').html('<option value="">جميع الفصول</option>').prop('disabled', true);
             }
         });
 
-        // Search button
-        $('#btnSearch').click(function () {
-            loadReport();
+// Search button
+$('#btnSearch').click(function() {
+    loadReport();
         });
 
-        // Print button
-        $('#btnPrint').click(function () {
-            window.print();
+// Print PDF button
+$('#btnPrintPdf').click(function() {
+    printOfficialReport();
         });
+    });
 
-        // Print PDF button
-        $('#btnPrintPdf').click(function () {
-            printOfficialReport();
-        });
-
-        // Export Excel button
-        $('#btnExportExcel').click(function () {
-            exportToExcel();
-        });
-    };
-
-    var initDatatable = function () {
-        // Init datatable --- more info on datatables: https://datatables.net/manual/
-        table = document.getElementById('kt_absence_table');
-
-        if (!table) {
-            console.error('Table element not found');
-            return;
-        }
-
-        datatable = $(table).DataTable({
-            responsive: true,
-            processing: true,
-            serverSide: true,
-            "ajax": {
-                "url": "/Reports/GetDailyAbsenceReportData",
-                "type": "GET",
-                "data": function (d) {
-                    d.date = $('#reportDate').val();
-                    d.classId = $('#classFilter').val() || null;
-                    d.classRoomId = $('#classRoomFilter').val() || null;
+// Initialize DataTable
+var initTable = function () {
+    datatable = $('#dailyAbsenceTable').DataTable({
+        responsive: true,
+        processing: true,
+        serverSide: false,
+        data: [],
+        dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+            "<'row'<'col-sm-12'tr>>" +
+            "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                text: '<i class="fas fa-file-excel"></i> Excel',
+                className: 'btn btn-success me-1 excel-btn',
+                title: 'تقرير الغياب اليومي',
+                filename: function () {
+                    const date = $('#reportDate').val();
+                    return 'تقرير_الغياب_اليومي_' + date;
+                },
+                exportOptions: {
+                    columns: ':visible'
+                }
+            }
+        ],
+        language: {
+            search: "البحث:",
+            emptyTable: "لا توجد بيانات",
+            loadingRecords: "جارى التحميل ...",
+            processing: "جارى التحميل ...",
+            lengthMenu: "عرض _MENU_",
+            paginate: {
+                first: "الأول",
+                last: "الأخير",
+                next: "التالى",
+                previous: "السابق"
+            },
+            info: "عرض _START_ الى _END_ من _TOTAL_ مدخل",
+            infoFiltered: "(البحث من _MAX_ إجمالى المدخلات)",
+            infoEmpty: "لا توجد مدخلات للعرض",
+            zeroRecords: "لا توجد مدخلات مطابقة للبحث"
+        },
+        pageLength: 10,
+        order: [[0, "asc"]],
+        columns: [
+            {
+                data: null,
+                className: 'text-center',
+                render: function (data, type, row, meta) {
+                    return meta.row + 1;
                 }
             },
-            "language": {
-                "search": "البحث ",
-                "emptyTable": "لا توجد بيانات",
-                "loadingRecords": "جارى التحميل ...",
-                "processing": "جارى التحميل ...",
-                "lengthMenu": "عرض _MENU_",
-                "paginate": {
-                    "first": "الأول",
-                    "last": "الأخير",
-                    "next": "التالى",
-                    "previous": "السابق"
-                },
-                "info": "عرض _START_ الى _END_ من _TOTAL_ طالب غائب",
-                "infoFiltered": "(البحث من _MAX_ إجمالى الطلاب)",
-                "infoEmpty": "لا توجد طلاب غائبين للعرض",
-                "zeroRecords": "لا توجد طلاب غائبين مطابقة للبحث"
-            },
-            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "الكل"]],
-            "pageLength": 25,
-            fixedHeader: {
-                header: true
-            },
-            'order': [[1, 'asc']],
-            'columnDefs': [
-                {
-                    targets: [0, 2, 3, 4, 5],
-                    orderable: false,
-                    searchable: false,
-                    className: "text-center"
-                },
-                {
-                    targets: [1],
-                    className: "text-start"
+            {
+                data: 'studentName',
+                render: function (data) {
+                    return data || '-';
                 }
-            ],
-            "columns": [
-                {
-                    "data": null,
-                    "render": function (data, type, row, meta) {
-                        return meta.row + 1;
-                    }
-                },
-                {
-                    "data": "studentName",
-                    "render": function (data, type, row) {
-                        return `<span class="fw-bold text-gray-800">${data}</span>`;
-                    }
-                },
-                {
-                    "data": "className",
-                    "render": function (data, type, row) {
-                        return `<span class="badge badge-light-primary">${data}</span>`;
-                    }
-                },
-                {
-                    "data": "classRoomName",
-                    "render": function (data, type, row) {
-                        return `<span class="badge badge-light-info">${data}</span>`;
-                    }
-                },
-                {
-                    "data": "consecutiveAbsenceDays",
-                    "render": function (data, type, row) {
-                        const badgeClass = data >= 3 ? 'badge-danger' : 'badge-warning';
-                        return `<span class="badge ${badgeClass}">${data} يوم</span>`;
-                    }
-                },
-                {
-                    "data": "studentPhone",
-                    "render": function (data, type, row) {
-                        return data ? `<span class="text-gray-600">${data}</span>` : '-';
-                    }
-                },
-                {
-                    "data": "studentCode",
-                    "render": function (data, type, row) {
-                        return data ? `<span class="text-gray-700">${data}</span>` : '-';
-                    }
-                },
-                {
-                    "data": "notes",
-                    "render": function (data, type, row) {
-                        return data ? `<span class="text-muted">${data}</span>` : '-';
-                    }
+            },
+            {
+                data: 'studentCode',
+                className: 'text-center',
+                render: function (data) {
+                    return data || '-';
                 }
-            ],
-            "drawCallback": function (settings) {
-                // Re-init functions on every table re-draw
-                var api = this.api();
-                api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
-                    cell.innerHTML = i + 1;
-                });
+            },
+            {
+                data: 'className',
+                render: function (data) {
+                    return data || '-';
+                }
+            },
+            {
+                data: 'classRoomName',
+                render: function (data) {
+                    return data || '-';
+                }
+            },
+            {
+                data: 'studentPhone',
+                className: 'text-center',
+                render: function (data) {
+                    return data || '-';
+                }
+            },
+            {
+                data: 'consecutiveAbsenceDays',
+                className: 'text-center',
+                render: function (data) {
+                    const badgeClass = data >= 3 ? 'badge-danger' : 'badge-warning';
+                    return `<span class="badge ${badgeClass}">${data} يوم</span>`;
+                }
+            },
+            {
+                data: 'notes',
+                render: function (data) {
+                    return data || '-';
+                }
             }
-        });
-
-        // Handle row click
-        datatable.on('click', 'tr', function () {
-            $(this).toggleClass('selected');
-        });
-    };
-
-    // Load classes dropdown
-    var loadClasses = function () {
-        $.get('/Reports/GetClasses', function (response) {
-            if (response.success) {
-                const select = $('#classFilter');
-                select.html('<option value="">جميع الصفوف</option>');
-                response.data.forEach(function (item) {
-                    select.append(`<option value="${item.id}">${item.name}</option>`);
-                });
+        ],
+        rowCallback: function (row, data) {
+            if (data.consecutiveAbsenceDays >= 3) {
+                $(row).addClass('bg-light-danger');
             }
-        }).fail(function () {
-            console.error('Failed to load classes');
-        });
+        }
+    });
+
+// Add Excel button to toolbar
+datatable.buttons().container().appendTo($('#tableCard .card-toolbar'));
     };
 
-    // Load classrooms dropdown
-    var loadClassRooms = function (classId) {
-        $.get('/Reports/GetClassRooms', { classId: classId }, function (response) {
-            const select = $('#classRoomFilter');
-            select.html('<option value="">جميع الفصول</option>');
+// Load classes dropdown
+function loadClasses() {
+    $.get('@Url.Action("GetClasses", "Reports")', function (response) {
+        if (response.success) {
+            const select = $('#classFilter');
+            response.data.forEach(function (item) {
+                select.append(`<option value="${item.id}">${item.name}</option>`);
+            });
+        }
+    });
+    }
 
-            if (response.success) {
-                response.data.forEach(function (item) {
-                    select.append(`<option value="${item.id}">${item.name}</option>`);
-                });
+// Load classrooms dropdown
+function loadClassRooms(classId) {
+    $.get('@Url.Action("GetClassRooms", "Reports")', { classId: classId }, function (response) {
+        const select = $('#classRoomFilter');
+        select.html('<option value="">جميع الفصول</option>');
+
+        if (response.success) {
+            response.data.forEach(function (item) {
+                select.append(`<option value="${item.id}">${item.name}</option>`);
+            });
+        }
+    });
+    }
+
+// Load report
+function loadReport() {
+        const date = $('#reportDate').val();
+const classId = $('#classFilter').val() || null;
+const classRoomId = $('#classRoomFilter').val() || null;
+
+if (!date) {
+    Swal.fire('تنبيه', 'الرجاء اختيار التاريخ', 'warning');
+return;
+        }
+
+// Show loading
+Swal.fire({
+    title: 'جاري تحميل التقرير...',
+allowOutsideClick: false,
+            didOpen: () => {Swal.showLoading(); }
+        });
+
+$.get('@Url.Action("GetDailyAbsenceReport", "Reports")', {
+    date: date,
+classId: classId,
+classRoomId: classRoomId
+        }, function(response) {
+    Swal.close();
+
+if (response.success) {
+    displayReport(response.data);
+            } else {
+    Swal.fire('خطأ', response.message, 'error');
             }
-        }).fail(function () {
-            console.error('Failed to load classrooms');
+        }).fail(function() {
+    Swal.close();
+Swal.fire('خطأ', 'حدث خطأ أثناء تحميل التقرير', 'error');
         });
-    };
+    }
 
-    // Load report
-    var loadReport = function () {
-        const date = $('#reportDate').val();
+// Display report
+function displayReport(data) {
+        if (!data.classesAbsence || data.classesAbsence.length === 0) {
+    $('#emptyState').show();
+$('#tableCard').hide();
+$('#summaryCards').hide();
 
-        if (!date) {
-            Swal.fire('تنبيه', 'الرجاء اختيار التاريخ', 'warning');
-            return;
+// Clear DataTable
+datatable.clear().draw();
+
+Swal.fire('معلومة', 'لا يوجد طلاب غائبين في هذا اليوم! 🎉', 'info');
+return;
         }
 
-        // Show loading
-        KTApp.showLoading('#reportContainer');
+// Update summary
+$('#totalAbsent').text(data.totalAbsentStudents);
+$('#totalClasses').text(data.totalClasses);
+$('#reportDateDisplay').text(new Date(data.reportDate).toLocaleDateString('ar-EG'));
 
-        // Reload datatable with new parameters
-        if (datatable) {
-            datatable.ajax.reload(function (json) {
-                KTApp.hideLoading('#reportContainer');
-                updateSummary(json.summary);
-            }, false);
-        }
-    };
-
-    // Update summary cards
-    var updateSummary = function (summary) {
-        if (summary) {
-            $('#totalAbsent').text(summary.totalAbsentStudents || 0);
-            $('#totalClasses').text(summary.totalClasses || 0);
-            $('#reportDateDisplay').text(summary.reportDate ?
-                new Date(summary.reportDate).toLocaleDateString('ar-EG') : '--/--/----');
-
-            $('#summaryCards').show();
-            $('#exportButtons').show();
-        } else {
-            $('#summaryCards').hide();
-            $('#exportButtons').hide();
-        }
-    };
-
-    // Export to Excel
-    var exportToExcel = function () {
-        const date = $('#reportDate').val();
-        const classId = $('#classFilter').val() || null;
-        const classRoomId = $('#classRoomFilter').val() || null;
-
-        window.location.href = `/Reports/ExportDailyAbsenceToExcel?date=${date}&classId=${classId}&classRoomId=${classRoomId}`;
-    };
-
-    // Print Official PDF Report
-    var printOfficialReport = function () {
-        const date = $('#reportDate').val();
-        const classId = $('#classFilter').val() || '';
-        const classRoomId = $('#classRoomFilter').val() || '';
-
-        if (!date) {
-            Swal.fire('تنبيه', 'الرجاء اختيار التاريخ', 'warning');
-            return;
-        }
-
-        // Show loading
-        Swal.fire({
-            title: 'جاري إنشاء التقرير...',
-            text: 'الرجاء الانتظار',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
+// Prepare data for DataTable
+tableData = [];
+data.classesAbsence.forEach(function(classData) {
+    classData.absentStudentsList.forEach(function (student) {
+        tableData.push({
+            studentName: student.studentName,
+            studentCode: student.studentCode,
+            className: classData.className,
+            classRoomName: classData.classRoomName,
+            studentPhone: student.studentPhone,
+            consecutiveAbsenceDays: student.consecutiveAbsenceDays,
+            notes: student.notes
+        });
+    });
         });
 
-        // Using XMLHttpRequest for better error handling
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/Reports/PrintDailyAbsencePdf', true);
-        xhr.responseType = 'blob';
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+// Update DataTable
+datatable.clear().rows.add(tableData).draw();
 
-        xhr.onload = function () {
-            Swal.close();
+// Show report
+$('#emptyState').hide();
+$('#tableCard').show();
+$('#summaryCards').show();
+    }
 
-            if (xhr.status === 200) {
+// Print Official PDF Report
+function printOfficialReport() {
+        const date = $('#reportDate').val();
+const classId = $('#classFilter').val() || '';
+const classRoomId = $('#classRoomFilter').val() || '';
+
+if (!date) {
+    Swal.fire('تنبيه', 'الرجاء اختيار التاريخ', 'warning');
+return;
+        }
+
+// Show loading
+Swal.fire({
+    title: 'جاري إنشاء التقرير...',
+text: 'الرجاء الانتظار',
+allowOutsideClick: false,
+            didOpen: () => {Swal.showLoading(); }
+        });
+
+const xhr = new XMLHttpRequest();
+xhr.open('POST', '@Url.Action("PrintDailyAbsencePdf", "Reports")', true);
+xhr.responseType = 'blob';
+xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+xhr.onload = function() {
+    Swal.close();
+
+if (xhr.status === 200) {
                 const contentType = xhr.getResponseHeader('content-type');
 
-                if (contentType && contentType.includes('application/json')) {
-                    // Handle JSON error response
+if (contentType && contentType.includes('application/json')) {
                     const reader = new FileReader();
-                    reader.onload = function () {
+reader.onload = function() {
                         try {
                             const error = JSON.parse(reader.result);
-                            Swal.fire('خطأ', error.message || 'حدث خطأ أثناء إنشاء التقرير', 'error');
-                        } catch (e) {
-                            Swal.fire('خطأ', 'حدث خطأ أثناء إنشاء التقرير', 'error');
+Swal.fire('خطأ', error.message || 'حدث خطأ أثناء إنشاء التقرير', 'error');
+                        } catch(e) {
+    Swal.fire('خطأ', 'حدث خطأ أثناء إنشاء التقرير', 'error');
                         }
                     };
-                    reader.readAsText(xhr.response);
+reader.readAsText(xhr.response);
                 } else {
-                    // Success - download PDF
                     const blob = xhr.response;
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `تقرير_الغياب_اليومي_${date}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
+const url = window.URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `تقرير_الغياب_اليومي_${date}.pdf`;
+document.body.appendChild(a);
+a.click();
 
                     setTimeout(() => {
-                        window.URL.revokeObjectURL(url);
-                        document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+document.body.removeChild(a);
                     }, 100);
 
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'تم!',
-                        text: 'تم إنشاء التقرير بنجاح',
-                        timer: 2000,
-                        showConfirmButton: false
+Swal.fire({
+    icon: 'success',
+title: 'تم!',
+text: 'تم إنشاء التقرير بنجاح',
+timer: 2000,
+showConfirmButton: false
                     });
                 }
             } else {
-                Swal.fire('خطأ', 'حدث خطأ أثناء إنشاء التقرير', 'error');
+    Swal.fire('خطأ', 'حدث خطأ أثناء إنشاء التقرير: ' + xhr.statusText, 'error');
             }
         };
 
-        xhr.onerror = function () {
-            Swal.close();
-            Swal.fire('خطأ', 'حدث خطأ في الاتصال بالسيرفر', 'error');
+xhr.onerror = function() {
+    Swal.close();
+Swal.fire('خطأ', 'حدث خطأ في الاتصال بالسيرفر', 'error');
         };
 
-        const formData = `date=${encodeURIComponent(date)}&classId=${classId}&classRoomId=${classRoomId}`;
-        xhr.send(formData);
-    };
-
-    // Public methods
-    return {
-        init: function () {
-            initFilters();
-            initDatatable();
-        },
-
-        reload: function () {
-            if (datatable) {
-                datatable.ajax.reload();
-            }
-        },
-
-        getSelectedRows: function () {
-            if (datatable) {
-                return datatable.rows('.selected').data().toArray();
-            }
-            return [];
-        }
-    };
-}();
-
-// Initialize on document ready
-if (typeof jQuery !== 'undefined') {
-    jQuery(document).ready(function () {
-        KTDailyAbsenceReport.init();
-    });
-}
+const formData = `date=${encodeURIComponent(date)}&classId=${classId}&classRoomId=${classRoomId}`;
+xhr.send(formData);
+    }

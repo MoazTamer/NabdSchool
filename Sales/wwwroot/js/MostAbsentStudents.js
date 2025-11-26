@@ -17,6 +17,18 @@ var MostAbsentReport = function () {
             processing: true,
             serverSide: false,
             data: [],
+            dom: 'Bfrtip',   // مهم جدًا لتفعيل مكان الأزرار
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    text: '<i class="fas fa-file-excel"></i> تصدير Excel',
+                    className: 'btn btn-success excel-btn',
+                    title: 'أكثر الطلاب غياب',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                }
+            ],
             language: {
                 search: "البحث ",
                 emptyTable: "لا توجد بيانات",
@@ -67,18 +79,18 @@ var MostAbsentReport = function () {
                         else if (data <= 50) progressClass = "bg-warning";
 
                         return `
-                            <div class="d-flex align-items-center">
-                                <div class="flex-grow-1 me-3">
-                                    <div class="progress" style="height: 8px;">
-                                        <div class="progress-bar ${progressClass}"
-                                                role="progressbar"
-                                                style="width: ${data}%">
-                                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1 me-3">
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar ${progressClass}"
+                                            role="progressbar"
+                                            style="width: ${data}%">
                                     </div>
                                 </div>
-                                <div class="fw-bold">${data}%</div>
                             </div>
-                        `;
+                            <div class="fw-bold">${data}%</div>
+                        </div>
+                    `;
                     },
                     className: "text-center"
                 },
@@ -86,13 +98,14 @@ var MostAbsentReport = function () {
                     data: null,
                     render: function (data, type, row) {
                         return `<a href="/Reports/StudentReport?studentCode=${row.studentCode}&fromDate=${getFromDate()}&toDate=${getToDate()}" 
-                              class="btn btn-sm btn-primary">التفاصيل</a>`;
+                          class="btn btn-sm btn-primary">التفاصيل</a>`;
                     },
                     className: "text-center"
                 }
             ]
         });
     };
+
 
     var loadClasses = function () {
         $.ajax({
