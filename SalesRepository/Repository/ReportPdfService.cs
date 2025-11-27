@@ -5,6 +5,7 @@ using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using SalesModel.ViewModels;
 using SalesModel.ViewModels.Reports;
+using System.Drawing;
 
 
 
@@ -395,103 +396,8 @@ namespace SalesRepository.Repository
                 });
         }
 
-        // قسم كل صف
-        private void ComposeClassSectionOld(IContainer container, ClassAbsenceViewModel classData, string type)
-        {
-            container.Column(column =>
-            {
-                // عنوان الصف
-                column.Item().Background(Colors.Blue.Lighten3)
-                    .Padding(8)
-                    .Row(row =>
-                    {
-
-                        row.ConstantItem(300).AlignLeft().Text(
-                            $"النسبة: {classData.AbsencePercentage}% | " +
-                            $"{type}: {classData.AbsentStudents} | " +
-                            $"إجمالي الطلاب: {classData.TotalStudents}")
-                            .FontSize(10)
-                            .AlignRight()
-                            .FontColor(Colors.Red.Darken2);
-
-                        row.RelativeItem().AlignRight().Text($"{classData.ClassName} - {classData.ClassRoomName}")
-                           .FontSize(14)
-                           .Bold()
-                           .FontColor(Colors.Blue.Darken3);
-                    });
-
-                // جدول الغياب RTL
-                column.Item().Table(table =>
-                {
-
-                    // الأعمدة (مقلوبة)
-                    table.ColumnsDefinition(columns =>
-                    {
-                        columns.RelativeColumn(3);   // ملاحظات
-                        columns.RelativeColumn(2);   // أيام الغياب
-                        columns.RelativeColumn(2);   // الهاتف
-                        columns.RelativeColumn(2);   // الكود
-                        columns.RelativeColumn(3);   // الاسم
-                        columns.ConstantColumn(40);  // #
-                    });
-
-                    // Header RTL
-                    table.Header(header =>
-                    {
-                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
-                            .AlignCenter().Text("ملاحظات").FontColor(Colors.White).Bold().FontSize(10);
-
-                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
-                            .AlignCenter().Text("أيام "+type+" المتتالية").FontColor(Colors.White).Bold().FontSize(10);
-
-                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
-                            .AlignCenter().Text("رقم الجوال").FontColor(Colors.White).Bold().FontSize(10);
-
-                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
-                            .AlignCenter().Text("كود الطالبة").FontColor(Colors.White).Bold().FontSize(10);
-
-                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
-                            .AlignCenter().Text("اسم الطالب").FontColor(Colors.White).Bold().FontSize(10);
-
-                        header.Cell().Background(Colors.Blue.Darken2).Padding(5)
-                            .AlignCenter().Text("#").FontColor(Colors.White).Bold().FontSize(10);
-                    });
-
-                    // Rows RTL
-                    int index = 1;
-                    foreach (var st in classData.AbsentStudentsList)
-                    {
-                        var bgColor = st.ConsecutiveAbsenceDays >= 3
-                            ? Colors.Red.Lighten4
-                            : (index % 2 == 0 ? Colors.Grey.Lighten4 : Colors.White);
-
-                        table.Cell().Background(bgColor).Padding(5)
-                            .AlignRight().Text(st.Notes ?? "-").FontSize(9);
-
-                        table.Cell().Background(bgColor).Padding(5)
-                            .AlignCenter().Text($"{st.ConsecutiveAbsenceDays} يوم")
-                            .FontSize(9)
-                            .FontColor(st.ConsecutiveAbsenceDays >= 3 ? Colors.Red.Darken2 : Colors.Black);
-
-                        table.Cell().Background(bgColor).Padding(5)
-                            .AlignRight().Text(st.StudentPhone ?? "-").FontSize(9);
-
-                        table.Cell().Background(bgColor).Padding(5)
-                            .AlignRight().Text(st.StudentCode ?? "-").FontSize(9);
-
-                        table.Cell().Background(bgColor).Padding(5)
-                            .AlignRight().Text(st.StudentName).FontSize(9);
-
-                        table.Cell().Background(bgColor).Padding(5)
-                            .AlignCenter().Text(index.ToString()).FontSize(9);
-
-                        index++;
-                    }
-                });
-            });
-        }
-
-        // قسم كل صف - معدلة لإضافة معاد الحضور
+        
+        // قسم كل صف - لإضافة معاد الحضور
         private void ComposeClassSection(IContainer container, ClassAbsenceViewModel classData, string type)
         {
             container.Column(column =>
@@ -604,41 +510,7 @@ namespace SalesRepository.Repository
         }
 
         // Footer التقرير
-        private void OldComposeFooter(IContainer container)
-        {
-            container.AlignCenter().Column(column =>
-            {
-                column.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten1);
-
-                column.Item().PaddingTop(5).Row(row =>
-                {
-                    row.RelativeItem().AlignLeft()
-                        .Text(text =>
-                        {
-                            text.Span("صفحة ")
-                            .FontSize(9).FontColor(Colors.Grey.Darken1);
-                            text.CurrentPageNumber()
-                            .FontSize(9).FontColor(Colors.Grey.Darken1);
-                            text.Span(" من ")
-                            .FontSize(9).FontColor(Colors.Grey.Darken1);
-                            text.TotalPages()
-                            .FontSize(9).FontColor(Colors.Grey.Darken1);
-                        });
-
-                    //row.RelativeItem().AlignCenter()
-                    //    .Text("تم إنشاء هذا التقرير بواسطة نظام إدارة حضور الطلاب")
-                    //    .FontSize(8)
-                    //    .FontColor(Colors.Grey.Medium);
-
-                    //row.RelativeItem().AlignRight()
-                    //    .Text(DateTime.Now.ToString("yyyy"))
-                    //    .FontSize(9)
-                    //    .FontColor(Colors.Grey.Darken1);
-                });
-            });
-        }
-
-
+        
         private void ComposeFooter(IContainer container)
         {
             container.AlignCenter().Column(column =>
@@ -2000,5 +1872,557 @@ namespace SalesRepository.Repository
 
                 });
         }
+
+
+
+        //   public byte[] GenerateStudentAbsenceNotice(StudentAbsenceNoticeViewModel data)
+        //   {
+        //       var document = Document.Create(container =>
+        //       {
+        //           container.Page(page =>
+        //           {
+        //               page.Size(PageSizes.A4);
+        //               page.Margin(1.5f, Unit.Centimetre);
+        //               page.PageColor(Colors.White);
+        //               page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(12));
+        //               page.DefaultTextStyle(x => x.DirectionFromRightToLeft());
+
+        //               page.Content().Element(c => ComposeAbsenceNotice(c, data));
+        //           });
+        //       });
+
+        //       return document.GeneratePdf();
+        //   }
+
+        //   // تكوين إخطار الغياب
+        //   private void ComposeAbsenceNotice(IContainer container, StudentAbsenceNoticeViewModel data)
+        //   {
+        //       container.Column(column =>
+        //       {
+        //           column.Spacing(0);
+
+        //           // ===== Header الرسمي =====
+        //           column.Item().Border(2).BorderColor(Colors.Black).Padding(10).Column(headerCol =>
+        //           {
+        //               headerCol.Spacing(0);
+
+        //               headerCol.Item().Row(row =>
+        //               {
+        //                   row.Spacing(10);
+
+        //                   // الرقم على اليسار
+        //                   row.ConstantItem(120).AlignLeft().Column(numCol =>
+        //                   {
+        //                       numCol.Item().Text("العدد: 1447/")
+        //                           .FontSize(11)
+        //                           .FontColor(Colors.Black);
+
+        //                       numCol.Item().PaddingTop(3).Text("الفصل الدراسي: الأول")
+        //                           .FontSize(10)
+        //                           .FontColor(Colors.Black);
+        //                   });
+
+        //                   // الشعارات والمعلومات في المنتصف
+        //                   row.RelativeItem().AlignCenter().Column(centerCol =>
+        //                   {
+        //                       centerCol.Spacing(3);
+
+        //                       // شعار الوزارة (أعلى)
+        //                       centerCol.Item().AlignCenter().Column(logoCol =>
+        //                       {
+        //                           if (File.Exists(_ministryLogoPath))
+        //                           {
+        //                               logoCol.Item()
+        //                                   .Width(60)
+        //                                   .Height(60)
+        //                                   .Image(_ministryLogoPath, ImageScaling.FitArea);
+        //                           }
+        //                       });
+
+        //                       // وزارة التعليم
+        //                       centerCol.Item().AlignCenter().Text("وزارة التعليم")
+        //                           .FontSize(14)
+        //                           .Bold()
+        //                           .FontColor(Colors.Black);
+
+        //                       // المتوسطة الخامسة عشرة
+        //                       centerCol.Item().AlignCenter().Text("المتوسطة الخامسة عشرة")
+        //                           .FontSize(12)
+        //                           .Bold()
+        //                           .FontColor(Colors.Black);
+
+        //                       // بالطائف
+        //                       centerCol.Item().AlignCenter().Text("بالطائف")
+        //                           .FontSize(11)
+        //                           .FontColor(Colors.Black);
+        //                   });
+
+        //                   // شعار المملكة على اليمين
+        //                   row.ConstantItem(120).AlignRight().Column(saudiCol =>
+        //                   {
+        //                       // شعار المملكة
+        //                       if (File.Exists(_schoolLogoPath))
+        //                       {
+        //                           saudiCol.Item().AlignRight()
+        //                               .Width(70)
+        //                               .Height(50)
+        //                               .Image(_schoolLogoPath, ImageScaling.FitArea);
+        //                       }
+
+        //                       saudiCol.Item().PaddingTop(3).AlignRight().Text("المملكة العربية السعودية")
+        //                           .FontSize(9)
+        //                           .FontColor(Colors.Black);
+        //                   });
+        //               });
+        //           });
+
+        //           // ===== عنوان الإخطار =====
+        //           column.Item().PaddingTop(20).Border(1).BorderColor(Colors.Black)
+        //               .AlignCenter().Padding(8)
+        //               .Text("إخطار غياب طالب")
+        //               .FontSize(16)
+        //               .Bold()
+        //               .FontColor(Colors.Black);
+
+        //           // ===== معلومات الطالب =====
+        //           column.Item().PaddingTop(15).PaddingHorizontal(20).Column(infoCol =>
+        //           {
+        //               infoCol.Spacing(8);
+
+        //               // اسم الطالب
+        //               infoCol.Item().Row(row =>
+        //               {
+        //                   row.RelativeItem().AlignRight()
+        //                       .Text($"اسم الطالب/ــة: {data.StudentName}")
+        //                       .FontSize(12)
+        //                       .FontColor(Colors.Black);
+        //               });
+
+        //               // الفصل
+        //               infoCol.Item().Row(row =>
+        //               {
+        //                   row.RelativeItem().AlignRight()
+        //                       .Text($"الفصل: {data.ClassName}")
+        //                       .FontSize(12)
+        //                       .FontColor(Colors.Black);
+        //               });
+        //           });
+
+        //           // ===== خط منقط =====
+        //           //column.Item().PaddingTop(10).PaddingHorizontal(20)
+        //           //    .Canvas((canvas, size) =>
+        //           //    {
+        //           //        canvas.DrawLine(
+        //           //            new Point(0, 0),
+        //           //            new Point(size.Width, 0),
+        //           //            lineColor: Colors.Black,
+        //           //            lineWidth: 1,
+        //           //            dashPattern: new float[] { 5, 3 }
+        //           //        );
+        //           //    });
+
+        //           column.Item().PaddingTop(10).PaddingHorizontal(20)
+        //            .BorderTop(1, Unit.Point)
+        //            .BorderColor(Colors.Black)
+        //            .ExtendHorizontal();
+
+        ////           column.Item().PaddingTop(10).PaddingHorizontal(20)
+        ////.Height(1).Background(Colors.Black);
+
+        //           // ===== جدول أيام الغياب =====
+        //           column.Item().PaddingTop(15).PaddingHorizontal(20).Column(tableCol =>
+        //           {
+        //               tableCol.Item().AlignRight().PaddingBottom(8)
+        //                   .Text("أيام الغياب")
+        //                   .FontSize(13)
+        //                   .Bold()
+        //                   .FontColor(Colors.Black);
+
+        //               tableCol.Item().Table(table =>
+        //               {
+        //                   // تعريف الأعمدة (من اليسار لليمين في RTL)
+        //                   table.ColumnsDefinition(columns =>
+        //                   {
+        //                       columns.RelativeColumn(3); // اليوم
+        //                       columns.RelativeColumn(3); // التاريخ
+        //                       columns.ConstantColumn(50); // م
+        //                   });
+
+        //                   // Header
+        //                   table.Header(header =>
+        //                   {
+        //                       header.Cell().Border(1).BorderColor(Colors.Black)
+        //                           .Background(Colors.Grey.Lighten3)
+        //                           .Padding(5).AlignCenter()
+        //                           .Text("اليوم").FontSize(11).Bold();
+
+        //                       header.Cell().Border(1).BorderColor(Colors.Black)
+        //                           .Background(Colors.Grey.Lighten3)
+        //                           .Padding(5).AlignCenter()
+        //                           .Text("التاريخ").FontSize(11).Bold();
+
+        //                       header.Cell().Border(1).BorderColor(Colors.Black)
+        //                           .Background(Colors.Grey.Lighten3)
+        //                           .Padding(5).AlignCenter()
+        //                           .Text("م").FontSize(11).Bold();
+        //                   });
+
+        //                   // Rows
+        //                   foreach (var absence in data.AbsenceDates)
+        //                   {
+        //                       table.Cell().Border(1).BorderColor(Colors.Black)
+        //                           .Padding(5).AlignCenter()
+        //                           .Text(absence.DayName).FontSize(11);
+
+        //                       table.Cell().Border(1).BorderColor(Colors.Black)
+        //                           .Padding(5).AlignCenter()
+        //                           .Text(absence.Date).FontSize(11);
+
+        //                       table.Cell().Border(1).BorderColor(Colors.Black)
+        //                           .Padding(5).AlignCenter()
+        //                           .Text(absence.RowNumber.ToString()).FontSize(11);
+        //                   }
+        //               });
+        //           });
+
+        //           // ===== التذكير الأول =====
+        //           column.Item().PaddingTop(20).Border(1).BorderColor(Colors.Black)
+        //               .AlignCenter().Padding(8)
+        //               .Text("التذكير الأول")
+        //               .FontSize(14)
+        //               .Bold()
+        //               .FontColor(Colors.Black);
+
+        //           // ===== نص الإخطار =====
+        //           column.Item().PaddingTop(15).PaddingHorizontal(20)
+        //               .Text(text =>
+        //               {
+        //                   text.Span($"عزيزي/ـتي {data.StudentGuardianType} آل حوج اختطافي\n")
+        //                       .FontSize(12).FontColor(Colors.Black);
+
+        //                   text.Span("نود تنبيهك بأن مصيحة ابنك/ــتك مضمون بأننا قد بدأنا بملاحظة تكرار غيابه/ـها عن المدرسة. نأمل منكم الاهتمام ")
+        //                       .FontSize(11).FontColor(Colors.Black);
+
+        //                   text.Span("بانتظام ابنك/ــتك في الحضور إلى المدرسة حيث إن غيابك يؤثر على تحصيله/ـها الدراسي ويجب حضوره/ـها لضمان تعزيز المسؤولية ")
+        //                       .FontSize(11).FontColor(Colors.Black);
+
+        //                   text.Span("لدراستكم لديه/ـها توجد تبعات تعوق على عدم الغياب والمواظبة على الحضور للمدرسة.")
+        //                       .FontSize(11).FontColor(Colors.Black);
+        //               });
+
+        //           // ===== التوقيعات =====
+        //           column.Item().PaddingTop(30).PaddingHorizontal(40).Row(row =>
+        //           {
+        //               row.Spacing(20);
+
+        //               // توقيع الطالب/ـة على اليسار
+        //               row.RelativeItem().AlignLeft().Column(sigCol =>
+        //               {
+        //                   sigCol.Item().AlignRight().Text("اسم الطالب/ــة:")
+        //                       .FontSize(11).FontColor(Colors.Black);
+
+        //                   sigCol.Item().PaddingTop(20).AlignRight()
+        //                       .LineHorizontal(1).LineColor(Colors.Black);
+
+        //                   sigCol.Item().PaddingTop(3).AlignRight().Text("التوقيع:")
+        //                       .FontSize(11).FontColor(Colors.Black);
+
+        //                   sigCol.Item().PaddingTop(20).AlignRight()
+        //                       .LineHorizontal(1).LineColor(Colors.Black);
+        //               });
+
+        //               // التاريخ على اليمين
+        //               row.RelativeItem().AlignRight().Column(dateCol =>
+        //               {
+        //                   dateCol.Item().AlignRight().Text("التاريخ:")
+        //                       .FontSize(11).FontColor(Colors.Black);
+
+        //                   dateCol.Item().PaddingTop(5).AlignRight()
+        //                       .Text($"     /     / 1447هـ")
+        //                       .FontSize(11).FontColor(Colors.Black);
+        //               });
+        //           });
+
+        //           // ===== ملاحظة في الأسفل =====
+        //           column.Item().PaddingTop(30).PaddingHorizontal(20)
+        //               .Border(1).BorderColor(Colors.Black)
+        //               .Background(Colors.Grey.Lighten4)
+        //               .Padding(10)
+        //               .Text("ملاحظة: يرجى إعادة هذا الإخطار موقعاً من ولي الأمر والطالب/ـة")
+        //               .FontSize(10)
+        //               .Italic()
+        //               .FontColor(Colors.Grey.Darken2);
+        //       });
+        //   }
+
+        public byte[] GenerateStudentAbsenceNotice(StudentAbsenceNoticeViewModel data)
+        {
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(1.5f, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(12));
+                    page.DefaultTextStyle(x => x.DirectionFromRightToLeft());
+
+                    page.Content().Element(c => ComposeAbsenceNotice(c, data));
+                });
+            });
+
+            return document.GeneratePdf();
+        }
+
+        // تكوين إخطار الغياب
+        private void ComposeAbsenceNotice(IContainer container, StudentAbsenceNoticeViewModel data)
+        {
+            container.Column(column =>
+            {
+                column.Spacing(0);
+
+                // ===== Header الرسمي =====
+                column.Item().Border(2).BorderColor(Colors.Black).Padding(10).Column(headerCol =>
+                {
+                    headerCol.Spacing(0);
+
+                    headerCol.Item().Row(row =>
+                    {
+                        row.Spacing(10);
+
+                        // الرقم على اليسار
+                        row.ConstantItem(120).AlignLeft().Column(numCol =>
+                        {
+                            numCol.Item().Text("العدد: 1447/")
+                                .FontSize(11)
+                                .FontColor(Colors.Black);
+
+                            numCol.Item().PaddingTop(3).Text("الفصل الدراسي: الأول")
+                                .FontSize(10)
+                                .FontColor(Colors.Black);
+                        });
+
+                        // الشعارات والمعلومات في المنتصف
+                        row.RelativeItem().AlignCenter().Column(centerCol =>
+                        {
+                            centerCol.Spacing(3);
+
+                            // شعار الوزارة (أعلى)
+                            centerCol.Item().AlignCenter().Column(logoCol =>
+                            {
+                                if (File.Exists(_ministryLogoPath))
+                                {
+                                    logoCol.Item()
+                                        .Width(60)
+                                        .Height(60)
+                                        .Image(_ministryLogoPath, ImageScaling.FitArea);
+                                }
+                            });
+
+                            // وزارة التعليم
+                            centerCol.Item().AlignCenter().Text("وزارة التعليم")
+                                .FontSize(14)
+                                .Bold()
+                                .FontColor(Colors.Black);
+
+                            // المتوسطة الخامسة عشرة
+                            centerCol.Item().AlignCenter().Text("المتوسطة الخامسة عشرة")
+                                .FontSize(12)
+                                .Bold()
+                                .FontColor(Colors.Black);
+
+                            // بالطائف
+                            centerCol.Item().AlignCenter().Text("بالطائف")
+                                .FontSize(11)
+                                .FontColor(Colors.Black);
+                        });
+
+                        // شعار المملكة على اليمين
+                        row.ConstantItem(120).AlignRight().Column(saudiCol =>
+                        {
+                            // شعار المملكة
+                            if (File.Exists(_schoolLogoPath))
+                            {
+                                saudiCol.Item().AlignRight()
+                                    .Width(70)
+                                    .Height(50)
+                                    .Image(_schoolLogoPath, ImageScaling.FitArea);
+                            }
+
+                            saudiCol.Item().PaddingTop(3).AlignRight().Text("المملكة العربية السعودية")
+                                .FontSize(9)
+                                .FontColor(Colors.Black);
+                        });
+                    });
+                });
+
+                // ===== عنوان الإخطار =====
+                column.Item().PaddingTop(20).Border(1).BorderColor(Colors.Black)
+                    .AlignCenter().Padding(8)
+                    .Text("إخطار غياب طالب")
+                    .FontSize(16)
+                    .Bold()
+                    .FontColor(Colors.Black);
+
+                // ===== معلومات الطالب =====
+                column.Item().PaddingTop(15).PaddingHorizontal(20).Column(infoCol =>
+                {
+                    infoCol.Spacing(8);
+
+                    // اسم الطالب
+                    infoCol.Item().Row(row =>
+                    {
+                        row.RelativeItem().AlignRight()
+                            .Text($"اسم الطالب/ــة: {data.StudentName}")
+                            .FontSize(12)
+                            .FontColor(Colors.Black);
+                    });
+
+                    // الفصل
+                    infoCol.Item().Row(row =>
+                    {
+                        row.RelativeItem().AlignRight()
+                            .Text($"الفصل: {data.ClassName}")
+                            .FontSize(12)
+                            .FontColor(Colors.Black);
+                    });
+                });
+
+                // ===== خط منقط =====
+                column.Item().PaddingTop(10).PaddingHorizontal(20)
+                    .Height(1)
+                    .Background(Colors.White)
+                    .ExtendHorizontal();
+
+                // ===== جدول أيام الغياب =====
+                column.Item().PaddingTop(15).PaddingHorizontal(20).Column(tableCol =>
+                {
+                    tableCol.Item().AlignRight().PaddingBottom(8)
+                        .Text("أيام الغياب")
+                        .FontSize(13)
+                        .Bold()
+                        .FontColor(Colors.Black);
+
+                    tableCol.Item().Table(table =>
+                    {
+                        // تعريف الأعمدة (من اليسار لليمين في RTL)
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(1); // م
+                            columns.RelativeColumn(2); // التاريخ
+                            columns.RelativeColumn(1); // اليوم
+                        });
+
+                        // Header
+                        table.Header(header =>
+                        {
+                            header.Cell().Border(1).BorderColor(Colors.Black)
+                                .Background(Colors.White)
+                                .Padding(5).AlignCenter()
+                                .Text("م").FontSize(11).Bold();
+
+                            header.Cell().Border(1).BorderColor(Colors.Black)
+                                .Background(Colors.White)
+                                .Padding(5).AlignCenter()
+                                .Text("التاريخ").FontSize(11).Bold();
+
+                            header.Cell().Border(1).BorderColor(Colors.Black)
+                                .Background(Colors.White)
+                                .Padding(5).AlignCenter()
+                                .Text("اليوم").FontSize(11).Bold();
+                        });
+
+                        // Rows
+                        for (int i = 0; i < data.AbsenceDates.Count; i++)
+                        {
+                            var absence = data.AbsenceDates[i];
+
+                            table.Cell().Border(1).BorderColor(Colors.Black)
+                                .Background(Colors.White)
+                                .Padding(5).AlignCenter()
+                                .Text((i + 1).ToString()).FontSize(11);
+
+                            table.Cell().Border(1).BorderColor(Colors.Black)
+                                .Background(Colors.White)
+                                .Padding(5).AlignCenter()
+                                .Text(absence.Date).FontSize(11);
+
+                            table.Cell().Border(1).BorderColor(Colors.Black)
+                                .Background(Colors.White)
+                                .Padding(5).AlignCenter()
+                                .Text(absence.DayName).FontSize(11);
+                        }
+                    });
+                });
+
+                // ===== التذكير الأول =====
+                column.Item().PaddingTop(20).Border(1).BorderColor(Colors.Black)
+                    .AlignCenter().Padding(8)
+                    .Text("التذكير الأول")
+                    .FontSize(14)
+                    .Bold()
+                    .FontColor(Colors.Black);
+
+                // ===== نص الإخطار =====
+                column.Item().PaddingTop(15).PaddingHorizontal(20)
+                    .Text(text =>
+                    {
+                        text.Span($"عزيزي/ـتي الطالب/ــة {data.StudentName}\n")
+                            .FontSize(12).FontColor(Colors.Black);
+
+                        text.Span("أود تنبيهك بأن مجموع أيام غيابك قد بلغ ما يستدعي إرسال هذا الإخطار. لذا نرجو منك الالتزام والانتظام في الحضور إلى المدرسة حيث إن غيابك يؤثر على ")
+                            .FontSize(11).FontColor(Colors.Black);
+
+                        text.Span("تحصيلك الدراسي ويخفض مستواك بين زملائك. لذا نرجو منك الالتزام بعدم الغياب والمواظبة على الحضور للمدرسة.\n\n")
+                            .FontSize(11).FontColor(Colors.Black);
+
+                        text.Span("ونأمل من ولي أمرك متابعة انتظامك في الحضور والالتزام بالدوام المدرسي.")
+                            .FontSize(11).FontColor(Colors.Black);
+                    });
+
+                // ===== التوقيعات =====
+                column.Item().PaddingTop(30).PaddingHorizontal(40).Row(row =>
+                {
+                    row.Spacing(20);
+
+                    // توقيع الطالب/ـة على اليسار
+                    row.RelativeItem().AlignLeft().Column(sigCol =>
+                    {
+                        sigCol.Item().AlignRight().Text("اسم الطالب/ــة:")
+                            .FontSize(11).FontColor(Colors.Black);
+
+                        sigCol.Item().PaddingTop(15).AlignRight()
+                            .LineHorizontal(1).LineColor(Colors.Black);
+
+                        sigCol.Item().PaddingTop(3).AlignRight().Text("التوقيع:")
+                            .FontSize(11).FontColor(Colors.Black);
+
+                        sigCol.Item().PaddingTop(15).AlignRight()
+                            .LineHorizontal(1).LineColor(Colors.Black);
+                    });
+
+                    // التاريخ على اليمين
+                    row.RelativeItem().AlignRight().Column(dateCol =>
+                    {
+                        dateCol.Item().AlignRight().Text("التاريخ:")
+                            .FontSize(11).FontColor(Colors.Black);
+
+                        dateCol.Item().PaddingTop(15).AlignRight()
+                            .LineHorizontal(1).LineColor(Colors.Black);
+                    });
+                });
+
+                // ===== ملاحظة في الأسفل =====
+                column.Item().PaddingTop(30).PaddingHorizontal(20)
+                    .Border(1).BorderColor(Colors.Black)
+                    .Background(Colors.Grey.Lighten4)
+                    .Padding(10)
+                    .Text("ملاحظة: يرجى إعادة هذا الإخطار موقعاً من ولي الأمر والطالب/ـة")
+                    .FontSize(10)
+                    .Italic()
+                    .FontColor(Colors.Grey.Darken2);
+            });
+        }
     }
+
 }

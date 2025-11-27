@@ -97,11 +97,29 @@ var MostAbsentReport = function () {
                 {
                     data: null,
                     render: function (data, type, row) {
-                        return `<a href="/Reports/StudentReport?studentCode=${row.studentCode}&fromDate=${getFromDate()}&toDate=${getToDate()}" 
-                          class="btn btn-sm btn-primary">التفاصيل</a>`;
-                    },
-                    className: "text-center"
-                }
+
+                        let detailsBtn = `
+                            <a href="/Reports/StudentReport?studentIdentifier=${row.studentCode}&fromDate=${getFromDate()}&date=${getToDate()}" 
+                               class="btn btn-sm btn-primary me-1">
+                               التفاصيل
+                            </a>
+                        `;
+
+                        let noticeBtn = "";
+                        if (row.absentDays >= 3) {
+                            noticeBtn = `
+                            <a href="/Reports/GenerateAbsenceNotice?studentCode=${row.studentCode}&fromDate=${getFromDate()}&toDate=${getToDate()}" 
+                               class="btn btn-sm btn-danger">
+                               إخطار غياب
+                            </a>
+                        `;
+                                    }
+
+                                    return detailsBtn + noticeBtn;
+                                },
+                                className: "text-center"
+                            }
+
             ]
         });
     };
@@ -229,6 +247,8 @@ var MostAbsentReport = function () {
         }
     };
 }();
+
+
 
 $(document).ready(function () {
     MostAbsentReport.init();

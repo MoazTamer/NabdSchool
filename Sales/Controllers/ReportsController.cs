@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using QuestPDF.Fluent;
 using SalesModel.Models;
+using SalesModel.ViewModels;
 using SalesModel.ViewModels.Reports;
 using SalesRepository.Data;
 using SalesRepository.Repository;
@@ -1109,7 +1111,7 @@ namespace Sales.Controllers
 
 
                 // حساب الإحصائيات
-                int present = result.Count(r => r.Status == "حضور" || r.Status == "متأخر");
+                int present = result.Count(r => r.Status == "حضور" || r.Status == "متأخر" || r.Status == "استئذان");
                 int late = result.Count(r => r.Status == "متأخر");
                 int absent = result.Count(r => r.Status == "غياب");
 
@@ -2312,7 +2314,100 @@ namespace Sales.Controllers
             };
         }
 
-   
+
+
+
+        
+        [HttpGet]
+        public IActionResult AbsenceNotice()
+        {
+            var students = _context.TblStudent
+                .Where(s => s.Student_Visible == "yes")
+                .Select(s => new SelectListItem
+                {
+                    Value = s.Student_ID.ToString(),
+                    Text = s.Student_Name
+                })
+                .ToList();
+
+            ViewBag.Students = students;
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GenerateAbsenceNotice(string studentCode, DateTime? fromDate, DateTime? toDate)
+        {
+            try
+            {
+                var student = await _context.TblStudent
+                    .Include(s => s.ClassRoom)
+                    .ThenInclude(cr => cr.Class)
+                    .FirstOrDefaultAsync(s => s.Student_Code == studentCode);
+
+                if (student == null)
+                {
+                    return NotFound("الطالبة غير موجودة");
+                }
+
+                if (fromDate == null)
+                {
+                    fromDate = await _context.TblAttendance
+                        .Where(a => a.Student_ID == student.Student_ID)
+                        .OrderBy(a => a.Attendance_Date)
+                        .Select(a => a.Attendance_Date)
+                        .FirstOrDefaultAsync();
+                }
+
+                if (toDate == null)
+                {
+                    toDate = DateTime.Today;
+                }
+
+                // تصفية الغياب من - إلى
+                var absenceDates = await _context.TblAttendance
+                    .Where(a => a.Student_ID == student.Student_ID &&
+                                a.Attendance_Status == "غياب" &&
+                                a.Attendance_Visible == "yes" &&
+                                a.Attendance_Date >= fromDate &&
+                                a.Attendance_Date <= toDate)
+                    .OrderBy(a => a.Attendance_Date)
+                    .Select(a => new AbsenceDateInfo
+                    {
+                        Date = a.Attendance_Date.ToString("dd/MM/yyyy"),
+                        DayName = a.Attendance_Date.ToString("dddd", new System.Globalization.CultureInfo("ar-SA"))
+                    })
+                    .ToListAsync();
+
+                int rowNum = 1;
+                foreach (var date in absenceDates)
+                {
+                    date.RowNumber = rowNum++;
+                }
+
+                var noticeData = new StudentAbsenceNoticeViewModel
+                {
+                    StudentName = student.Student_Name,
+                    ClassName = $"{student.ClassRoom?.Class?.Class_Name} - {student.ClassRoom?.ClassRoom_Name}",
+                    StudentGuardianType = "ولي الأمر",
+                    AbsenceDates = absenceDates,
+                    NoticeText = "",
+                    DateText = DateTime.Now.ToString("dd/MM/yyyy"),
+                    FromDate = fromDate?.ToString("dd/MM/yyyy"),
+                    ToDate = toDate?.ToString("dd/MM/yyyy")
+                };
+
+                var reportService = new ReportPdfService();
+                var pdfBytes = reportService.GenerateStudentAbsenceNotice(noticeData);
+
+                return File(pdfBytes, "application/pdf",
+                    $"إخطار_غياب_{student.Student_Name}_{DateTime.Now:yyyyMMdd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"حدث خطأ: {ex.Message}");
+            }
+        }
+
     }
 }
 

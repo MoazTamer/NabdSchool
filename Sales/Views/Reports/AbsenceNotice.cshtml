@@ -1,0 +1,234 @@
+﻿
+@{
+    ViewData["Title"] = "إخطارات الغياب";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="ki-outline ki-notification fs-2 text-danger me-2"></i>
+            توليد إخطارات الغياب
+        </h3>
+    </div>
+
+    <div class="card-body">
+        <div class="row g-5">
+
+            <!-- إخطار لطالب واحد -->
+            <div class="col-md-6">
+                <div class="card border border-dashed border-primary">
+                    <div class="card-header bg-light-primary">
+                        <h4 class="card-title text-primary">
+                            <i class="ki-outline ki-profile-user me-2"></i>
+                            إخطار لطالبة واحدة
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="singleStudentForm">
+                            <!-- اختيار الطالبة -->
+                            <div class="mb-5">
+                                <label class="form-label required">اختر الطالبة</label>
+                                <select class="form-select" id="studentId" asp-items="ViewBag.Students" name="studentId" required>
+                                    <option value="">-- اختر الطالبة --</option>
+                                    @foreach (var item in ViewBag.Students)
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- عدد أيام الغياب -->
+                            <div class="mb-5">
+                                <label class="form-label">عدد أيام الغياب المراد عرضها</label>
+                                <select class="form-select" id="daysCount">
+                                    <option value="5">آخر 5 أيام</option>
+                                    <option value="10" selected>آخر 10 أيام</option>
+                                    <option value="15">آخر 15 يوم</option>
+                                    <option value="30">آخر 30 يوم</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="ki-outline ki-file-down me-2"></i>
+                                توليد الإخطار
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- إخطارات جماعية -->
+            <div class="col-md-6">
+                <div class="card border border-dashed border-danger">
+                    <div class="card-header bg-light-danger">
+                        <h4 class="card-title text-danger">
+                            <i class="ki-outline ki-double-check me-2"></i>
+                            إخطارات جماعية
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="bulkNoticesForm">
+                            <!-- اختيار التاريخ -->
+                            <div class="mb-5">
+                                <label class="form-label required">اختر التاريخ</label>
+                                <input type="date" class="form-control" id="noticeDate" name="noticeDate"
+                                       value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                            </div>
+
+                            <!-- اختيار الفصل (اختياري) -->
+                            <div class="mb-5">
+                                <label class="form-label">تصفية حسب الفصل (اختياري)</label>
+                                <select class="form-select" id="classRoomId">
+                                    <option value="">كل الفصول</option>
+                                    <!-- يمكن إضافة الفصول هنا -->
+                                </select>
+                            </div>
+
+                            <div class="alert alert-warning d-flex align-items-center">
+                                <i class="ki-outline ki-information-5 fs-2x me-3"></i>
+                                <div class="fs-7">
+                                    سيتم توليد إخطار لكل طالبة غائبة في التاريخ المحدد
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="ki-outline ki-file-down me-2"></i>
+                                توليد إخطارات جماعية
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- إخطار حسب فترة زمنية -->
+            <div class="col-md-12">
+                <div class="card border border-dashed border-info">
+                    <div class="card-header bg-light-info">
+                        <h4 class="card-title text-info">
+                            <i class="ki-outline ki-calendar-8 me-2"></i>
+                            إخطار حسب فترة زمنية محددة
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="dateRangeForm">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label required">اختر الطالبة</label>
+                                    <select class="form-select" id="studentIdRange" name="studentId" required>
+                                        <option value="">-- اختر الطالبة --</option>
+                                        @foreach (var item in ViewBag.Students)
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label required">من تاريخ</label>
+                                    <input type="date" class="form-control" id="fromDate" name="fromDate" required />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label required">إلى تاريخ</label>
+                                    <input type="date" class="form-control" id="toDate" name="toDate"
+                                           value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="submit" class="btn btn-info w-100">
+                                        <i class="ki-outline ki-file-down"></i>
+                                        توليد
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+
+            // إخطار لطالبة واحدة
+            $('#singleStudentForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const studentId = $('#studentId').val();
+                const daysCount = $('#daysCount').val();
+
+                if (!studentId) {
+                    Swal.fire('تنبيه', 'الرجاء اختيار الطالبة', 'warning');
+                    return;
+                }
+
+                // فتح الملف في نافذة جديدة
+                window.open(`/Reports/GenerateAbsenceNotice?studentId=${studentId}&daysCount=${daysCount}`, '_blank');
+            });
+
+            // إخطارات جماعية
+            $('#bulkNoticesForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const date = $('#noticeDate').val();
+                const classRoomId = $('#classRoomId').val();
+
+                if (!date) {
+                    Swal.fire('تنبيه', 'الرجاء اختيار التاريخ', 'warning');
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'جارٍ التوليد...',
+                    text: 'يتم الآن توليد الإخطارات الجماعية',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.ajax({
+                    url: '/Reports/GenerateAllAbsenceNotices',
+                    type: 'GET',
+                    data: { date: date, classRoomId: classRoomId },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'تم بنجاح',
+                            text: response,
+                            confirmButtonText: 'حسناً'
+                        });
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'خطأ',
+                            text: xhr.responseText || 'حدث خطأ أثناء التوليد',
+                            confirmButtonText: 'حسناً'
+                        });
+                    }
+                });
+            });
+
+            // إخطار حسب فترة زمنية
+            $('#dateRangeForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const studentId = $('#studentIdRange').val();
+                const fromDate = $('#fromDate').val();
+                const toDate = $('#toDate').val();
+
+                if (!studentId || !fromDate || !toDate) {
+                    Swal.fire('تنبيه', 'الرجاء ملء جميع الحقول', 'warning');
+                    return;
+                }
+
+                window.open(`/Reports/GenerateAbsenceNoticeByDate?studentId=${studentId}&fromDate=${fromDate}&toDate=${toDate}`, '_blank');
+            });
+
+        });
+    </script>
+}
