@@ -2,7 +2,6 @@
     LoadData();
 });
 
-// تحميل البيانات
 function LoadData() {
     $.ajax({
         url: '/Class/GetClasses',
@@ -20,7 +19,6 @@ function LoadData() {
     });
 }
 
-// عرض الجدول
 function renderTable(data) {
     let tbody = $('#classTableBody');
     tbody.empty();

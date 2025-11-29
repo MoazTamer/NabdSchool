@@ -16,10 +16,16 @@ namespace Sales.Controllers
         private readonly SalesDBContext _context;
         private readonly ReportPdfService _pdfService;
 
+        private string _academicYear;
+        private string _semester;
+
+
         public ReportsController(SalesDBContext context, ReportPdfService pdfService)
         {
             _context = context;
             _pdfService = pdfService;
+            _academicYear = SchoolSettingsController.GetAcademicYear(_context);
+            _semester = SchoolSettingsController.GetSemester(_context);
         }
 
         [HttpGet]
@@ -2397,7 +2403,7 @@ namespace Sales.Controllers
                 };
 
                 var reportService = new ReportPdfService();
-                var pdfBytes = reportService.GenerateStudentAbsenceNotice(noticeData);
+                var pdfBytes = reportService.GenerateStudentAbsenceNotice(noticeData, _academicYear, _semester);
 
                 return File(pdfBytes, "application/pdf",
                     $"إخطار_غياب_{student.Student_Name}_{DateTime.Now:yyyyMMdd}.pdf");

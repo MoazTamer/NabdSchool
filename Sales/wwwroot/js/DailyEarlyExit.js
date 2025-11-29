@@ -109,12 +109,9 @@
             }
         });
 
-        // إضافة أزرار التصدير في مكان مناسب
         datatable.buttons().container().appendTo('#exportButtonsContainer');
     };
 
-    // ============================
-    // 2) تحميل البيانات من الأكشن
     // ============================
     var loadData = function () {
         const classId = $("#classFilter").val();
@@ -127,12 +124,10 @@
             type: "GET",
             data: { classId, classRoomId, date },
             beforeSend: function () {
-                // إظهار مؤشر التحميل
                 $('#searchBtn').prop('disabled', true).html('<i class="ki-outline ki-loading fs-2 spinner"></i> جاري التحميل...');
             },
             success: function (json) {
 
-                // إظهار تحميل
                 $('#emptyState').hide();
                 $('#reportTableCard').show();
                 $('#exportButtons').show();
@@ -140,14 +135,13 @@
 
                 $('#searchBtn').prop('disabled', false).html('<i class="ki-outline ki-magnifier fs-2"></i> عرض التقرير');
 
-                console.log("Response JSON:", json); // للتdebug
+                console.log("Response JSON:", json); 
 
                 if (json.success) {
                     var allStudents = [];
                     var totalEarlyExit = 0;
                     var totalClasses = 0;
 
-                    // التحقق من وجود البيانات - استخدم classesReport بدلاً من ClassesReport
                     if (json.data && json.data.classesReport) {
                         totalClasses = json.data.classesReport.length;
 
@@ -166,7 +160,6 @@
                         });
                     }
 
-                    // تحديث البطاقات الإحصائية
                     $('#totalEarlyExit').text(totalEarlyExit);
                     $('#totalClasses').text(totalClasses);
 
@@ -176,10 +169,8 @@
                         $('#reportDateDisplay').text(new Date().toLocaleDateString('ar-EG'));
                     }
 
-                    // تحديث الجدول
                     datatable.clear().rows.add(allStudents).draw();
 
-                    // إظهار/إخفاء بناءً على وجود البيانات
                     if (allStudents.length === 0) {
                         $('#emptyState').show();
                         $('#reportTableCard').hide();
@@ -237,9 +228,6 @@
 
     };
 
-    // ============================
-    // 3) الأحداث
-    // ============================
     var handleEvents = function () {
         $("#searchBtn").on("click", loadData);
 
@@ -248,7 +236,6 @@
             const classId = $("#classFilter").val();
             const classRoomId = $("#classRoomFilter").val();
 
-            // التحقق من وجود بيانات أولاً
             if (datatable.rows().count() === 0) {
                 Swal.fire({
                     text: "لا توجد بيانات لطباعة التقرير",
@@ -258,7 +245,6 @@
                 return;
             }
 
-            // إنشاء نموذج وإرساله
             const form = $('<form>', {
                 action: '/Reports/PrintDailyEarlyExitPdf',
                 method: 'post',
@@ -274,7 +260,6 @@
         });
 
         $("#previewBtn").on("click", function () {
-            // معاينة سريعة للبيانات
             if (datatable.rows().count() > 0) {
                 Swal.fire({
                     title: 'معاينة التقرير',
@@ -291,7 +276,6 @@
             }
         });
 
-        // تحميل الصفوف عند بدء التحميل
         $.get("/Reports/GetClasses", function (data) {
             if (data.success) {
                 data.data.forEach(cls =>
@@ -304,7 +288,6 @@
             console.error("Failed to load classes:", error);
         });
 
-        // تحميل الفصول عند اختيار الصف
         $("#classFilter").on("change", function () {
             var classId = $(this).val();
             var classRoomFilter = $("#classRoomFilter");
@@ -329,7 +312,6 @@
             }
         });
 
-        // البحث عند الضغط على Enter في حقل التاريخ
         $("#dateFilter").on('keypress', function (e) {
             if (e.which === 13) {
                 loadData();

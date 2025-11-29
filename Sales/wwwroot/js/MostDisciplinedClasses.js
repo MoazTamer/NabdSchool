@@ -18,7 +18,7 @@
                         return 'تقرير_الفصول_الأكثر_انضباطاً';
                     },
                     exportOptions: {
-                        columns: ':visible' // يصدر كل الأعمدة الظاهرة
+                        columns: ':visible' 
                     }
                 }
             ],
@@ -147,7 +147,7 @@
         init: function () {
             initTable();
             handleEvents();
-            loadData(); // تحميل البيانات تلقائياً عند فتح الصفحة
+            loadData(); 
         }
     };
 }();

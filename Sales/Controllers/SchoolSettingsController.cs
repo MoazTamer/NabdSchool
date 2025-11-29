@@ -16,6 +16,8 @@ namespace Sales.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SalesDBContext _context;
         private const string AttendanceTimeKey = "AttendanceTime";
+        private const string AcademicYearKey = "AcademicYear";
+        private const string SemesterKey = "Semester";
         string Title = "إعدادات المدرسة";
 
         public SchoolSettingsController(
@@ -29,7 +31,6 @@ namespace Sales.Controllers
         }
 
         [Authorize (Policy = "SchoolSettings_View")]
-        //[Authorize]
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -39,12 +40,20 @@ namespace Sales.Controllers
                     .Where(obj => obj.Setting_Key == AttendanceTimeKey && obj.Setting_Visible == "yes")
                     .FirstOrDefaultAsync();
 
+                var academicYearSetting = await _context.TblSchoolSettings
+                    .Where(obj => obj.Setting_Key == AcademicYearKey && obj.Setting_Visible == "yes")
+                    .FirstOrDefaultAsync();
+
+                var semesterSetting = await _context.TblSchoolSettings
+                    .Where(obj => obj.Setting_Key == SemesterKey && obj.Setting_Visible == "yes")
+                    .FirstOrDefaultAsync();
+
                 var model = new ModelSchoolSettings
                 {
                     Setting_ID = attendanceSetting?.Setting_ID ?? 0,
-                    Setting_Key = AttendanceTimeKey,
                     AttendanceTime = attendanceSetting?.Setting_Value ?? "07:30",
-                    Setting_Description = attendanceSetting?.Setting_Description ?? "موعد الحضور اليومي للمدرسة"
+                    AcademicYear = academicYearSetting?.Setting_Value ?? "1447",
+                    Semester = semesterSetting?.Setting_Value ?? "الأول"
                 };
 
                 return View(model);
@@ -53,58 +62,55 @@ namespace Sales.Controllers
             {
                 ViewBag.Type = "error";
                 ViewBag.Message = "خطأ في تحميل البيانات: " + ex.Message;
-                return View(new ModelSchoolSettings { AttendanceTime = "07:30" });
+                return View(new ModelSchoolSettings
+                {
+                    AttendanceTime = "07:30",
+                    AcademicYear = "1447",
+                    Semester = "الأول"
+                });
             }
         }
 
-        [Authorize (Policy = "SchoolSettings_Edit")]
-        //[Authorize]
+
+        [Authorize(Policy = "SchoolSettings_Edit")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveAttendanceTime(ModelSchoolSettings model)
+        public async Task<IActionResult> SaveSettings(ModelSchoolSettings model)
         {
             try
             {
+                // التحقق من البيانات
                 if (string.IsNullOrEmpty(model.AttendanceTime))
                 {
                     return Json(new { isValid = false, title = Title, message = "الرجاء إدخال موعد الحضور" });
                 }
 
-                // التحقق من صيغة الوقت
+                if (string.IsNullOrEmpty(model.AcademicYear))
+                {
+                    return Json(new { isValid = false, title = Title, message = "الرجاء إدخال العام الدراسي" });
+                }
+
+                if (string.IsNullOrEmpty(model.Semester))
+                {
+                    return Json(new { isValid = false, title = Title, message = "الرجاء اختيار الفصل الدراسي" });
+                }
+
                 if (!TimeSpan.TryParse(model.AttendanceTime, out TimeSpan time))
                 {
                     return Json(new { isValid = false, title = Title, message = "صيغة الوقت غير صحيحة" });
                 }
 
-                // البحث عن الإعداد الموجود
-                var attendanceSetting = await _context.TblSchoolSettings
-                    .Where(obj => obj.Setting_Key == AttendanceTimeKey && obj.Setting_Visible == "yes")
-                    .FirstOrDefaultAsync();
+                var userId = _userManager.GetUserId(User);
+                var currentDate = DateTime.Now;
 
-                if (attendanceSetting == null)
-                {
-                    // إنشاء إعداد جديد
-                    var newSetting = new TblSchoolSettings
-                    {
-                        Setting_Key = AttendanceTimeKey,
-                        Setting_Value = model.AttendanceTime,
-                        Setting_Description = "موعد الحضور اليومي للمدرسة",
-                        Setting_Visible = "yes",
-                        Setting_AddUserID = _userManager.GetUserId(User),
-                        Setting_AddDate = DateTime.Now
-                    };
+                // حفظ موعد الحضور
+                await SaveOrUpdateSetting(AttendanceTimeKey, model.AttendanceTime, "موعد الحضور اليومي للمدرسة", userId, currentDate);
 
-                    await _context.TblSchoolSettings.AddAsync(newSetting);
-                }
-                else
-                {
-                    // تحديث الإعداد الموجود
-                    attendanceSetting.Setting_Value = model.AttendanceTime;
-                    attendanceSetting.Setting_EditUserID = _userManager.GetUserId(User);
-                    attendanceSetting.Setting_EditDate = DateTime.Now;
+                // حفظ العام الدراسي
+                await SaveOrUpdateSetting(AcademicYearKey, model.AcademicYear, "العام الدراسي الحالي", userId, currentDate);
 
-                    _context.TblSchoolSettings.Update(attendanceSetting);
-                }
+                // حفظ الفصل الدراسي
+                await SaveOrUpdateSetting(SemesterKey, model.Semester, "الفصل الدراسي الحالي", userId, currentDate);
 
                 var result = await _context.SaveChangesAsync();
 
@@ -113,26 +119,53 @@ namespace Sales.Controllers
                     return Json(new { isValid = false, title = Title, message = "لم يتم حفظ البيانات" });
                 }
 
-                return Json(new { isValid = true, title = Title, message = "تم حفظ موعد الحضور بنجاح" });
+                return Json(new { isValid = true, title = Title, message = "تم حفظ الإعدادات بنجاح" });
             }
             catch (Exception ex)
             {
-                // إظهار تفاصيل الخطأ الكاملة
                 var innerMessage = ex.InnerException != null ?
                     ex.InnerException.Message : ex.Message;
-                var stackTrace = ex.StackTrace;
 
                 return Json(new
                 {
                     isValid = false,
                     title = Title,
-                    message = $"خطأ: {innerMessage}",
-                    details = stackTrace
+                    message = $"خطأ: {innerMessage}"
                 });
             }
         }
 
-        // Helper method للحصول على موعد الحضور (يمكن استخدامه في أماكن أخرى)
+        private async Task SaveOrUpdateSetting(string key, string value, string description, string userId, DateTime currentDate)
+        {
+            var setting = await _context.TblSchoolSettings
+                .Where(obj => obj.Setting_Key == key && obj.Setting_Visible == "yes")
+                .FirstOrDefaultAsync();
+
+            if (setting == null)
+            {
+                var newSetting = new TblSchoolSettings
+                {
+                    Setting_Key = key,
+                    Setting_Value = value,
+                    Setting_Description = description,
+                    Setting_Visible = "yes",
+                    Setting_AddUserID = userId,
+                    Setting_AddDate = currentDate
+                };
+
+                await _context.TblSchoolSettings.AddAsync(newSetting);
+            }
+            else
+            {
+                setting.Setting_Value = value;
+                setting.Setting_EditUserID = userId;
+                setting.Setting_EditDate = currentDate;
+
+                _context.TblSchoolSettings.Update(setting);
+            }
+        }
+
+        // Methods للحصول على القيم
         public static async Task<TimeSpan> GetAttendanceTimeAsync(SalesDBContext context)
         {
             var setting = await context.TblSchoolSettings
@@ -144,11 +177,9 @@ namespace Sales.Controllers
                 return time;
             }
 
-            // القيمة الافتراضية إذا لم يتم العثور على إعداد
-            return new TimeSpan(7, 30, 0); // 7:30 صباحاً
+            return new TimeSpan(7, 30, 0);
         }
 
-        // نسخة Sync من الـ Helper method
         public static TimeSpan GetAttendanceTime(SalesDBContext context)
         {
             var setting = context.TblSchoolSettings
@@ -161,6 +192,42 @@ namespace Sales.Controllers
             }
 
             return new TimeSpan(7, 30, 0);
+        }
+
+        public static async Task<string> GetAcademicYearAsync(SalesDBContext context)
+        {
+            var setting = await context.TblSchoolSettings
+                .Where(obj => obj.Setting_Key == AcademicYearKey && obj.Setting_Visible == "yes")
+                .FirstOrDefaultAsync();
+
+            return setting?.Setting_Value ?? "1447";
+        }
+
+        public static string GetAcademicYear(SalesDBContext context)
+        {
+            var setting = context.TblSchoolSettings
+                .Where(obj => obj.Setting_Key == AcademicYearKey && obj.Setting_Visible == "yes")
+                .FirstOrDefault();
+
+            return setting?.Setting_Value ?? "1447";
+        }
+
+        public static async Task<string> GetSemesterAsync(SalesDBContext context)
+        {
+            var setting = await context.TblSchoolSettings
+                .Where(obj => obj.Setting_Key == SemesterKey && obj.Setting_Visible == "yes")
+                .FirstOrDefaultAsync();
+
+            return setting?.Setting_Value ?? "الأول";
+        }
+
+        public static string GetSemester(SalesDBContext context)
+        {
+            var setting = context.TblSchoolSettings
+                .Where(obj => obj.Setting_Key == SemesterKey && obj.Setting_Visible == "yes")
+                .FirstOrDefault();
+
+            return setting?.Setting_Value ?? "الأول";
         }
     }
 }

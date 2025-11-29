@@ -1,9 +1,8 @@
 ﻿@model SalesModel.ViewModels.ModelSchoolSettings
 
 @{
-    ViewData["Title"] = "موعد الحضور اليومي";
-    ViewData["Page"] = "موعد الحضور اليومي";
-
+    ViewData["Title"] = "إعدادات المدرسة";
+    ViewData["Page"] = "إعدادات المدرسة";
 }
 
 <!--begin::App Content Header-->
@@ -11,42 +10,46 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-sm-6">
-                <h3 class="mb-0">موعد الحضور اليومي</h3>
+                <h3 class="mb-0">إعدادات المدرسة</h3>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-end">
                     <li class="breadcrumb-item"><a href="/Home">الرئيسية</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">موعد الحضور اليومي</li>
+                    <li class="breadcrumb-item active" aria-current="page">إعدادات المدرسة</li>
                 </ol>
             </div>
         </div>
     </div>
 </div>
 <!--end::App Content Header-->
+
 <!--begin::App Content-->
 <div class="app-content">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-8 offset-md-2">
+            <div class="col-md-10 offset-md-1">
                 <!--begin::Card-->
                 <div class="card card-flush">
                     <!--begin::Card header-->
                     <div class="card-header">
                         <h3 class="card-title">
-                            <i class="ki-duotone ki-time fs-1 me-2">
+                            <i class="ki-duotone ki-setting-3 fs-1 me-2">
                                 <span class="path1"></span>
                                 <span class="path2"></span>
+                                <span class="path3"></span>
+                                <span class="path4"></span>
+                                <span class="path5"></span>
                             </i>
-                            تحديد موعد الحضور اليومي
+                            الإعدادات العامة للمدرسة
                         </h3>
                     </div>
                     <!--end::Card header-->
+
                     <!--begin::Card body-->
                     <div class="card-body pt-5">
-                        <form id="attendanceTimeForm" asp-action="SaveAttendanceTime" method="post">
+                        <form id="schoolSettingsForm" asp-action="SaveSettings" method="post">
                             @Html.AntiForgeryToken()
                             <input type="hidden" asp-for="Setting_ID" />
-                            <input type="hidden" asp-for="Setting_Key" />
 
                             <!--begin::Alert Info-->
                             <div class="alert alert-info d-flex align-items-center mb-8">
@@ -57,44 +60,144 @@
                                 </i>
                                 <div class="d-flex flex-column">
                                     <h5 class="mb-1">معلومة هامة</h5>
-                                    <span>سيتم حساب تأخر الطلاب بناءً على الموعد المحدد هنا. أي طالب يحضر بعد هذا الموعد سيتم اعتباره متأخراً.</span>
+                                    <span>هذه الإعدادات سيتم استخدامها في جميع أنحاء النظام</span>
                                 </div>
                             </div>
                             <!--end::Alert Info-->
-                            <!--begin::Form Group-->
-                            <div class="mb-10">
-                                <label class="form-label required fs-5 fw-bold mb-3">موعد الحضور</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text">
-                                        <i class="ki-duotone ki-time fs-1">
-                                            <span class="path1"></span>
-                                            <span class="path2"></span>
-                                        </i>
-                                    </span>
-                                    <input type="time"
-                                           class="form-control form-control-lg"
-                                           asp-for="AttendanceTime"
-                                           placeholder="مثال: 07:30"
-                                           required />
+
+                            <div class="row g-5">
+                                <!--begin::العام الدراسي-->
+                                <div class="col-md-6">
+                                    <div class="card bg-light-primary border border-primary border-dashed">
+                                        <div class="card-body">
+                                            <label class="form-label required fs-5 fw-bold mb-3">
+                                                <i class="ki-duotone ki-calendar fs-2 text-primary me-2">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                </i>
+                                                العام الدراسي
+                                            </label>
+                                            <input type="text"
+                                                   class="form-control form-control-lg"
+                                                   asp-for="AcademicYear"
+                                                   placeholder="مثال: 1447"
+                                                   required />
+                                            <div class="form-text">أدخل العام الدراسي الهجري (مثال: 1447)</div>
+                                            <span asp-validation-for="AcademicYear" class="text-danger"></span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="form-text">أدخل الوقت بصيغة 24 ساعة (مثال: 07:30 للساعة 7:30 صباحاً)</div>
-                                <span asp-validation-for="AttendanceTime" class="text-danger"></span>
+                                <!--end::العام الدراسي-->
+
+                                <!--begin::الفصل الدراسي-->
+                                <div class="col-md-6">
+                                    <div class="card bg-light-success border border-success border-dashed">
+                                        <div class="card-body">
+                                            <label class="form-label required fs-5 fw-bold mb-3">
+                                                <i class="ki-duotone ki-book fs-2 text-success me-2">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                    <span class="path3"></span>
+                                                    <span class="path4"></span>
+                                                </i>
+                                                الفصل الدراسي
+                                            </label>
+                                            <select class="form-select form-select-lg"
+                                                    asp-for="Semester"
+                                                    required>
+                                                <option value="">اختر الفصل الدراسي</option>
+                                                <option value="الأول">الفصل الدراسي الأول</option>
+                                                <option value="الثاني">الفصل الدراسي الثاني</option>
+                                                <option value="الثالث">الفصل الدراسي الثالث</option>
+                                            </select>
+                                            <div class="form-text">اختر الفصل الدراسي الحالي</div>
+                                            <span asp-validation-for="Semester" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--end::الفصل الدراسي-->
+
+                                <!--begin::موعد الحضور-->
+                                <div class="col-12">
+                                    <div class="card bg-light-warning border border-warning border-dashed">
+                                        <div class="card-body">
+                                            <label class="form-label required fs-5 fw-bold mb-3">
+                                                <i class="ki-duotone ki-time fs-2 text-warning me-2">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                </i>
+                                                موعد الحضور اليومي
+                                            </label>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <input type="time"
+                                                           class="form-control form-control-lg"
+                                                           asp-for="AttendanceTime"
+                                                           placeholder="مثال: 07:30"
+                                                           required />
+                                                    <div class="form-text">أدخل الوقت بصيغة 24 ساعة (مثال: 07:30 للساعة 7:30 صباحاً)</div>
+                                                    <span asp-validation-for="AttendanceTime" class="text-danger"></span>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="alert alert-warning mb-0">
+                                                        <strong>ملاحظة:</strong> سيتم حساب تأخر الطلاب بناءً على هذا الموعد
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--end::موعد الحضور-->
                             </div>
-                            <!--end::Form Group-->
-                            <!--begin::Current Setting Display-->
-                            <div class="bg-light-primary rounded border border-primary border-dashed p-6 mb-8">
-                                <div class="d-flex align-items-center">
-                                    <i class="ki-duotone ki-check-circle fs-2x text-primary me-4">
-                                        <span class="path1"></span>
-                                        <span class="path2"></span>
-                                    </i>
-                                    <div>
-                                        <h5 class="mb-1">الموعد الحالي</h5>
-                                        <span class="fs-3 fw-bold text-primary" id="currentTimeDisplay">@Model.AttendanceTime</span>
+
+                            <!--begin::Current Settings Display-->
+                            <div class="separator my-8"></div>
+                            
+                            <div class="bg-light rounded border border-dashed p-6 mb-8">
+                                <h5 class="mb-4">الإعدادات الحالية</h5>
+                                <div class="row g-4">
+                                    <div class="col-md-4">
+                                        <div class="d-flex align-items-center">
+                                            <i class="ki-duotone ki-calendar fs-2x text-primary me-3">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            <div>
+                                                <div class="text-muted fs-7">العام الدراسي</div>
+                                                <span class="fs-4 fw-bold" id="currentYear">@Model.AcademicYear هـ</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="d-flex align-items-center">
+                                            <i class="ki-duotone ki-book fs-2x text-success me-3">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                                <span class="path3"></span>
+                                                <span class="path4"></span>
+                                            </i>
+                                            <div>
+                                                <div class="text-muted fs-7">الفصل الدراسي</div>
+                                                <span class="fs-4 fw-bold" id="currentSemester">@Model.Semester</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="d-flex align-items-center">
+                                            <i class="ki-duotone ki-time fs-2x text-warning me-3">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            <div>
+                                                <div class="text-muted fs-7">موعد الحضور</div>
+                                                <span class="fs-4 fw-bold" id="currentTime">@Model.AttendanceTime</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <!--end::Current Setting Display-->
+                            <!--end::Current Settings Display-->
+
                             <!--begin::Actions-->
                             <div class="d-flex justify-content-end">
                                 <button type="submit" class="btn btn-primary btn-lg">
@@ -102,7 +205,7 @@
                                         <span class="path1"></span>
                                         <span class="path2"></span>
                                     </i>
-                                    حفظ الإعدادات
+                                    حفظ جميع الإعدادات
                                 </button>
                             </div>
                             <!--end::Actions-->
@@ -116,79 +219,7 @@
     </div>
 </div>
 <!--end::App Content-->
+
 @section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Handle form submission
-            $('#attendanceTimeForm').on('submit', function(e) {
-                e.preventDefault();
-
-                var form = $(this);
-                var submitBtn = form.find('button[type="submit"]');
-
-                // Disable submit button
-                submitBtn.prop('disabled', true);
-                submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>جاري الحفظ...');
-
-                $.ajax({
-                    url: form.attr('action'),
-                    type: 'POST',
-                    data: form.serialize(),
-                    success: function(response) {
-                        if (response.isValid) {
-                            // Update current time display
-                            var timeValue = $('#AttendanceTime').val();
-                            $('#currentTimeDisplay').text(timeValue);
-
-                            // Show success message
-                            Swal.fire({
-                                icon: 'success',
-                                title: response.title,
-                                text: response.message,
-                                confirmButtonText: 'حسناً',
-                                customClass: {
-                                    confirmButton: 'btn btn-primary'
-                                }
-                            });
-                        } else {
-                            // Show error message
-                            Swal.fire({
-                                icon: 'error',
-                                title: response.title,
-                                text: response.message,
-                                confirmButtonText: 'حسناً',
-                                customClass: {
-                                    confirmButton: 'btn btn-danger'
-                                }
-                            });
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'خطأ',
-                            text: 'حدث خطأ أثناء الحفظ: ' + error,
-                            confirmButtonText: 'حسناً',
-                            customClass: {
-                                confirmButton: 'btn btn-danger'
-                            }
-                        });
-                    },
-                    complete: function() {
-                        // Re-enable submit button
-                        submitBtn.prop('disabled', false);
-                        submitBtn.html('<i class="ki-duotone ki-check fs-2"><span class="path1"></span><span class="path2"></span></i> حفظ الإعدادات');
-                    }
-                });
-            });
-
-            // Update display when time input changes
-            $('#AttendanceTime').on('change', function() {
-                var timeValue = $(this).val();
-                if (timeValue) {
-                    $('#currentTimeDisplay').text(timeValue);
-                }
-            });
-        });
-    </script>
+   <script src="~/js/SchoolSettings.js"></script>
 }

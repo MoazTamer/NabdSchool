@@ -17,7 +17,7 @@ var MostAbsentReport = function () {
             processing: true,
             serverSide: false,
             data: [],
-            dom: 'Bfrtip',   // مهم جدًا لتفعيل مكان الأزرار
+            dom: 'Bfrtip',  
             buttons: [
                 {
                     extend: 'excelHtml5',
