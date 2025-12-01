@@ -33,5 +33,9 @@ namespace SalesModel.IRepository
 		Task<List<TResult>> ExecuteStoredProcedureQueryAsync<TResult>(
 					string storedProcedureName,
 					params SqlParameter[] parameters) where TResult : class;
-	}
+
+        Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null);
+        Task<bool> AnyAsync(Expression<Func<T, bool>> filter);
+        IQueryable<T> Table { get; }
+    }
 }

@@ -132,5 +132,22 @@ namespace SalesRepository.Repository
 						   .ToListAsync(cancellationToken);
 			return  res; 
 		}
-	}
+
+
+
+        public async Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null)
+        {
+            if (predicate == null)
+                return await dbSet.CountAsync();
+
+            return await dbSet.CountAsync(predicate);
+        }
+
+        public Task<bool> AnyAsync(Expression<Func<T, bool>> filter)
+        {
+            return dbSet.AnyAsync(filter);
+        }
+
+        public IQueryable<T> Table => dbSet;
+    }
 }
