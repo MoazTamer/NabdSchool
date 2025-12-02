@@ -155,7 +155,6 @@ namespace Sales.Controllers
 
 
         //---------------------------------------------------------
-        
 
 
 
@@ -172,7 +171,8 @@ namespace Sales.Controllers
 
 
 
-        
+
+
         [HttpPost]
         public async Task<IActionResult> RegistrationAllStudents()
         {
@@ -181,17 +181,17 @@ namespace Sales.Controllers
                 var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Arabian_Standard_Time);
                 var today = now.Date;
 
-                var students = await _context.TblStudent
-                    .Where(s => s.Student_Visible == "yes")
+                var students = _unitOfWork.TblStudent
+                    .GetAll(s => s.Student_Visible == "yes")
                     .Select(s => new { s.Student_ID })
-                    .ToListAsync();
+                    .ToList();
 
-                var todaysRecords = await _context.TblAttendance
-                    .Where(a => a.Attendance_Date == today)
+                var todaysRecords = _unitOfWork.TblAttendance
+                    .GetAll(a => a.Attendance_Date.Date == today)
                     .Select(a => a.Student_ID)
-                    .ToListAsync();
-                
-                var todaysRecordsSet = todaysRecords.ToHashSet();
+                    .ToList();
+
+                var todaysRecordsSet = new HashSet<int>(todaysRecords);
 
                 var newAttendances = new List<TblAttendance>();
                 var registeredStudents = new List<int>();
@@ -200,7 +200,7 @@ namespace Sales.Controllers
                 {
                     if (!todaysRecordsSet.Contains(student.Student_ID))
                     {
-                        newAttendances.Add(new TblAttendance
+                        var attendance = new TblAttendance
                         {
                             Student_ID = student.Student_ID,
                             Attendance_Status = "حضور",
@@ -209,50 +209,126 @@ namespace Sales.Controllers
                             Attendance_Visible = "yes",
                             Attendance_AddUserID = "SYSTEM",
                             Attendance_AddDate = now
-                        });
-                        
+                        };
+
+                        _unitOfWork.TblAttendance.Add(attendance);
                         registeredStudents.Add(student.Student_ID);
                     }
                 }
 
-                if (newAttendances.Count > 0)
+                await _unitOfWork.Complete();
+
+                foreach (var studentId in registeredStudents)
                 {
-                    await _context.TblAttendance.AddRangeAsync(newAttendances);
-                    await _context.SaveChangesAsync();
-                    
-                    foreach (var studentId in registeredStudents)
+                    try
                     {
-                        try
-                        {
-                            await UpdateStudentPoints(studentId, today);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error updating points for student {studentId}: {ex.Message}");
-                        }
+                        await UpdateStudentPoints(studentId, today);
                     }
-                    
-                    return Json(new { 
-                        success = true, 
-                        message = $"تم تسجيل حضور {newAttendances.Count} طالبة بنجاح" 
-                    });
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error updating points for student {studentId}: {ex.Message}");
+                    }
                 }
-                else
+
+                return Json(new
                 {
-                    return Json(new { 
-                        success = true, 
-                        message = "جميع الطالبات لديهم سجل حضور اليوم" 
-                    });
-                }
+                    success = true,
+                    message = registeredStudents.Any()
+                        ? $"تم تسجيل حضور {registeredStudents.Count} طالبة بنجاح"
+                        : "جميع الطالبات لديهم سجل حضور اليوم"
+                });
             }
             catch (Exception ex)
             {
-                return Json(new { 
-                    success = false, 
-                    message = "حدث خطأ: " + ex.Message 
+                return Json(new
+                {
+                    success = false,
+                    message = "حدث خطأ: " + ex.Message
                 });
             }
         }
+
+
+        //[HttpPost]
+        //public async Task<IActionResult> RegistrationAllStudents()
+        //{
+        //    try
+        //    {
+        //        var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Arabian_Standard_Time);
+        //        var today = now.Date;
+
+        //        var students = await _context.TblStudent
+        //            .Where(s => s.Student_Visible == "yes")
+        //            .Select(s => new { s.Student_ID })
+        //            .ToListAsync();
+
+        //        var todaysRecords = await _context.TblAttendance
+        //            .Where(a => a.Attendance_Date == today)
+        //            .Select(a => a.Student_ID)
+        //            .ToListAsync();
+
+        //        var todaysRecordsSet = todaysRecords.ToHashSet();
+
+        //        var newAttendances = new List<TblAttendance>();
+        //        var registeredStudents = new List<int>();
+
+        //        foreach (var student in students)
+        //        {
+        //            if (!todaysRecordsSet.Contains(student.Student_ID))
+        //            {
+        //                newAttendances.Add(new TblAttendance
+        //                {
+        //                    Student_ID = student.Student_ID,
+        //                    Attendance_Status = "حضور",
+        //                    Attendance_Date = today,
+        //                    Attendance_Time = now.TimeOfDay,
+        //                    Attendance_Visible = "yes",
+        //                    Attendance_AddUserID = "SYSTEM",
+        //                    Attendance_AddDate = now
+        //                });
+
+        //                registeredStudents.Add(student.Student_ID);
+        //            }
+        //        }
+
+        //        if (newAttendances.Count > 0)
+        //        {
+        //            await _context.TblAttendance.AddRangeAsync(newAttendances);
+        //            await _context.SaveChangesAsync();
+
+        //            foreach (var studentId in registeredStudents)
+        //            {
+        //                try
+        //                {
+        //                    await UpdateStudentPoints(studentId, today);
+        //                }
+        //                catch (Exception ex)
+        //                {
+        //                    Console.WriteLine($"Error updating points for student {studentId}: {ex.Message}");
+        //                }
+        //            }
+
+        //            return Json(new { 
+        //                success = true, 
+        //                message = $"تم تسجيل حضور {newAttendances.Count} طالبة بنجاح" 
+        //            });
+        //        }
+        //        else
+        //        {
+        //            return Json(new { 
+        //                success = true, 
+        //                message = "جميع الطالبات لديهم سجل حضور اليوم" 
+        //            });
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Json(new { 
+        //            success = false, 
+        //            message = "حدث خطأ: " + ex.Message 
+        //        });
+        //    }
+        //}
 
         private void InsertDailyAbsence(DateTime now, DateTime today)
         {
