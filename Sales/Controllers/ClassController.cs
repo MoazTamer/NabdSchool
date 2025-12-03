@@ -25,7 +25,6 @@ namespace Sales.Controllers
         }
 
         [Authorize(Policy = "Class_View1")]
-        //[Authorize]
         [HttpGet]
         public IActionResult Index()
         {
@@ -75,7 +74,6 @@ namespace Sales.Controllers
         #region Class CRUD
 
         [Authorize (Policy = "Class_Create1")]
-        //[Authorize]
         [HttpGet]
         public IActionResult CreateClass()
         {
@@ -403,7 +401,6 @@ namespace Sales.Controllers
         }
 
         #endregion
-
 
     }
 }

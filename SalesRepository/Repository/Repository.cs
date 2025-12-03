@@ -148,6 +148,16 @@ namespace SalesRepository.Repository
             return dbSet.AnyAsync(filter);
         }
 
+        public async Task AddRangeAsync(IEnumerable<T> entities)
+        {
+            if (entities == null || !entities.Any())
+                return;
+
+            await dbSet.AddRangeAsync(entities);
+        }
+
+
         public IQueryable<T> Table => dbSet;
+
     }
 }

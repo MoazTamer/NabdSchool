@@ -36,6 +36,8 @@ namespace SalesModel.IRepository
 
         Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null);
         Task<bool> AnyAsync(Expression<Func<T, bool>> filter);
+
+		Task AddRangeAsync(IEnumerable<T> entities);
         IQueryable<T> Table { get; }
     }
 }

@@ -61,7 +61,6 @@
                                     <i class="ki-outline ki-abstract-26 fs-2 text-primary me-2"></i>
                                     إجراءات سريعة
                                 </span>
-                                @* <span class="text-muted mt-1 fw-semibold fs-7">الوصول السريع للعمليات الأساسية</span> *@
                             </h3>
                         </div>
                         <div class="card-body pt-5">
@@ -282,7 +281,6 @@
                 </div>
                 <!--end::Absent Card-->
                 <!--begin::Total Card-->
-                @* <div class="col-md-12"> *@
                 <div class="col-xl-4 col-lg-4 col-md-12">
                     <div class="card card-flush h-md-100 shadow-sm">
                         <div class="card-header pt-7">
@@ -315,9 +313,8 @@
                 <!--end::Total Card-->
             </div>
             <!--end::Attendance Stats-->
-            <!-- لوحة الشارات الرقمية -->
+            <!-- في جزء لوحة الشرف -->
             <div class="row g-5 g-xl-10 mt-5">
-                <!-- إحصائيات الشارات -->
                 <div class="col-xl-12">
                     <div class="card card-flush shadow-sm">
                         <div class="card-header pt-7 pb-5">
@@ -330,43 +327,35 @@
                                     تكريم الطالبات المتميزات في الانضباط والمواظبة
                                 </span>
                             </h3>
-                        </div>
-                        <div class="card-body pt-2">
-                            <!-- إحصائيات الشارات -->
-                            <div class="row g-3 mb-8">
-                                <div class="col-6 col-md-3">
-                                    <div class="badge-stat-box bg-light-primary p-4 rounded text-center">
-                                        <i class="ki-outline ki-award fs-3x text-primary mb-2"></i>
-                                        <div class="fw-bold fs-2 text-primary">@Model.BadgeStats.TotalBadgesEarned</div>
-                                        <div class="text-gray-700 fw-semibold fs-7">إجمالي الشارات</div>
-                                    </div>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <div class="badge-stat-box p-4 rounded text-center" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);">
-                                        <div class="fs-2x mb-2">💎</div>
-                                        <div class="fw-bold fs-2" style="color: #1976d2;">@Model.BadgeStats.DiamondBadges</div>
-                                        <div class="text-gray-700 fw-semibold fs-7">شارات ماسية</div>
-                                    </div>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <div class="badge-stat-box p-4 rounded text-center" style="background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);">
-                                        <div class="fs-2x mb-2">🥇</div>
-                                        <div class="fw-bold fs-2" style="color: #f57f17;">@Model.BadgeStats.GoldBadges</div>
-                                        <div class="text-gray-700 fw-semibold fs-7">شارات ذهبية</div>
-                                    </div>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <div class="badge-stat-box p-4 rounded text-center" style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);">
-                                        <div class="fs-2x mb-2">🥈</div>
-                                        <div class="fw-bold fs-2" style="color: #7b1fa2;">@Model.BadgeStats.SilverBadges</div>
-                                        <div class="text-gray-700 fw-semibold fs-7">شارات فضية</div>
+                            <div class="card-toolbar">
+                                <div class="d-flex align-items-center gap-3">
+                                    <!-- فلترة -->
+                                    <select id="badgeFilter" class="form-select form-select-sm w-150px">
+                                        <option value="">جميع الشارات</option>
+                                        <option value="diamond">ماسية</option>
+                                        <option value="gold">ذهبية</option>
+                                        <option value="silver">فضية</option>
+                                    </select>
+
+                                    <!-- بحث -->
+                                    <div class="d-flex align-items-center">
+                                        <input type="text" id="searchInput" class="form-control form-control-sm w-200px" placeholder="بحث باسم الطالبة...">
+                                        <button class="btn btn-sm btn-icon btn-light ms-2" id="searchBtn">
+                                            <i class="ki-outline ki-magnifier"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div class="card-body pt-2">
+                            <!-- إحصائيات الشارات -->
+                            <div class="row g-3 mb-8" id="badgeStatsContainer">
+                                <!-- سيتم تعبئته بالبيانات -->
+                            </div>
 
-                            <!-- أفضل الطالبات -->
+                            <!-- الجدول -->
                             <div class="table-responsive">
-                                <table class="table table-row-bordered table-hover align-middle gs-7">
+                                <table id="topStudentsTable" class="table table-row-bordered table-hover align-middle gs-7 w-100">
                                     <thead>
                                         <tr class="fw-bold fs-6 text-light border-bottom-2 border-gray-200">
                                             <th class="min-w-50px text-center">الترتيب</th>
@@ -374,71 +363,11 @@
                                             <th class="min-w-150px text-center">النقاط</th>
                                             <th class="min-w-120px text-center">أيام متتالية</th>
                                             <th class="min-w-300px text-center">الشارات المكتسبة</th>
+                                            <th class="min-w-100px text-center">الإجراءات</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @for (int i = 0; i < Model.TopStudents.Count; i++)
-                                        {
-                                            var student = Model.TopStudents[i];
-                                            var rankClass = i == 0 ? "gold-rank" : i == 1 ? "silver-rank" : i == 2 ? "bronze-rank" : "";
-                                            var rankIcon = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : $"{i + 1}";
-
-                                            <tr class="@rankClass">
-                                                <td class="text-center">
-                                                    <span class="badge badge-circle badge-lg @(i < 3 ? "badge-light-warning" : "badge-light") fw-bold fs-4">
-                                                        @rankIcon
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="symbol symbol-45px me-3" style="border: 2px solid @student.BadgeColor;">
-                                                            <div class="symbol-label fs-3 fw-bold" style="background: @student.BadgeColor; color: white;">
-                                                                @student.Student_Name.Substring(0, 1)
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <a href="javascript:void(0)"
-                                                               onclick="showStudentBadges(@student.Student_ID)"
-                                                               class="fw-bold text-gray-800 fs-5 text-hover-primary">
-                                                                @student.Student_Name
-                                                            </a>
-                                                            <span class="badge badge-light-@(i < 3 ? "warning" : "primary") fs-8 d-block mt-1">
-                                                                @student.HighestBadgeLevel
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="badge badge-light-success fs-4 fw-bold px-4 py-3">
-                                                        @student.Total_Points نقطة
-                                                    </span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <div class="d-flex flex-column align-items-center">
-                                                        <i class="ki-outline ki-chart-simple text-primary fs-2x mb-1"></i>
-                                                        <span class="fw-bold text-primary fs-5">@student.Attendance_Streak</span>
-                                                        <span class="text-gray-600 fs-8">يوم</span>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex flex-wrap justify-content-center gap-2">
-                                                        @foreach (var badge in student.Badges.Take(4))
-                                                        {
-                                                            <div class="badge-item" style="background: @badge.Badge_Color;"
-                                                                 title="@badge.Badge_Name - @badge.Badge_Level">
-                                                                <i class="ki-outline ki-@badge.Badge_Icon text-white fs-3"></i>
-                                                            </div>
-                                                        }
-                                                        @if (student.Badges.Count > 4)
-                                                        {
-                                                            <div class="badge badge-light-primary fw-bold">
-                                                                +@(student.Badges.Count - 4)
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        }
+                                        <!-- سيتم تعبئته بـ JavaScript -->
                                     </tbody>
                                 </table>
                             </div>
@@ -446,6 +375,10 @@
                     </div>
                 </div>
             </div>
+
+            <!-- إضافة CSS لـ DataTables -->
+            <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+            <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" />
 
 
 
@@ -455,7 +388,6 @@
 </div>
 
 <style>
-    /* تنسيقات إضافية للوجو */
     .symbol-150px {
         width: 150px !important;
         height: 150px !important;
@@ -474,7 +406,6 @@
             box-shadow: 0 0 30px rgba(0, 158, 247, 0.5) !important;
         }
 
-    /* تحسين التباين */
     .bg-light {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
     }
@@ -553,6 +484,15 @@
 @section Scripts
 {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 
     <script>
         window.dashboardData = {

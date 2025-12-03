@@ -1703,11 +1703,10 @@ namespace SalesRepository.Repository
         {
             var qrCache = new Dictionary<string, byte[]>();
 
-            int cardsPerPage = 6; // ← عدد البطاقات في الصفحة (3 صفوف × 2 كارت)
+            int cardsPerPage = 6; 
 
             var document = Document.Create(container =>
             {
-                // تقسيم الطلاب إلى صفحات — كل صفحة تحتوي 6 طلاب فقط
                 var pages = students
                     .Select((s, index) => new { s, index })
                     .GroupBy(x => x.index / cardsPerPage)
@@ -1744,7 +1743,6 @@ namespace SalesRepository.Repository
                                     }
                                 });
 
-                                // مسافة بين الصفوف
                                 if (i + 2 < pageStudents.Count)
                                 {
                                     column.Item().PaddingVertical(10);
@@ -1776,7 +1774,7 @@ namespace SalesRepository.Repository
                     // Header مع الشريط العلوي
                     column.Item().Height(35).Background(Colors.Blue.Darken2)
                         .Padding(5)
-                        .AlignCenter() // محاذاة المركز
+                        .AlignCenter() 
                         .AlignMiddle()
                         .Text(_schoolName)
                         .FontSize(12)
@@ -1815,7 +1813,8 @@ namespace SalesRepository.Repository
                                     if (!qrCache.ContainsKey(qrKey))
                                     {
                                         var qrGenerator = new QRCodeGenerator();
-                                        var qrData = $"الأسم: {student.StudentName}\nكود الطالبة: {student.StudentCode}\nجوال: {student.StudentPhone}";
+                                        //var qrData = $"الأسم: {student.StudentName}\nكود الطالبة: {student.StudentCode}\nجوال: {student.StudentPhone}";
+                                        var qrData = student.StudentCode;
                                         var qrCodeData = qrGenerator.CreateQrCode(qrData, QRCodeGenerator.ECCLevel.H);
                                         var qrCode = new QRCode(qrCodeData);
                                         var qrBitmap = qrCode.GetGraphic(20);

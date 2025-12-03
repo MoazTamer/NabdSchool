@@ -32,8 +32,6 @@ namespace Sales.Controllers
         }
 
         [Authorize(Policy = "Users_View")]
-        //[Authorize(Roles = "Admin")]
-        [Authorize]
         [HttpGet]
         public IActionResult Index()
         {
@@ -58,7 +56,6 @@ namespace Sales.Controllers
         {
             try
             {
-                // 1️⃣ استقبال المعاملات من DataTables
                 var draw = Request.Form["draw"].FirstOrDefault();
                 var start = Request.Form["start"].FirstOrDefault();
                 var length = Request.Form["length"].FirstOrDefault();
@@ -66,19 +63,15 @@ namespace Sales.Controllers
                 var sortColumnIndex = Request.Form["order[0][column]"].FirstOrDefault();
                 var sortDirection = Request.Form["order[0][dir]"].FirstOrDefault();
 
-                // 2️⃣ تحويل القيم
                 int pageSize = length != null ? Convert.ToInt32(length) : 10;
                 int skip = start != null ? Convert.ToInt32(start) : 0;
 
-                // 3️⃣ جلب كل المستخدمين المرئيين
                 var allUsers = _unitOfWork.ApplicationUser
                     .GetAll(u => u.Visible == "yes")
                     .ToList();
 
-                // 4️⃣ إجمالي السجلات قبل البحث
                 int totalRecords = allUsers.Count;
 
-                // 5️⃣ إضافة اسم الفرع لكل مستخدم
                 var usersWithBranch = allUsers.Select(u => new
                 {
                     User = u,
@@ -87,7 +80,6 @@ namespace Sales.Controllers
                         : "غير محدد"
                 }).ToList();
 
-                // 6️⃣ البحث
                 if (!string.IsNullOrEmpty(searchValue))
                 {
                     searchValue = searchValue.ToLower();
@@ -98,10 +90,8 @@ namespace Sales.Controllers
                     ).ToList();
                 }
 
-                // 7️⃣ إجمالي السجلات بعد البحث
                 int recordsFiltered = usersWithBranch.Count;
 
-                // 8️⃣ الترتيب
                 if (!string.IsNullOrEmpty(sortColumnIndex))
                 {
                     int columnIndex = Convert.ToInt32(sortColumnIndex);
@@ -109,17 +99,17 @@ namespace Sales.Controllers
 
                     switch (columnIndex)
                     {
-                        case 1: // Branch Name
+                        case 1: 
                             usersWithBranch = isAscending
                                 ? usersWithBranch.OrderBy(ub => ub.BranchName).ToList()
                                 : usersWithBranch.OrderByDescending(ub => ub.BranchName).ToList();
                             break;
-                        case 2: // User Name
+                        case 2: 
                             usersWithBranch = isAscending
                                 ? usersWithBranch.OrderBy(ub => ub.User.UserName).ToList()
                                 : usersWithBranch.OrderByDescending(ub => ub.User.UserName).ToList();
                             break;
-                        case 3: // User Type
+                        case 3:
                             usersWithBranch = isAscending
                                 ? usersWithBranch.OrderBy(ub => ub.User.UserType).ToList()
                                 : usersWithBranch.OrderByDescending(ub => ub.User.UserType).ToList();
@@ -134,10 +124,8 @@ namespace Sales.Controllers
                     usersWithBranch = usersWithBranch.OrderBy(ub => ub.User.UserName).ToList();
                 }
 
-                // 9️⃣ التصفح (Pagination)
                 var pagedData = usersWithBranch.Skip(skip).Take(pageSize).ToList();
 
-                // 🔟 تحويل للـ Response Format
                 var data = pagedData.Select(ub => new
                 {
                     id = ub.User.Id,
@@ -147,7 +135,6 @@ namespace Sales.Controllers
                     visible = ub.User.Visible
                 }).ToList();
 
-                // 1️⃣1️⃣ إرجاع النتيجة
                 return Json(new
                 {
                     draw = draw,
@@ -158,7 +145,6 @@ namespace Sales.Controllers
             }
             catch (Exception ex)
             {
-                // تسجيل الخطأ
                 System.Diagnostics.Debug.WriteLine($"GetData Error: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Stack Trace: {ex.StackTrace}");
 
@@ -167,7 +153,6 @@ namespace Sales.Controllers
                     System.Diagnostics.Debug.WriteLine($"Inner Exception: {ex.InnerException.Message}");
                 }
 
-                // إرجاع استجابة فارغة في حالة الخطأ
                 return Json(new
                 {
                     draw = Request.Form["draw"].FirstOrDefault(),

@@ -196,11 +196,12 @@
             const canvas = document.getElementById('modalQRCode');
             canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 
-            const studentData = `
-        الأسم: ${studentName}
-        كود الطالبة: ${studentCode}
-        جوال: ${studentPhone}
-            `;
+            const studentData = studentCode;
+        //     const studentData = `
+        // الأسم: ${studentName}
+        // كود الطالبة: ${studentCode}
+        // جوال: ${studentPhone}
+        //     `;
 
             QRCode.toCanvas(canvas, studentData, {
                 width: 200,

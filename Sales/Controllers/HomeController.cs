@@ -16,10 +16,8 @@ namespace Sales.Controllers
         private static TimeZoneInfo Arabian_Standard_Time =
             TimeZoneInfo.FindSystemTimeZoneById("Arab Standard Time");
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly IAuthorizationService _authorizationService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SalesDBContext _context;
 
         public HomeController(
             SignInManager<ApplicationUser> signInManager,
@@ -30,12 +28,10 @@ namespace Sales.Controllers
         {
             _signInManager = signInManager;
             _unitOfWork = unitOfWork;
-            _authorizationService = authorizationService;
             _userManager = userManager;
-            _context = context;
         }
 
-        
+
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -72,8 +68,7 @@ namespace Sales.Controllers
                                 a.Attendance_Date.Date == today &&
                                 (
                                     a.Attendance_Status == "غياب" ||
-                                    a.Attendance_Status == "متأخر" ||
-                                    a.Attendance_Status == "استئذان"
+                                    a.Attendance_Status == "متأخر"
                                 )
                             )
                     );
@@ -115,12 +110,6 @@ namespace Sales.Controllers
         }
 
         [HttpGet]
-        public IActionResult Reports()
-        {
-            return View();
-        }
-
-        [HttpGet]
         public async Task<IActionResult> AttendanceRegistration()
         {
             var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Arabian_Standard_Time);
@@ -131,10 +120,10 @@ namespace Sales.Controllers
 
             if (!dailyAbsenceExists)
             {
-                InsertDailyAbsence(now, today); 
+                InsertDailyAbsence(now, today);
             }
 
-            var totalStudents =await _unitOfWork.TblStudent.CountAsync(s => s.Student_Visible == "yes");
+            var totalStudents = await _unitOfWork.TblStudent.CountAsync(s => s.Student_Visible == "yes");
 
             var present = await _unitOfWork.TblAttendance
                 .CountAsync(a => a.Attendance_Date == today &&
@@ -153,23 +142,31 @@ namespace Sales.Controllers
         }
 
 
+        public IActionResult GetTopStudentsData()
+        {
+            try
+            {
+                var topStudents = GetTopStudents(10).Result;
+                var badgeStats = GetBadgeStatistics().Result;
+
+                return Json(new
+                {
+                    success = true,
+                    data = topStudents,
+                    stats = badgeStats
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
 
         //---------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -249,102 +246,24 @@ namespace Sales.Controllers
         }
 
 
-        //[HttpPost]
-        //public async Task<IActionResult> RegistrationAllStudents()
-        //{
-        //    try
-        //    {
-        //        var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Arabian_Standard_Time);
-        //        var today = now.Date;
 
-        //        var students = await _context.TblStudent
-        //            .Where(s => s.Student_Visible == "yes")
-        //            .Select(s => new { s.Student_ID })
-        //            .ToListAsync();
 
-        //        var todaysRecords = await _context.TblAttendance
-        //            .Where(a => a.Attendance_Date == today)
-        //            .Select(a => a.Student_ID)
-        //            .ToListAsync();
 
-        //        var todaysRecordsSet = todaysRecords.ToHashSet();
 
-        //        var newAttendances = new List<TblAttendance>();
-        //        var registeredStudents = new List<int>();
-
-        //        foreach (var student in students)
-        //        {
-        //            if (!todaysRecordsSet.Contains(student.Student_ID))
-        //            {
-        //                newAttendances.Add(new TblAttendance
-        //                {
-        //                    Student_ID = student.Student_ID,
-        //                    Attendance_Status = "حضور",
-        //                    Attendance_Date = today,
-        //                    Attendance_Time = now.TimeOfDay,
-        //                    Attendance_Visible = "yes",
-        //                    Attendance_AddUserID = "SYSTEM",
-        //                    Attendance_AddDate = now
-        //                });
-
-        //                registeredStudents.Add(student.Student_ID);
-        //            }
-        //        }
-
-        //        if (newAttendances.Count > 0)
-        //        {
-        //            await _context.TblAttendance.AddRangeAsync(newAttendances);
-        //            await _context.SaveChangesAsync();
-
-        //            foreach (var studentId in registeredStudents)
-        //            {
-        //                try
-        //                {
-        //                    await UpdateStudentPoints(studentId, today);
-        //                }
-        //                catch (Exception ex)
-        //                {
-        //                    Console.WriteLine($"Error updating points for student {studentId}: {ex.Message}");
-        //                }
-        //            }
-
-        //            return Json(new { 
-        //                success = true, 
-        //                message = $"تم تسجيل حضور {newAttendances.Count} طالبة بنجاح" 
-        //            });
-        //        }
-        //        else
-        //        {
-        //            return Json(new { 
-        //                success = true, 
-        //                message = "جميع الطالبات لديهم سجل حضور اليوم" 
-        //            });
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return Json(new { 
-        //            success = false, 
-        //            message = "حدث خطأ: " + ex.Message 
-        //        });
-        //    }
-        //}
-
-        private void InsertDailyAbsence(DateTime now, DateTime today)
+        private async void InsertDailyAbsence(DateTime now, DateTime today)
         {
-            var studentIds = _context.TblStudent
-                .Where(s => s.Student_Visible == "yes")
-                .Select(s => s.Student_ID)
-                .ToList();
+            var studentIds = _unitOfWork.TblStudent.GetAll(
+                filter: s => s.Student_Visible == "yes"
+            ).Select(s => s.Student_ID).ToList();
 
-            var existingAttendance = _context.TblAttendance
-                .Where(a => a.Attendance_Date >= today && a.Attendance_Date < today.AddDays(1))
-                .Select(a => a.Student_ID)
-                .ToList();
+            var existingAttendance = _unitOfWork.TblAttendance.GetAll(
+                filter: a => a.Attendance_Date >= today && a.Attendance_Date < today.AddDays(1)
+            ).Select(a => a.Student_ID).ToList();
 
-            var newAbsentStudents = studentIds
-                .Where(id => !existingAttendance.Contains(id))
-                .ToList();
+            var newAbsentStudents = studentIds.Except(existingAttendance).ToList();
+
+            if (!newAbsentStudents.Any())
+                return;
 
             var attendanceList = newAbsentStudents.Select(id => new TblAttendance
             {
@@ -356,12 +275,16 @@ namespace Sales.Controllers
                 Attendance_Visible = "yes"
             }).ToList();
 
-            if (attendanceList.Count > 0)
-            {
-                _context.TblAttendance.AddRange(attendanceList);
-                _context.SaveChanges();
-            }
+            await _unitOfWork.TblAttendance.AddRangeAsync(attendanceList);
+
+            await _unitOfWork.Complete();
         }
+
+
+
+
+
+
 
         [HttpPost]
         public async Task<IActionResult> RegisterAttendance(string studentCode)
@@ -369,45 +292,60 @@ namespace Sales.Controllers
             try
             {
                 if (string.IsNullOrWhiteSpace(studentCode))
-                {
-                    return Json(new
-                    {
-                        isValid = false,
-                        message = "الرجاء إدخال كود الطالبة"
-                    });
-                }
+                    return Json(new { isValid = false, message = "الرجاء إدخال كود الطالبة" });
 
-                var student = await _context.TblStudent
-                    .Include(s => s.ClassRoom)
-                    .ThenInclude(c => c.Class)
-                    .FirstOrDefaultAsync(s => s.Student_Code == studentCode.Trim()
-                                           && s.Student_Visible == "yes");
+                studentCode = studentCode.Trim();
+
+                var student = _unitOfWork.TblStudent.GetAll(
+                    filter: s => s.Student_Code == studentCode && s.Student_Visible == "yes",
+                    includeProperties: new[] { "ClassRoom.Class" }
+                ).FirstOrDefault();
 
                 if (student == null)
-                {
-                    return Json(new
-                    {
-                        isValid = false,
-                        message = "الطالبة غير موجودة أو تم حذفها"
-                    });
-                }
+                    return Json(new { isValid = false, message = "الطالبة غير موجودة أو تم حذفها" });
 
                 var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Arabian_Standard_Time);
                 var today = now.Date;
                 var currentTime = now.TimeOfDay;
 
-                var existingAttendance = await _context.TblAttendance
-                    .FirstOrDefaultAsync(a => a.Student_ID == student.Student_ID
-                                           && a.Attendance_Date == today
-                                           && a.Attendance_Visible == "yes"
-                                           && a.Attendance_Status != "غياب");
+                var existingAttendance = _unitOfWork.TblAttendance.GetAll(
+                    filter: a => a.Student_ID == student.Student_ID &&
+                                 a.Attendance_Date == today &&
+                                 a.Attendance_Visible == "yes" &&
+                                 a.Attendance_Status != "غياب"
+                ).OrderBy(a => a.Attendance_AddDate).LastOrDefault();
 
                 if (existingAttendance != null)
                 {
-                    return await RegisterExcuse(studentCode);
+                    var excuse = new TblAttendance
+                    {
+                        Student_ID = student.Student_ID,
+                        Attendance_Date = today,
+                        Attendance_Time = currentTime,
+                        Attendance_LateMinutes = 0,
+                        Attendance_Status = "استئذان",
+                        Attendance_Visible = "yes",
+                        Attendance_AddUserID = _userManager.GetUserId(User),
+                        Attendance_AddDate = now
+                    };
+
+                    _unitOfWork.TblAttendance.Add(excuse);
+                    await _unitOfWork.Complete();
+
+                    await UpdateStudentPoints(student.Student_ID, today);
+
+                    return Json(new
+                    {
+                        isValid = true,
+                        message = $"تم تسجيل استئذان للطالبة: {student.Student_Name}",
+                        studentName = student.Student_Name,
+                        className = $"{student.ClassRoom?.Class?.Class_Name} - {student.ClassRoom?.ClassRoom_Name}",
+                        status = "استئذان",
+                        attendanceTime = currentTime
+                    });
                 }
 
-                var attendanceTime = await SchoolSettingsController.GetAttendanceTimeAsync(_context);
+                var attendanceTime = SchoolSettingsController.GetAttendanceTime(_unitOfWork);
 
                 int lateMinutes = 0;
                 string status = "حضور";
@@ -430,42 +368,31 @@ namespace Sales.Controllers
                     Attendance_AddDate = now
                 };
 
-                await _context.TblAttendance.AddAsync(attendance);
-                var result = await _context.SaveChangesAsync();
-
-                if (result == 0)
-                {
-                    return Json(new
-                    {
-                        isValid = false,
-                        message = "فشل في حفظ الحضور"
-                    });
-                }
+                _unitOfWork.TblAttendance.Add(attendance);
+                await _unitOfWork.Complete();
 
                 await UpdateStudentPoints(student.Student_ID, today);
 
-                var studentPoints = await _context.TblStudentPoints
-                    .FirstOrDefaultAsync(sp => sp.Student_ID == student.Student_ID);
+                var studentPoints = _unitOfWork.StudentPoints.GetAll(
+                    filter: sp => sp.Student_ID == student.Student_ID
+                ).FirstOrDefault();
 
-                var newBadges = await _context.TblStudentBadges
-                    .Where(sb => sb.Student_ID == student.Student_ID && 
-                           sb.Badge_Visible == "yes" &&
-                           sb.Earned_Date.Date == today)
-                    .Join(_context.TblBadgeDefinitions,
-                          sb => new { sb.Badge_Type, sb.Badge_Level },
-                          bd => new { bd.Badge_Type, bd.Badge_Level },
-                          (sb, bd) => new
-                          {
-                              badge_name = bd.Badge_Name,
-                              badge_level = bd.Badge_Level
-                          })
-                    .ToListAsync();
+                var newBadges = _unitOfWork.StudentBadge.GetAll(
+                    filter: sb => sb.Student_ID == student.Student_ID &&
+                                  sb.Badge_Visible == "yes" &&
+                                  sb.Earned_Date.Date == today
+                ).Join(_unitOfWork.BadgeDefinition.Table,
+                       sb => new { sb.Badge_Type, sb.Badge_Level },
+                       bd => new { bd.Badge_Type, bd.Badge_Level },
+                       (sb, bd) => new
+                       {
+                           badge_name = bd.Badge_Name,
+                           badge_level = bd.Badge_Level
+                       }).ToList();
 
                 string badgeMessage = "";
                 if (newBadges.Any())
-                {
                     badgeMessage = $" 🏆 مبروك! حصلت على شارة جديدة: {string.Join(", ", newBadges.Select(b => $"{b.badge_name} {b.badge_level}"))}";
-                }
 
                 return Json(new
                 {
@@ -491,6 +418,12 @@ namespace Sales.Controllers
             }
         }
 
+
+
+
+
+
+
         [HttpPost]
         public async Task<IActionResult> RegisterExcuse(string studentCode)
         {
@@ -501,10 +434,10 @@ namespace Sales.Controllers
 
                 studentCode = studentCode.Trim();
 
-                var student = await _context.TblStudent
-                    .Include(s => s.ClassRoom)
-                    .ThenInclude(c => c.Class)
-                    .FirstOrDefaultAsync(s => s.Student_Code == studentCode && s.Student_Visible == "yes");
+                var student = _unitOfWork.TblStudent.GetAll(
+                    filter: s => s.Student_Code == studentCode && s.Student_Visible == "yes",
+                    includeProperties: new[] { "ClassRoom.Class" }
+                ).FirstOrDefault();
 
                 if (student == null)
                     return Json(new { isValid = false, message = "الطالبة غير موجودة أو تم حذفها" });
@@ -513,12 +446,12 @@ namespace Sales.Controllers
                 var today = now.Date;
                 var currentTime = now.TimeOfDay;
 
-                var existingExcuse = await _context.TblAttendance
-                    .FirstOrDefaultAsync(a =>
-                        a.Student_ID == student.Student_ID &&
-                        a.Attendance_Date == today &&
-                        a.Attendance_Status == "استئذان" &&
-                        a.Attendance_Visible == "yes");
+                var existingExcuse = _unitOfWork.TblAttendance.GetAll(
+                    filter: a => a.Student_ID == student.Student_ID &&
+                                 a.Attendance_Date == today &&
+                                 a.Attendance_Status == "استئذان" &&
+                                 a.Attendance_Visible == "yes"
+                ).FirstOrDefault();
 
                 if (existingExcuse != null)
                     return Json(new { isValid = false, message = "تم تسجيل استئذان للطالبة مسبقاً اليوم" });
@@ -535,8 +468,8 @@ namespace Sales.Controllers
                     Attendance_AddDate = now
                 };
 
-                await _context.TblAttendance.AddAsync(excuse);
-                await _context.SaveChangesAsync();
+                _unitOfWork.TblAttendance.Add(excuse);
+                await _unitOfWork.Complete();
 
                 await UpdateStudentPoints(student.Student_ID, today);
 
@@ -547,7 +480,7 @@ namespace Sales.Controllers
                     studentName = student.Student_Name,
                     className = $"{student.ClassRoom?.Class?.Class_Name} - {student.ClassRoom?.ClassRoom_Name}",
                     status = "استئذان",
-                    attendanceTime = currentTime, 
+                    attendanceTime = currentTime,
                 });
             }
             catch (Exception ex)
@@ -578,20 +511,22 @@ namespace Sales.Controllers
 
         private async Task<int> CalculateStudentPoints(int studentId, DateTime date)
         {
-            var attendance = await _context.TblAttendance
-                .Where(a => a.Student_ID == studentId &&
-                           a.Attendance_Date.Date == date.Date &&
-                           a.Attendance_Visible == "yes")
-                .FirstOrDefaultAsync();
+            var lastAttendance = _unitOfWork.TblAttendance.GetAll(
+                filter: a => a.Student_ID == studentId &&
+                             a.Attendance_Date.Date == date.Date &&
+                             a.Attendance_Visible == "yes",
+                orderBy: a => a.Attendance_ID,
+                orderByDirection: OrderBy.Descending
+            ).FirstOrDefault();
 
-            if (attendance == null) return 0;
+            if (lastAttendance == null) return 0;
 
-            return attendance.Attendance_Status switch
+            return lastAttendance.Attendance_Status switch
             {
-                "حضور" => 10,      
-                "متأخر" => 3,      
-                "غياب" => -5,      
-                "استئذان" => 0,   
+                "حضور" => 10,
+                "متأخر" => 3,
+                "غياب" => -5,
+                "استئذان" => 0,
                 _ => 0
             };
         }
@@ -600,8 +535,9 @@ namespace Sales.Controllers
         {
             var points = await CalculateStudentPoints(studentId, date);
 
-            var studentPoints = await _context.TblStudentPoints
-                .FirstOrDefaultAsync(sp => sp.Student_ID == studentId);
+            var studentPoints = _unitOfWork.StudentPoints.GetAll(
+                filter: sp => sp.Student_ID == studentId
+            ).FirstOrDefault();
 
             if (studentPoints == null)
             {
@@ -613,10 +549,11 @@ namespace Sales.Controllers
                     Attendance_Streak = points > 0 ? 1 : 0,
                     Last_Updated = date
                 };
-                _context.TblStudentPoints.Add(studentPoints);
+                _unitOfWork.StudentPoints.Add(studentPoints);
             }
             else
             {
+                // تحديث النقاط
                 studentPoints.Total_Points += points;
                 studentPoints.Monthly_Points += points;
 
@@ -632,7 +569,7 @@ namespace Sales.Controllers
                         studentPoints.Attendance_Streak = 1;
                     }
                 }
-                else if (points < 0 || points == 0) 
+                else
                 {
                     studentPoints.Attendance_Streak = 0;
                 }
@@ -640,32 +577,32 @@ namespace Sales.Controllers
                 studentPoints.Last_Updated = date;
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Complete();
 
             await CheckAndAwardBadges(studentId);
         }
 
         private async Task CheckAndAwardBadges(int studentId)
         {
-            var studentPoints = await _context.TblStudentPoints
-                .FirstOrDefaultAsync(sp => sp.Student_ID == studentId);
+            var studentPoints = _unitOfWork.StudentPoints.GetAll(
+                sp => sp.Student_ID == studentId
+            ).FirstOrDefault();
 
             if (studentPoints == null) return;
 
-            var existingBadges = await _context.TblStudentBadges
-                .Where(sb => sb.Student_ID == studentId && sb.Badge_Visible == "yes")
-                .Select(sb => new { sb.Badge_Type, sb.Badge_Level })
-                .ToListAsync();
+            var existingBadges = _unitOfWork.StudentBadge.GetAll(
+                sb => sb.Student_ID == studentId && sb.Badge_Visible == "yes"
+            ).Select(sb => new { sb.Badge_Type, sb.Badge_Level }).ToList();
 
-            var badgeDefinitions = await _context.TblBadgeDefinitions
-                .Where(bd => bd.Is_Active)
-                .OrderBy(bd => bd.Required_Points)
-                .ToListAsync();
+            var badgeDefinitions = _unitOfWork.BadgeDefinition.GetAll(
+                bd => bd.Is_Active,
+                orderBy: bd => bd.Required_Points
+            ).ToList();
 
             foreach (var definition in badgeDefinitions)
             {
                 if (existingBadges.Any(eb => eb.Badge_Type == definition.Badge_Type &&
-                                            eb.Badge_Level == definition.Badge_Level))
+                                              eb.Badge_Level == definition.Badge_Level))
                     continue;
 
                 bool shouldAward = false;
@@ -694,49 +631,51 @@ namespace Sales.Controllers
                         Badge_Visible = "yes"
                     };
 
-                    _context.TblStudentBadges.Add(badge);
+                    _unitOfWork.StudentBadge.Add(badge);
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Complete();
         }
+
 
         private async Task<List<TopStudentBadge>> GetTopStudents(int count = 10)
         {
-            var topStudents = await _context.TblStudentPoints
-                .Include(sp => sp.Student)
-                .Where(sp => sp.Student.Student_Visible == "yes")
-                .OrderByDescending(sp => sp.Total_Points)
-                .Take(count)
-                .ToListAsync();
+            var topStudents = _unitOfWork.StudentPoints.GetAll(
+                filter: sp => sp.Student.Student_Visible == "yes",
+                includeProperties: new[] { "Student" },
+                orderBy: sp => sp.Total_Points,
+                orderByDirection: OrderBy.Descending
+            ).Take(count).ToList();
 
             var result = new List<TopStudentBadge>();
 
-            foreach (var student in topStudents)
+            foreach (var studentPoints in topStudents)
             {
-                var badges = await _context.TblStudentBadges
-                    .Where(sb => sb.Student_ID == student.Student_ID && sb.Badge_Visible == "yes")
-                    .Join(_context.TblBadgeDefinitions,
-                          sb => new { sb.Badge_Type, sb.Badge_Level },
-                          bd => new { bd.Badge_Type, bd.Badge_Level },
-                          (sb, bd) => new StudentBadgeInfo
-                          {
-                              Badge_Name = bd.Badge_Name,
-                              Badge_Level = bd.Badge_Level,
-                              Badge_Icon = bd.Badge_Icon,
-                              Badge_Color = bd.Badge_Color,
-                              Points = sb.Points
-                          })
-                    .ToListAsync();
+                var badges = _unitOfWork.StudentBadge.GetAll(
+                    sb => sb.Student_ID == studentPoints.Student_ID && sb.Badge_Visible == "yes"
+                ).Join(
+                    _unitOfWork.BadgeDefinition.GetAll(bd => bd.Is_Active),
+                    sb => new { sb.Badge_Type, sb.Badge_Level },
+                    bd => new { bd.Badge_Type, bd.Badge_Level },
+                    (sb, bd) => new StudentBadgeInfo
+                    {
+                        Badge_Name = bd.Badge_Name,
+                        Badge_Level = bd.Badge_Level,
+                        Badge_Icon = bd.Badge_Icon,
+                        Badge_Color = bd.Badge_Color,
+                        Points = sb.Points
+                    }
+                ).ToList();
 
                 var highestBadge = badges.OrderByDescending(b => b.Points).FirstOrDefault();
 
                 result.Add(new TopStudentBadge
                 {
-                    Student_ID = student.Student_ID,
-                    Student_Name = student.Student.Student_Name,
-                    Total_Points = student.Total_Points,
-                    Attendance_Streak = student.Attendance_Streak,
+                    Student_ID = studentPoints.Student_ID,
+                    Student_Name = studentPoints.Student.Student_Name,
+                    Total_Points = studentPoints.Total_Points,
+                    Attendance_Streak = studentPoints.Attendance_Streak,
                     Badges = badges,
                     HighestBadgeLevel = highestBadge?.Badge_Level ?? "لا يوجد",
                     BadgeColor = highestBadge?.Badge_Color ?? "#6c757d"
@@ -748,9 +687,9 @@ namespace Sales.Controllers
 
         private async Task<BadgeStatistics> GetBadgeStatistics()
         {
-            var allBadges = await _context.TblStudentBadges
-                .Where(sb => sb.Badge_Visible == "yes")
-                .ToListAsync();
+            var allBadges = _unitOfWork.StudentBadge.GetAll(
+                filter: sb => sb.Badge_Visible == "yes"
+            ).ToList();
 
             return new BadgeStatistics
             {
@@ -763,31 +702,31 @@ namespace Sales.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetStudentBadges(int studentId)
+        public IActionResult GetStudentBadges(int studentId)
         {
             try
             {
-                var studentPoints = await _context.TblStudentPoints
-                    .Include(sp => sp.Student)
-                    .FirstOrDefaultAsync(sp => sp.Student_ID == studentId);
-                
-                var badges = await _context.TblStudentBadges
-                    .Where(sb => sb.Student_ID == studentId && sb.Badge_Visible == "yes")
-                    .Join(_context.TblBadgeDefinitions,
-                          sb => new { sb.Badge_Type, sb.Badge_Level },
-                          bd => new { bd.Badge_Type, bd.Badge_Level },
-                          (sb, bd) => new
-                          {
-                              badge_name = bd.Badge_Name,
-                              badge_level = bd.Badge_Level,
-                              badge_icon = bd.Badge_Icon,
-                              badge_color = bd.Badge_Color,
-                              points = sb.Points,
-                              earned_date = sb.Earned_Date,
-                              description = bd.Description
-                          })
-                    .ToListAsync();
-                
+                var studentPoints = _unitOfWork.StudentPoints.GetAll(
+                    filter: sp => sp.Student_ID == studentId,
+                    includeProperties: new[] { "Student" }
+                ).FirstOrDefault();
+
+                var badges = (from sb in _unitOfWork.StudentBadge.GetAll(
+                                  filter: sb => sb.Student_ID == studentId && sb.Badge_Visible == "yes"
+                              )
+                              join bd in _unitOfWork.BadgeDefinition.GetAll(filter: bd => bd.Is_Active)
+                              on new { sb.Badge_Type, sb.Badge_Level } equals new { bd.Badge_Type, bd.Badge_Level }
+                              select new
+                              {
+                                  badge_name = bd.Badge_Name,
+                                  badge_level = bd.Badge_Level,
+                                  badge_icon = bd.Badge_Icon,
+                                  badge_color = bd.Badge_Color,
+                                  points = sb.Points,
+                                  earned_date = sb.Earned_Date,
+                                  description = bd.Description
+                              }).ToList();
+
                 return Json(new
                 {
                     success = true,
@@ -805,19 +744,19 @@ namespace Sales.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ResetMonthlyPoints()
+        public IActionResult ResetMonthlyPoints()
         {
             try
             {
-                var allPoints = await _context.TblStudentPoints.ToListAsync();
+                var allPoints = _unitOfWork.StudentPoints.GetAll().ToList();
 
                 foreach (var point in allPoints)
                 {
                     point.Monthly_Points = 0;
                 }
 
-                await _context.SaveChangesAsync();
-                
+                _unitOfWork.Complete();
+
                 return Json(new { success = true, message = "تم إعادة تعيين النقاط الشهرية بنجاح" });
             }
             catch (Exception ex)
@@ -825,5 +764,6 @@ namespace Sales.Controllers
                 return Json(new { success = false, message = "حدث خطأ: " + ex.Message });
             }
         }
+
     }
 }

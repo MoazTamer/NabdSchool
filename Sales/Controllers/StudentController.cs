@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using SalesModel.IRepository;
 using SalesModel.Models;
@@ -29,7 +30,6 @@ namespace Sales.Controllers
         {
             try
             {
-                // Get all classes for filter dropdown
                 var classes = _unitOfWork.TblClass.GetAll(obj => obj.Class_Visible == "yes").ToList();
 
                 ViewBag.Classes = classes.Select(c => new SelectListItem
@@ -120,7 +120,6 @@ namespace Sales.Controllers
             {
                 var model = new ModelStudent();
 
-                // Get all classes
                 var classes = _unitOfWork.TblClass.GetAll(obj => obj.Class_Visible == "yes").ToList();
 
                 ViewBag.Classes = classes.Select(c => new SelectListItem
@@ -144,7 +143,6 @@ namespace Sales.Controllers
         {
             try
             {
-                // Check if student code already exists
                 if (!string.IsNullOrEmpty(model.Student_Code))
                 {
                     var checkStudent = _unitOfWork.TblStudent.GetFirstOrDefault(
@@ -215,7 +213,6 @@ namespace Sales.Controllers
                     Student_Notes = student.Student_Notes
                 };
 
-                // Get all classes
                 var classes = _unitOfWork.TblClass.GetAll(obj => obj.Class_Visible == "yes").ToList();
 
                 ViewBag.Classes = classes.Select(c => new SelectListItem
@@ -225,7 +222,6 @@ namespace Sales.Controllers
                     Selected = c.Class_ID == student.ClassRoom?.Class_ID
                 }).ToList();
 
-                // Get classrooms for selected class
                 if (student.ClassRoom?.Class_ID != null)
                 {
                     var classRooms = _unitOfWork.TblClassRoom.GetAll(
@@ -254,7 +250,6 @@ namespace Sales.Controllers
         {
             try
             {
-                // Check if student code already exists (excluding current student)
                 if (!string.IsNullOrEmpty(model.Student_Code))
                 {
                     var checkStudent = _unitOfWork.TblStudent.GetFirstOrDefault(
@@ -306,7 +301,6 @@ namespace Sales.Controllers
                     return Json(new { isValid = false, title = Title, message = "الطالب غير موجود" });
                 }
 
-                // Soft delete
                 student.Student_Visible = "no";
                 student.Student_DeleteUserID = _userManager.GetUserId(User);
                 student.Student_DeleteDate = DateTime.Now;
@@ -329,7 +323,6 @@ namespace Sales.Controllers
         #region Import from Excel
 
         [Authorize (Policy = "Student_Create1")]
-        [Authorize]
         [HttpGet]
         public IActionResult ImportStudents()
         {
@@ -359,27 +352,29 @@ namespace Sales.Controllers
                 var errors = new List<string>();
                 var userId = _userManager.GetUserId(User);
 
+                var classes = _unitOfWork.TblClass.GetAll(c => c.Class_Visible == "yes").ToList();
+                var classrooms = _unitOfWork.TblClassRoom.GetAll(c => c.ClassRoom_Visible == "yes").ToList();
+                var students = _unitOfWork.TblStudent.GetAll(s => s.Student_Visible == "yes").ToList();
+
                 using (var stream = new MemoryStream())
                 {
                     await excelFile.CopyToAsync(stream);
+
                     using (var package = new ExcelPackage(stream))
                     {
                         var worksheet = package.Workbook.Worksheets[0];
                         var rowCount = worksheet.Dimension?.Rows ?? 0;
 
-                        // Start from row 2 (skip header)
                         for (int row = 2; row <= rowCount; row++)
                         {
                             try
                             {
-                                // Read data from Excel
                                 var studentCode = worksheet.Cells[row, 5].Value?.ToString()?.Trim();
                                 var studentName = worksheet.Cells[row, 4].Value?.ToString()?.Trim();
-                                var classRoomNumber = worksheet.Cells[row, 3].Value?.ToString()?.Trim();
-                                var classNumber = worksheet.Cells[row, 2].Value?.ToString()?.Trim();
+                                var classNumber = worksheet.Cells[row, 3].Value?.ToString()?.Trim();
+                                var classRoomNumber = worksheet.Cells[row, 2].Value?.ToString()?.Trim();
                                 var phone = worksheet.Cells[row, 1].Value?.ToString()?.Trim();
 
-                                // Validate required fields
                                 if (string.IsNullOrEmpty(studentName) || string.IsNullOrEmpty(studentCode))
                                 {
                                     errors.Add($"الصف {row}: اسم الطالب أو رقم الطالب مفقود");
@@ -387,51 +382,51 @@ namespace Sales.Controllers
                                     continue;
                                 }
 
-                                // Check if student already exists
-                                var existingStudent = _unitOfWork.TblStudent.GetFirstOrDefault(
-                                    obj => obj.Student_Code == studentCode && obj.Student_Visible == "yes"
-                                );
-
-                                if (existingStudent != null)
+                                if (students.Any(s => s.Student_Code == studentCode))
                                 {
                                     errors.Add($"الصف {row}: الطالب {studentName} موجود بالفعل برقم {studentCode}");
                                     errorCount++;
                                     continue;
                                 }
 
-                                // Find or create classroom
+                          
+                                TblClass classEntity = null;
+
+                                if (!string.IsNullOrEmpty(classNumber))
+                                {
+                                    classEntity = classes.FirstOrDefault(c => c.Class_Name == classNumber);
+
+                                    if (classEntity == null)
+                                    {
+                                        classEntity = new TblClass
+                                        {
+                                            Class_Name = classNumber,
+                                            Class_Visible = "yes",
+                                            Class_AddUserID = userId,
+                                            Class_AddDate = DateTime.Now
+                                        };
+
+                                        _unitOfWork.TblClass.Add(classEntity);
+                                        classes.Add(classEntity);
+                                    }
+                                }
+
                                 int? classRoomId = null;
 
                                 if (!string.IsNullOrEmpty(classRoomNumber))
                                 {
-                                    var classRoom = _unitOfWork.TblClassRoom.GetFirstOrDefault(
-                                        obj => obj.ClassRoom_Name == classRoomNumber && obj.ClassRoom_Visible == "yes"
-                                    );
+                                    var classRoom = classrooms.FirstOrDefault(c => c.ClassRoom_Name == classRoomNumber);
 
-                                    if (classRoom != null)
+                                    if (classRoom == null)
                                     {
-                                        classRoomId = classRoom.ClassRoom_ID;
-                                    }
-                                    else if (!string.IsNullOrEmpty(classNumber))
-                                    {
-                                        var classEntity = _unitOfWork.TblClass.GetFirstOrDefault(
-                                            obj => obj.Class_Name == classNumber && obj.Class_Visible == "yes"
-                                        );
-
                                         if (classEntity == null)
                                         {
-                                            classEntity = new TblClass
-                                            {
-                                                Class_Name = classNumber,
-                                                Class_Visible = "yes",
-                                                Class_AddUserID = userId,
-                                                Class_AddDate = DateTime.Now
-                                            };
-                                            _unitOfWork.TblClass.Add(classEntity);
-                                            await _unitOfWork.Complete();
+                                            errors.Add($"الصف {row}: لم يتم العثور على الصف {classNumber}");
+                                            errorCount++;
+                                            continue;
                                         }
 
-                                        var newClassRoom = new TblClassRoom
+                                        classRoom = new TblClassRoom
                                         {
                                             Class_ID = classEntity.Class_ID,
                                             ClassRoom_Name = classRoomNumber,
@@ -439,10 +434,12 @@ namespace Sales.Controllers
                                             ClassRoom_AddUserID = userId,
                                             ClassRoom_AddDate = DateTime.Now
                                         };
-                                        _unitOfWork.TblClassRoom.Add(newClassRoom);
-                                        await _unitOfWork.Complete();
-                                        classRoomId = newClassRoom.ClassRoom_ID;
+
+                                        _unitOfWork.TblClassRoom.Add(classRoom);
+                                        classrooms.Add(classRoom);
                                     }
+
+                                    classRoomId = classRoom.ClassRoom_ID;
                                 }
 
                                 if (!classRoomId.HasValue)
@@ -452,7 +449,6 @@ namespace Sales.Controllers
                                     continue;
                                 }
 
-                                // Create student
                                 var student = new TblStudent
                                 {
                                     ClassRoom_ID = classRoomId.Value,
@@ -465,7 +461,7 @@ namespace Sales.Controllers
                                 };
 
                                 _unitOfWork.TblStudent.Add(student);
-                                await _unitOfWork.Complete();
+                                students.Add(student);
                                 successCount++;
                             }
                             catch (Exception ex)
@@ -477,11 +473,11 @@ namespace Sales.Controllers
                     }
                 }
 
+                await _unitOfWork.Complete();
+
                 var message = $"تم استيراد {successCount} طالب بنجاح";
                 if (errorCount > 0)
-                {
                     message += $" | فشل استيراد {errorCount} طالب";
-                }
 
                 return Json(new
                 {
@@ -495,7 +491,7 @@ namespace Sales.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { isValid = false, title = Title, message = "خطأ: " + ex.Message + " | Stack: " + ex.StackTrace });
+                return Json(new { isValid = false, title = Title, message = "خطأ: " + ex.Message });
             }
         }
 
@@ -508,7 +504,6 @@ namespace Sales.Controllers
         {
             try
             {
-                // Get all classes for filter dropdown
                 var classes = _unitOfWork.TblClass.GetAll(obj => obj.Class_Visible == "yes").ToList();
 
                 ViewBag.Classes = classes.Select(c => new SelectListItem
@@ -532,48 +527,47 @@ namespace Sales.Controllers
         {
             try
             {
-                var studentsQuery = _unitOfWork.TblStudent.GetAll(
-                    obj => obj.Student_Visible == "no", // الطلاب المحذوفين فقط
-                    new[] { "ClassRoom", "ClassRoom.Class" }
-                );
+                var studentsQuery = _unitOfWork.TblStudent
+                    .GetAll(
+                        s => s.Student_Visible == "no",
+                        new[] { "ClassRoom", "ClassRoom.Class" }
+                    );
 
                 if (classId.HasValue)
-                {
                     studentsQuery = studentsQuery.Where(s => s.ClassRoom.Class_ID == classId.Value);
-                }
 
                 if (classRoomId.HasValue)
-                {
                     studentsQuery = studentsQuery.Where(s => s.ClassRoom_ID == classRoomId.Value);
-                }
 
                 var studentsList = studentsQuery.ToList();
 
-                // Get user names for deleted by users
-                var data = new List<object>();
-                foreach (var s in studentsList)
-                {
-                    string deletedByName = "غير معروف";
-                    if (!string.IsNullOrEmpty(s.Student_DeleteUserID))
-                    {
-                        var user = await _userManager.FindByIdAsync(s.Student_DeleteUserID);
-                        deletedByName = user?.UserName ?? "غير معروف";
-                    }
+                var deletedUserIds = studentsList
+                    .Where(s => !string.IsNullOrEmpty(s.Student_DeleteUserID))
+                    .Select(s => s.Student_DeleteUserID)
+                    .Distinct()
+                    .ToList();
 
-                    data.Add(new
-                    {
-                        student_ID = s.Student_ID,
-                        student_Name = s.Student_Name,
-                        student_Code = s.Student_Code,
-                        student_Phone = s.Student_Phone,
-                        student_Gender = s.Student_Gender,
-                        className = s.ClassRoom?.Class?.Class_Name ?? "",
-                        classRoomName = s.ClassRoom?.ClassRoom_Name ?? "",
-                        deletedBy = deletedByName,
-                        deletedDate = s.Student_DeleteDate?.ToString("dd/MM/yyyy HH:mm") ?? "",
-                        classRoom_ID = s.ClassRoom_ID
-                    });
-                }
+                var users = await _userManager.Users
+                    .Where(u => deletedUserIds.Contains(u.Id))
+                    .ToListAsync();
+
+                var userDict = users.ToDictionary(u => u.Id, u => u.UserName);
+
+                var data = studentsList.Select(s => new
+                {
+                    student_ID = s.Student_ID,
+                    student_Name = s.Student_Name,
+                    student_Code = s.Student_Code,
+                    student_Phone = s.Student_Phone,
+                    student_Gender = s.Student_Gender,
+                    className = s.ClassRoom?.Class?.Class_Name ?? "",
+                    classRoomName = s.ClassRoom?.ClassRoom_Name ?? "",
+                    deletedBy = s.Student_DeleteUserID != null && userDict.ContainsKey(s.Student_DeleteUserID)
+                                ? userDict[s.Student_DeleteUserID]
+                                : "غير معروف",
+                    deletedDate = s.Student_DeleteDate?.ToString("dd/MM/yyyy HH:mm") ?? "",
+                    classRoom_ID = s.ClassRoom_ID
+                }).ToList();
 
                 return Json(new { data = data });
             }
@@ -582,6 +576,7 @@ namespace Sales.Controllers
                 return Json(new { error = true, message = ex.Message });
             }
         }
+
 
         [HttpPost]
         public async Task<IActionResult> RestoreStudent(int id)
@@ -595,13 +590,10 @@ namespace Sales.Controllers
                     return Json(new { isValid = false, title = Title, message = "الطالب غير موجود" });
                 }
 
-                // استعادة الطالب - إرجاع Visible إلى yes
                 student.Student_Visible = "yes";
                 student.Student_EditUserID = _userManager.GetUserId(User);
                 student.Student_EditDate = DateTime.Now;
-                // نحتفظ بسجل الحذف للتاريخ
-                // student.Student_DeleteUserID = null;
-                // student.Student_DeleteDate = null;
+            
 
                 if (await _unitOfWork.Complete() == 0)
                 {
@@ -628,7 +620,6 @@ namespace Sales.Controllers
                     return Json(new { isValid = false, title = Title, message = "الطالب غير موجود" });
                 }
 
-                // حذف نهائي من قاعدة البيانات
                 _unitOfWork.TblStudent.DeleteByEntity(student);
 
                 if (await _unitOfWork.Complete() == 0)
@@ -672,30 +663,22 @@ namespace Sales.Controllers
         #region Print Student Cards
 
         [HttpGet]
-        public async Task<IActionResult> PrintStudentCards(int? classId, int? classRoomId)
+        public IActionResult PrintStudentCards(int? classId, int? classRoomId)
         {
             try
             {
-                // 1. استعلام محسّن - نجلب فقط الحقول المطلوبة
                 var studentsQuery = _unitOfWork.TblStudent.GetAll(
-                    obj => obj.Student_Visible == "yes",
-                    new[] { "ClassRoom.Class" } // include واحد فقط بدلاً من اثنين
+                    s => s.Student_Visible == "yes",
+                    new[] { "ClassRoom", "ClassRoom.Class" }
                 );
 
-                // 2. تطبيق الفلتر على IQueryable قبل التنفيذ
                 if (classId.HasValue)
-                {
                     studentsQuery = studentsQuery.Where(s => s.ClassRoom.Class_ID == classId.Value);
-                }
 
                 if (classRoomId.HasValue)
-                {
                     studentsQuery = studentsQuery.Where(s => s.ClassRoom_ID == classRoomId.Value);
-                }
 
-                // 3. Projection مباشر في الاستعلام (يجلب فقط الحقول المطلوبة)
-                var students = await Task.Run(() => studentsQuery
-                    //.AsNoTracking() // لا نحتاج tracking
+                var students = studentsQuery
                     .Select(s => new StudentCardViewModel
                     {
                         StudentName = s.Student_Name,
@@ -704,19 +687,13 @@ namespace Sales.Controllers
                         ClassName = s.ClassRoom.Class.Class_Name ?? "",
                         ClassRoomName = s.ClassRoom.ClassRoom_Name ?? ""
                     })
-                    .ToList());
+                    .ToList();
 
                 if (!students.Any())
-                {
                     return Content("لا يوجد طلاب للطباعة");
-                }
 
-                // 4. توليد PDF في Thread منفصل
-                byte[] pdfBytes = await Task.Run(() =>
-                {
-                    var pdfService = new ReportPdfService();
-                    return pdfService.GenerateStudentCards(students);
-                });
+                var pdfService = new ReportPdfService();
+                byte[] pdfBytes = pdfService.GenerateStudentCards(students);
 
                 return File(pdfBytes, "application/pdf", $"بطاقات_الطلاب_{DateTime.Now:yyyyMMdd}.pdf");
             }
@@ -727,17 +704,15 @@ namespace Sales.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> PrintSingleStudentCard(int studentId)
+        public IActionResult PrintSingleStudentCard(int studentId)
         {
             try
             {
-                // استعلام محسّن
-                var student = await Task.Run(() => _unitOfWork.TblStudent
+                var student = _unitOfWork.TblStudent
                     .GetAll(
-                        obj => obj.Student_ID == studentId && obj.Student_Visible == "yes",
-                        new[] { "ClassRoom.Class" }
+                        s => s.Student_ID == studentId && s.Student_Visible == "yes",
+                        new[] { "ClassRoom", "ClassRoom.Class" }
                     )
-                    //.AsNoTracking()
                     .Select(s => new StudentCardViewModel
                     {
                         StudentName = s.Student_Name,
@@ -746,19 +721,15 @@ namespace Sales.Controllers
                         ClassName = s.ClassRoom.Class.Class_Name ?? "",
                         ClassRoomName = s.ClassRoom.ClassRoom_Name ?? ""
                     })
-                    .FirstOrDefault());
+                    .FirstOrDefault();
 
                 if (student == null)
-                {
                     return Content("الطالب غير موجود");
-                }
 
-                // توليد PDF في Thread منفصل
-                byte[] pdfBytes = await Task.Run(() =>
-                {
-                    var pdfService = new ReportPdfService();
-                    return pdfService.GenerateStudentCards(new List<StudentCardViewModel> { student });
-                });
+                var pdfService = new ReportPdfService();
+                byte[] pdfBytes = pdfService.GenerateStudentCards(
+                    new List<StudentCardViewModel> { student }
+                );
 
                 return File(pdfBytes, "application/pdf", $"بطاقة_{student.StudentName}_{DateTime.Now:yyyyMMdd}.pdf");
             }
@@ -767,6 +738,7 @@ namespace Sales.Controllers
                 return Content($"خطأ: {ex.Message}");
             }
         }
+
         #endregion
     }
 }
