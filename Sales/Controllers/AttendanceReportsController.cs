@@ -115,7 +115,7 @@ namespace Sales.Controllers
                 var monthEnd = monthStart.AddMonths(1).AddDays(-1);
                 var daysInMonth = DateTime.DaysInMonth(targetYear, targetMonth);
 
-                var arabicCulture = new CultureInfo("ar-EG");
+                var arabicCulture = new CultureInfo("ar-SA");
 
                 var totalStudents = await _unitOfWork.TblStudent
                     .CountAsync(s => s.Student_Visible == "yes");
