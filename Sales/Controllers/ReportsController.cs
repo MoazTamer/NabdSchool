@@ -126,7 +126,7 @@ namespace Sales.Controllers
                 }
 
                 var presentTodaySet = todayAttendance
-                    .Where(x => x.Attendance_Status == "حضور" || x.Attendance_Status == "متأخر" || x.Attendance_Status == "استئذان")
+                    .Where(x => x.Attendance_Status == "حضور" || x.Attendance_Status == "متأخر" )
                     .Select(x => x.Student_ID)
                     .ToHashSet();
 
@@ -308,7 +308,7 @@ namespace Sales.Controllers
                 );
 
                 var presentTodaySet = todayRecords
-                    .Where(x => x.Attendance_Status == "حضور" || x.Attendance_Status == "متأخر" || x.Attendance_Status == "استئذان")
+                    .Where(x => x.Attendance_Status == "حضور" || x.Attendance_Status == "متأخر" )
                     .Select(x => x.Student_ID)
                     .ToHashSet();
 
@@ -1641,7 +1641,7 @@ namespace Sales.Controllers
                     var classStudentIds = classStudents.Select(s => s.Student_ID).ToList();
                     var classRecords = attendanceRecords.Where(a => classStudentIds.Contains(a.Student_ID)).ToList();
 
-                    var totalPresentDays = classRecords.Count(r => r.Attendance_Status == "حضور" || r.Attendance_Status == "متأخر" || r.Attendance_Status == "استئذان");
+                    var totalPresentDays = classRecords.Count(r => r.Attendance_Status == "حضور" || r.Attendance_Status == "متأخر" );
                     var totalLateDays = classRecords.Count(r => r.Attendance_Status == "متأخر");
                     var totalAbsentDays = totalDays - totalPresentDays;
 
@@ -1721,7 +1721,7 @@ namespace Sales.Controllers
                     var classStudentIds = classStudents.Select(s => s.Student_ID).ToList();
                     var classRecords = attendanceRecords.Where(a => classStudentIds.Contains(a.Student_ID)).ToList();
 
-                    var totalPresentDays = classRecords.Count(r => r.Attendance_Status == "حضور" || r.Attendance_Status == "متأخر" || r.Attendance_Status == "استئذان");
+                    var totalPresentDays = classRecords.Count(r => r.Attendance_Status == "حضور" || r.Attendance_Status == "متأخر");
                     var totalLateDays = classRecords.Count(r => r.Attendance_Status == "متأخر");
                     var totalAbsentDays = totalLateDays - totalLateDays;
 

@@ -24,7 +24,7 @@ namespace Sales.Controllers
             _userManager = userManager;
         }
 
-        [Authorize(Policy = "Student_View")]
+        //[Authorize(Policy = "Student_View")]
         [HttpGet]
         public IActionResult Index()
         {
