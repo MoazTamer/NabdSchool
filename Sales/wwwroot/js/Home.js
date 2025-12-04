@@ -261,31 +261,31 @@ function initializeTopStudentsTable() {
                     }
                 }
             },
-            {
-                data: "attendance_Streak",
-                className: "text-center",
-                render: function (data) {
-                    const streak = parseInt(data) || 0;
+            //{
+            //    data: "attendance_Streak",
+            //    className: "text-center",
+            //    render: function (data) {
+            //        const streak = parseInt(data) || 0;
 
-                    if (streak <= 0) {
-                        return `
-                <div class="d-flex flex-column align-items-center">
-                    <i class="ki-outline ki-cross-circle text-danger fs-2x mb-1"></i>
-                    <span class="fw-bold text-danger fs-5">0</span>
-                    <span class="text-gray-600 fs-8">يوم</span>
-                </div>
-            `;
-                    } else {
-                        return `
-                <div class="d-flex flex-column align-items-center">
-                    <i class="ki-outline ki-chart-simple text-primary fs-2x mb-1"></i>
-                    <span class="fw-bold text-primary fs-5">${streak}</span>
-                    <span class="text-gray-600 fs-8">يوم</span>
-                </div>
-            `;
-                    }
-                }
-            },
+            //        if (streak <= 0) {
+            //            return `
+            //    <div class="d-flex flex-column align-items-center">
+            //        <i class="ki-outline ki-cross-circle text-danger fs-2x mb-1"></i>
+            //        <span class="fw-bold text-danger fs-5">0</span>
+            //        <span class="text-gray-600 fs-8">يوم</span>
+            //    </div>
+            //`;
+            //        } else {
+            //            return `
+            //    <div class="d-flex flex-column align-items-center">
+            //        <i class="ki-outline ki-chart-simple text-primary fs-2x mb-1"></i>
+            //        <span class="fw-bold text-primary fs-5">${streak}</span>
+            //        <span class="text-gray-600 fs-8">يوم</span>
+            //    </div>
+            //`;
+            //        }
+            //    }
+            //},
             {
                 data: "badges",
                 className: "",
