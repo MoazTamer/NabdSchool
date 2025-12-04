@@ -126,7 +126,7 @@ $(document).ready(function () {
 function initializeTopStudentsTable() {
     const table = $('#topStudentsTable').DataTable({
         processing: true,
-        serverSide: false, 
+        serverSide: false,
         responsive: true,
         paging: true,
         pageLength: 10,
@@ -143,10 +143,11 @@ function initializeTopStudentsTable() {
                 "last": "الأخير",
                 "next": "التالي",
                 "previous": "السابق"
-            }
+            },
+            "processing": "جارٍ التحميل..."
         },
         ajax: {
-            url: '/Home/GetTopStudentsData', 
+            url: '/Home/GetTopStudentsData',
             type: 'GET',
             dataSrc: function (response) {
                 if (response.success) {
@@ -154,12 +155,14 @@ function initializeTopStudentsTable() {
                     return response.data;
                 } else {
                     console.error('Error loading data:', response.message);
+                    showError('حدث خطأ في تحميل البيانات');
                     return [];
                 }
             },
             error: function (xhr, error, thrown) {
                 console.error('AJAX Error:', error, thrown);
                 showError('حدث خطأ في تحميل البيانات');
+                return [];
             }
         },
         columns: [

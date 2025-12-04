@@ -59,35 +59,15 @@ namespace Sales.Controllers
 
                 var absentCount = totalStudents - presentCount;
 
-                var disciplinedStudentsCount = await _unitOfWork.TblStudent.Table
-                    .CountAsync(s =>
-                        s.Student_Visible == "yes" &&
-                        !_unitOfWork.TblAttendance.Table
-                            .Any(a =>
-                                a.Student_ID == s.Student_ID &&
-                                a.Attendance_Date.Date == today &&
-                                (
-                                    a.Attendance_Status == "غياب" ||
-                                    a.Attendance_Status == "متأخر"
-                                )
-                            )
-                    );
-
-
-
-                var topStudents = await GetTopStudents(10);
-
-                var badgeStats = await GetBadgeStatistics();
-
                 var model = new DashboardViewModel
                 {
                     TotalStudents = totalStudents,
                     Present = presentCount,
                     Late = lateCount,
                     Absent = absentCount,
-                    Disciplined = disciplinedStudentsCount,
-                    TopStudents = topStudents,
-                    BadgeStats = badgeStats
+                    Disciplined = 0,
+                    TopStudents = new List<TopStudentBadge>(), 
+                    BadgeStats = new BadgeStatistics() 
                 };
 
                 return View(model);
@@ -253,11 +233,11 @@ namespace Sales.Controllers
         private async void InsertDailyAbsence(DateTime now, DateTime today)
         {
             var studentIds = _unitOfWork.TblStudent.GetAll(
-                filter: s => s.Student_Visible == "yes"
+                s => s.Student_Visible == "yes"
             ).Select(s => s.Student_ID).ToList();
 
             var existingAttendance = _unitOfWork.TblAttendance.GetAll(
-                filter: a => a.Attendance_Date >= today && a.Attendance_Date < today.AddDays(1)
+                a => a.Attendance_Date >= today && a.Attendance_Date < today.AddDays(1)
             ).Select(a => a.Student_ID).ToList();
 
             var newAbsentStudents = studentIds.Except(existingAttendance).ToList();
@@ -282,10 +262,6 @@ namespace Sales.Controllers
 
 
 
-
-
-
-
         [HttpPost]
         public async Task<IActionResult> RegisterAttendance(string studentCode)
         {
@@ -297,7 +273,7 @@ namespace Sales.Controllers
                 studentCode = studentCode.Trim();
 
                 var student = _unitOfWork.TblStudent.GetAll(
-                    filter: s => s.Student_Code == studentCode && s.Student_Visible == "yes",
+                    s => s.Student_Code == studentCode && s.Student_Visible == "yes",
                     includeProperties: new[] { "ClassRoom.Class" }
                 ).FirstOrDefault();
 
@@ -308,14 +284,25 @@ namespace Sales.Controllers
                 var today = now.Date;
                 var currentTime = now.TimeOfDay;
 
+
                 var existingAttendance = _unitOfWork.TblAttendance.GetAll(
-                    filter: a => a.Student_ID == student.Student_ID &&
+                    a => a.Student_ID == student.Student_ID &&
                                  a.Attendance_Date == today &&
                                  a.Attendance_Visible == "yes" &&
                                  a.Attendance_Status != "غياب"
                 ).OrderBy(a => a.Attendance_AddDate).LastOrDefault();
 
-                if (existingAttendance != null)
+                if (existingAttendance != null && existingAttendance.Attendance_Status == "استئذان")
+                {
+                    return Json(new
+                    {
+                        isValid = false,
+                        message = $"تم تسجيل استئذان للطالبة مسبقًا الساعة {existingAttendance.Attendance_Time.ToString(@"hh\:mm")}",
+                        studentName = student.Student_Name
+                    });
+                }
+
+                if (existingAttendance != null && existingAttendance.Attendance_Status != "استئذان")
                 {
                     var excuse = new TblAttendance
                     {
@@ -341,9 +328,10 @@ namespace Sales.Controllers
                         studentName = student.Student_Name,
                         className = $"{student.ClassRoom?.Class?.Class_Name} - {student.ClassRoom?.ClassRoom_Name}",
                         status = "استئذان",
-                        attendanceTime = currentTime
+                        attendanceTime = currentTime.ToString(@"hh\:mm")
                     });
                 }
+
 
                 var attendanceTime = SchoolSettingsController.GetAttendanceTime(_unitOfWork);
 
@@ -374,11 +362,11 @@ namespace Sales.Controllers
                 await UpdateStudentPoints(student.Student_ID, today);
 
                 var studentPoints = _unitOfWork.StudentPoints.GetAll(
-                    filter: sp => sp.Student_ID == student.Student_ID
+                    sp => sp.Student_ID == student.Student_ID
                 ).FirstOrDefault();
 
                 var newBadges = _unitOfWork.StudentBadge.GetAll(
-                    filter: sb => sb.Student_ID == student.Student_ID &&
+                    sb => sb.Student_ID == student.Student_ID &&
                                   sb.Badge_Visible == "yes" &&
                                   sb.Earned_Date.Date == today
                 ).Join(_unitOfWork.BadgeDefinition.Table,
@@ -435,7 +423,7 @@ namespace Sales.Controllers
                 studentCode = studentCode.Trim();
 
                 var student = _unitOfWork.TblStudent.GetAll(
-                    filter: s => s.Student_Code == studentCode && s.Student_Visible == "yes",
+                    s => s.Student_Code == studentCode && s.Student_Visible == "yes",
                     includeProperties: new[] { "ClassRoom.Class" }
                 ).FirstOrDefault();
 
@@ -447,7 +435,7 @@ namespace Sales.Controllers
                 var currentTime = now.TimeOfDay;
 
                 var existingExcuse = _unitOfWork.TblAttendance.GetAll(
-                    filter: a => a.Student_ID == student.Student_ID &&
+                    a => a.Student_ID == student.Student_ID &&
                                  a.Attendance_Date == today &&
                                  a.Attendance_Status == "استئذان" &&
                                  a.Attendance_Visible == "yes"
@@ -512,7 +500,7 @@ namespace Sales.Controllers
         private async Task<int> CalculateStudentPoints(int studentId, DateTime date)
         {
             var lastAttendance = _unitOfWork.TblAttendance.GetAll(
-                filter: a => a.Student_ID == studentId &&
+                a => a.Student_ID == studentId &&
                              a.Attendance_Date.Date == date.Date &&
                              a.Attendance_Visible == "yes",
                 orderBy: a => a.Attendance_ID,
@@ -536,7 +524,7 @@ namespace Sales.Controllers
             var points = await CalculateStudentPoints(studentId, date);
 
             var studentPoints = _unitOfWork.StudentPoints.GetAll(
-                filter: sp => sp.Student_ID == studentId
+                sp => sp.Student_ID == studentId
             ).FirstOrDefault();
 
             if (studentPoints == null)
@@ -642,7 +630,7 @@ namespace Sales.Controllers
         private async Task<List<TopStudentBadge>> GetTopStudents(int count = 10)
         {
             var topStudents = _unitOfWork.StudentPoints.GetAll(
-                filter: sp => sp.Student.Student_Visible == "yes",
+                sp => sp.Student.Student_Visible == "yes",
                 includeProperties: new[] { "Student" },
                 orderBy: sp => sp.Total_Points,
                 orderByDirection: OrderBy.Descending
@@ -688,7 +676,7 @@ namespace Sales.Controllers
         private async Task<BadgeStatistics> GetBadgeStatistics()
         {
             var allBadges = _unitOfWork.StudentBadge.GetAll(
-                filter: sb => sb.Badge_Visible == "yes"
+                sb => sb.Badge_Visible == "yes"
             ).ToList();
 
             return new BadgeStatistics
@@ -707,14 +695,14 @@ namespace Sales.Controllers
             try
             {
                 var studentPoints = _unitOfWork.StudentPoints.GetAll(
-                    filter: sp => sp.Student_ID == studentId,
+                    sp => sp.Student_ID == studentId,
                     includeProperties: new[] { "Student" }
                 ).FirstOrDefault();
 
                 var badges = (from sb in _unitOfWork.StudentBadge.GetAll(
-                                  filter: sb => sb.Student_ID == studentId && sb.Badge_Visible == "yes"
+                                  sb => sb.Student_ID == studentId && sb.Badge_Visible == "yes"
                               )
-                              join bd in _unitOfWork.BadgeDefinition.GetAll(filter: bd => bd.Is_Active)
+                              join bd in _unitOfWork.BadgeDefinition.GetAll(bd => bd.Is_Active)
                               on new { sb.Badge_Type, sb.Badge_Level } equals new { bd.Badge_Type, bd.Badge_Level }
                               select new
                               {

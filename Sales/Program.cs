@@ -5,8 +5,6 @@ using Hangfire.Dashboard;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-using Sales.Helper;
-
 using SalesModel.IRepository;
 using SalesModel.Models;
 
